@@ -77,7 +77,40 @@ const defaultState: AppState = {
     activity: "moderado",
   },
   dietLog: {},
+  workoutLog: {},
 };
+
+/** MET-based kcal burned estimate. */
+export function estimateKcal(met: number, weightKg: number, durationSec: number) {
+  return Math.round((met * weightKg * durationSec) / 3600);
+}
+
+export function logWorkoutSession(
+  state: AppState,
+  session: Omit<WorkoutSession, "id" | "at"> & { at?: string },
+): AppState {
+  const at = session.at ?? new Date().toISOString();
+  const key = todayKey(new Date(at));
+  const s: WorkoutSession = {
+    id: `w${Date.now()}`,
+    at,
+    source: session.source,
+    label: session.label,
+    durationSec: session.durationSec,
+    kcalBurned: session.kcalBurned,
+  };
+  const prevList = state.workoutLog[key] ?? [];
+  const wasToday = state.lastSession
+    ? todayKey(new Date(state.lastSession)) === todayKey()
+    : false;
+  return {
+    ...state,
+    workoutLog: { ...state.workoutLog, [key]: [s, ...prevList] },
+    completedSessions: [at, ...state.completedSessions].slice(0, 120),
+    lastSession: at,
+    streak: wasToday ? state.streak : state.streak + 1,
+  };
+}
 
 export function initialsFrom(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
