@@ -22,6 +22,15 @@ export interface DietDayLog {
   kcalTarget?: number;
 }
 
+export interface WorkoutSession {
+  id: string;
+  at: string; // ISO
+  source: "timer" | "programa" | "manual";
+  label: string;
+  durationSec: number;
+  kcalBurned: number;
+}
+
 export interface AppState {
   streak: number;
   lastSession: string | null; // ISO date
@@ -32,6 +41,7 @@ export interface AppState {
   goals: { id: string; label: string; done: boolean }[];
   profile: Profile;
   dietLog: Record<string, DietDayLog>;
+  workoutLog: Record<string, WorkoutSession[]>;
 }
 
 export function todayKey(d = new Date()) {
