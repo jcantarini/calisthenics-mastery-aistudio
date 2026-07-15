@@ -686,3 +686,224 @@ function MacroBar({
     </div>
   );
 }
+
+function RemindersCard() {
+  const [state, setState] = useAppState();
+  const [perm, setPerm] = useNotifPermission();
+  const r = state.reminders;
+
+  const setR = (patch: Partial<typeof r>) =>
+    setState((s) => ({ ...s, reminders: { ...s.reminders, ...patch } }));
+
+  const enable = async () => {
+    let p = perm;
+    if (p !== "granted") {
+      p = await requestNotifPermission();
+      setPerm(p);
+    }
+    if (p === "granted") {
+      setR({ enabled: true });
+      try {
+        new Notification("Lembretes ativados", {
+          body: "Vamos te avisar nas refeições e para beber água.",
+          icon: "/icon-192.png",
+        });
+      } catch {}
+    }
+  };
+
+  const disable = () => setR({ enabled: false });
+
+  const unsupported = perm === "unsupported";
+  const denied = perm === "denied";
+  const on = r.enabled && perm === "granted";
+
+  return (
+    <section className="mt-8">
+      <div className="flex items-center gap-2">
+        <Bell className="h-4 w-4 text-primary" />
+        <h2 className="text-display text-2xl">Lembretes</h2>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Avisos para marcar refeições e registrar água. Instale o app na tela inicial do
+        celular para receber com o app fechado.
+      </p>
+
+      <div
+        className={cn(
+          "mt-3 overflow-hidden rounded-3xl border p-4 transition-colors",
+          on ? "border-primary/40 bg-primary/5" : "border-border/60 bg-surface",
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "grid h-11 w-11 place-items-center rounded-xl",
+              on ? "bg-primary text-primary-foreground shadow-glow" : "bg-background/60 text-muted-foreground",
+            )}
+          >
+            {on ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
+          </span>
+          <div className="flex-1">
+            <p className="text-sm font-bold">
+              {on ? "Lembretes ativos" : "Lembretes desativados"}
+            </p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              {unsupported
+                ? "não suportado neste navegador"
+                : denied
+                  ? "permissão bloqueada nas configurações"
+                  : perm === "granted"
+                    ? "permissão concedida"
+                    : "permissão pendente"}
+            </p>
+          </div>
+          {on ? (
+            <button
+              onClick={disable}
+              className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground active:scale-95"
+            >
+              Desativar
+            </button>
+          ) : (
+            <button
+              onClick={enable}
+              disabled={unsupported || denied}
+              className="rounded-full bg-primary px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-primary-foreground shadow-glow active:scale-95 disabled:opacity-50"
+            >
+              {denied ? "Bloqueado" : "Ativar"}
+            </button>
+          )}
+        </div>
+
+        {denied && (
+          <p className="mt-3 rounded-2xl border border-border/60 bg-background/60 p-3 text-xs text-muted-foreground">
+            Para liberar, abra as configurações do site no navegador e permita notificações.
+          </p>
+        )}
+
+        {on && (
+          <div className="mt-4 space-y-3">
+            <ReminderToggle
+              label="Nas horas das refeições"
+              hint="Toca no horário de cada refeição do cardápio, se ainda não marcada."
+              value={r.meals}
+              onChange={(v) => setR({ meals: v })}
+            />
+            <ReminderToggle
+              label="Beber água"
+              hint="Só quando você ainda não bateu a meta diária."
+              value={r.water}
+              onChange={(v) => setR({ water: v })}
+            />
+            {r.water && (
+              <div className="rounded-2xl border border-border/60 bg-background/60 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      A cada
+                    </p>
+                    <p className="text-display text-xl leading-none">
+                      {r.waterEveryMin}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">min</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setR({ waterEveryMin: Math.max(30, r.waterEveryMin - 30) })}
+                      aria-label="Diminuir intervalo"
+                      className="grid h-8 w-8 place-items-center rounded-full border border-border/60 active:scale-95"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setR({ waterEveryMin: Math.min(360, r.waterEveryMin + 30) })}
+                      aria-label="Aumentar intervalo"
+                      className="grid h-8 w-8 place-items-center rounded-full border border-primary bg-primary/10 text-primary active:scale-95"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <TimeField
+                    label="Início"
+                    value={r.waterFrom}
+                    onChange={(v) => setR({ waterFrom: v })}
+                  />
+                  <TimeField
+                    label="Fim"
+                    value={r.waterTo}
+                    onChange={(v) => setR({ waterTo: v })}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ReminderToggle({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-background/60 p-3 text-left active:scale-[0.99]"
+    >
+      <div className="flex-1">
+        <p className="text-sm font-bold">{label}</p>
+        <p className="text-[11px] text-muted-foreground">{hint}</p>
+      </div>
+      <span
+        className={cn(
+          "relative h-6 w-11 rounded-full transition-colors",
+          value ? "bg-primary" : "bg-border",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-all",
+            value ? "left-[22px]" : "left-0.5",
+          )}
+        />
+      </span>
+    </button>
+  );
+}
+
+function TimeField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      <input
+        type="time"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-xl border border-border/60 bg-background px-3 py-2 font-mono text-sm focus:border-primary focus:outline-none"
+      />
+    </label>
+  );
+}
+
