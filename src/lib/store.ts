@@ -66,6 +66,7 @@ const defaultState: AppState = {
     sex: "masculino",
     activity: "moderado",
   },
+  dietLog: {},
 };
 
 export function initialsFrom(name: string) {
