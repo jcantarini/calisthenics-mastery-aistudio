@@ -173,6 +173,8 @@ function BottomNav() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [state, setState] = useAppState();
+  useReminderEngine(state, setState);
 
   return (
     <QueryClientProvider client={queryClient}>
