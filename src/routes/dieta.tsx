@@ -10,8 +10,13 @@ import {
   Info,
   Activity,
   UserCog,
+  Check,
+  Minus,
+  Plus,
+  BookOpen,
+  RotateCcw,
 } from "lucide-react";
-import { useAppState } from "@/lib/store";
+import { useAppState, todayKey, type DietDayLog } from "@/lib/store";
 import {
   ACTIVITY_META,
   BMI_META,
