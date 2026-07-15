@@ -15,7 +15,10 @@ import {
   Plus,
   BookOpen,
   RotateCcw,
+  Bell,
+  BellOff,
 } from "lucide-react";
+import { requestNotifPermission, useNotifPermission } from "@/lib/reminders";
 import { useAppState, todayKey, type DietDayLog } from "@/lib/store";
 import {
   ACTIVITY_META,
