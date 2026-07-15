@@ -13,7 +13,7 @@ import {
   Pencil,
   X,
 } from "lucide-react";
-import { useAppState, initialsFrom, type Profile } from "@/lib/store";
+import { useAppState, initialsFrom, type Profile, type Sex } from "@/lib/store";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -243,6 +243,7 @@ function EditProfileSheet({
   const [weight, setWeight] = useState(String(initial.weightKg));
   const [height, setHeight] = useState(String(initial.heightCm));
   const [birthYear, setBirthYear] = useState(String(initial.birthYear));
+  const [sex, setSex] = useState<Sex>(initial.sex);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -277,6 +278,7 @@ function EditProfileSheet({
       weightKg: Math.round(parsed.data.weightKg * 10) / 10,
       heightCm: Math.round(parsed.data.heightCm),
       birthYear: parsed.data.birthYear,
+      sex,
     });
   };
 
@@ -349,6 +351,24 @@ function EditProfileSheet({
               className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
               placeholder="1995"
             />
+          </Field>
+          <Field label="Sexo biológico (para cálculo calórico)">
+            <div className="grid grid-cols-2 gap-2">
+              {(["masculino", "feminino"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSex(s)}
+                  className={
+                    sex === s
+                      ? "rounded-2xl border border-primary bg-primary/10 px-4 py-3 text-sm font-bold capitalize text-primary"
+                      : "rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm font-medium capitalize text-muted-foreground"
+                  }
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </Field>
         </div>
 
