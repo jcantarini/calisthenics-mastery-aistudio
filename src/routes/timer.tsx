@@ -14,6 +14,7 @@ import {
   Timer as TimerIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { estimateKcal, logWorkoutSession, useAppState } from "@/lib/store";
 
 export const Route = createFileRoute("/timer")({
   head: () => ({
@@ -63,8 +64,11 @@ const DEFAULT_CONFIG: Config = {
 };
 
 function TimerPage() {
+  const [state, setState] = useAppState();
   const [config, setConfig] = useState<Config>(DEFAULT_CONFIG);
   const [hydrated, setHydrated] = useState(false);
+  const [presetKey, setPresetKey] = useState<(typeof PRESETS)[number]["key"]>("hiit");
+  const [lastLogged, setLastLogged] = useState<{ kcal: number; durationSec: number } | null>(null);
 
   const [running, setRunning] = useState(false);
   const [phase, setPhase] = useState<Phase>("prep");
@@ -74,6 +78,10 @@ function TimerPage() {
   const [isSetRest, setIsSetRest] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // Hydrate config
   useEffect(() => {
@@ -169,6 +177,24 @@ function TimerPage() {
         beep(880, 0.4, "triangle");
         setTimeout(() => beep(1200, 0.5, "triangle"), 220);
         vibrate([200, 100, 200, 100, 400]);
+        // Auto-log workout session
+        const met = presetKey === "tabata" ? 10 : presetKey === "militar" ? 9 : presetKey === "hiit" ? 8.5 : 7;
+        const durationSec =
+          config.prep +
+          config.sets * (config.work * config.rounds + config.rest * Math.max(0, config.rounds - 1)) +
+          Math.max(0, config.sets - 1) * config.setRest;
+        const kcal = estimateKcal(met, stateRef.current.profile.weightKg, durationSec);
+        const label =
+          PRESETS.find((p) => p.key === presetKey)?.label ?? "Timer HIIT";
+        setState((s) =>
+          logWorkoutSession(s, {
+            source: "timer",
+            label: `Timer · ${label}`,
+            durationSec,
+            kcalBurned: kcal,
+          }),
+        );
+        setLastLogged({ kcal, durationSec });
       }
       return;
     }
@@ -231,6 +257,7 @@ function TimerPage() {
   const applyPreset = (key: (typeof PRESETS)[number]["key"]) => {
     const p = PRESETS.find((x) => x.key === key);
     if (!p) return;
+    setPresetKey(key);
     const next = {
       ...config,
       prep: p.prep,
@@ -386,6 +413,22 @@ function TimerPage() {
             <p className="mt-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               {phase === "done" ? "treino finalizado" : "segundos restantes"}
             </p>
+            {phase === "done" && lastLogged && (
+              <div className="mt-4 w-full rounded-2xl border border-primary/40 bg-primary/10 p-3 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                  Sessão registrada no diário
+                </p>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  {Math.round(lastLogged.durationSec / 60)} min · {lastLogged.kcal} kcal queimadas
+                </p>
+                <Link
+                  to="/relatorio"
+                  className="mt-2 inline-block text-[11px] font-semibold uppercase tracking-widest text-primary"
+                >
+                  Ver relatório →
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 h-2 overflow-hidden rounded-full bg-background/50">

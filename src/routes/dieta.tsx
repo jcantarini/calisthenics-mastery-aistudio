@@ -73,6 +73,12 @@ function DietaPage() {
     (s, m) => s + m.items.reduce((a, i) => a + i.kcal, 0),
     0,
   );
+  const kcalBurnedToday = (state.workoutLog[today] ?? []).reduce(
+    (s, w) => s + w.kcalBurned,
+    0,
+  );
+  const workoutsToday = state.workoutLog[today] ?? [];
+  const netKcal = kcalConsumed - kcalBurnedToday;
   const kcalPct = Math.min(100, Math.round((kcalConsumed / kcal) * 100));
   const waterPct = Math.min(100, Math.round((todayLog.waterMl / waterGoalMl) * 100));
 
@@ -450,7 +456,41 @@ function DietaPage() {
             </div>
           </div>
         </div>
+
+        {/* Workout burn today */}
+        <div className="mt-3 flex items-center gap-3 rounded-2xl border border-border/60 bg-surface p-3">
+          <span
+            className="grid h-9 w-9 place-items-center rounded-xl"
+            style={{ background: "color-mix(in oklab, var(--ember) 15%, transparent)", color: "var(--ember)" }}
+          >
+            <Flame className="h-4 w-4" />
+          </span>
+          <div className="flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Queimadas no treino
+            </p>
+            <p className="text-sm">
+              <span className="font-bold" style={{ color: "var(--ember)" }}>
+                {kcalBurnedToday}
+              </span>{" "}
+              <span className="text-xs text-muted-foreground">
+                kcal · {workoutsToday.length} sessão(ões) · saldo{" "}
+                <span className={netKcal < 0 ? "text-primary" : ""}>
+                  {netKcal > 0 ? "+" : ""}
+                  {netKcal}
+                </span>
+              </span>
+            </p>
+          </div>
+          <Link
+            to="/relatorio"
+            className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary"
+          >
+            Relatório
+          </Link>
+        </div>
       </section>
+
 
       {/* Weekly summary */}
       <section className="mt-8">

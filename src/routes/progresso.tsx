@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Check, Plus, TrendingUp, Award, Flame } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Check, Plus, TrendingUp, Award, Flame, ChevronRight, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -59,6 +59,22 @@ function ProgressoPage() {
           <span className="text-primary">metas</span>
         </h1>
       </header>
+
+      <Link
+        to="/relatorio"
+        className="mt-5 flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-3 transition-colors active:scale-[0.99]"
+      >
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary text-primary-foreground shadow-glow">
+          <BarChart3 className="h-5 w-5" />
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-bold">Relatório semanal</span>
+          <span className="block text-[11px] text-muted-foreground">
+            Treinos, calorias, água e adesão
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
 
       {/* Big stats */}
       <section className="mt-6 grid grid-cols-3 gap-3">
