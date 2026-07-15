@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 
 const KEY = "barra:state:v1";
 
+export type Sex = "masculino" | "feminino";
+export type ActivityLevel = "sedentario" | "leve" | "moderado" | "intenso" | "atleta";
+
 export interface Profile {
   name: string;
   initials: string;
@@ -9,6 +12,8 @@ export interface Profile {
   heightCm: number;
   birthYear: number;
   memberSince: string; // e.g. "março de 2025"
+  sex: Sex;
+  activity: ActivityLevel;
 }
 
 export interface AppState {
@@ -44,6 +49,8 @@ const defaultState: AppState = {
     heightCm: 178,
     birthYear: 1995,
     memberSince: "março de 2025",
+    sex: "masculino",
+    activity: "moderado",
   },
 };
 
