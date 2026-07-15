@@ -9,38 +9,119 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TreinosRouteImport } from './routes/treinos'
+import { Route as ProgressoRouteImport } from './routes/progresso'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TreinosIndexRouteImport } from './routes/treinos.index'
+import { Route as TreinosSlugRouteImport } from './routes/treinos.$slug'
 
+const TreinosRoute = TreinosRouteImport.update({
+  id: '/treinos',
+  path: '/treinos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressoRoute = ProgressoRouteImport.update({
+  id: '/progresso',
+  path: '/progresso',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TreinosIndexRoute = TreinosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TreinosRoute,
+} as any)
+const TreinosSlugRoute = TreinosSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => TreinosRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/perfil': typeof PerfilRoute
+  '/progresso': typeof ProgressoRoute
+  '/treinos': typeof TreinosRouteWithChildren
+  '/treinos/$slug': typeof TreinosSlugRoute
+  '/treinos/': typeof TreinosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/perfil': typeof PerfilRoute
+  '/progresso': typeof ProgressoRoute
+  '/treinos/$slug': typeof TreinosSlugRoute
+  '/treinos': typeof TreinosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/perfil': typeof PerfilRoute
+  '/progresso': typeof ProgressoRoute
+  '/treinos': typeof TreinosRouteWithChildren
+  '/treinos/$slug': typeof TreinosSlugRoute
+  '/treinos/': typeof TreinosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/perfil'
+    | '/progresso'
+    | '/treinos'
+    | '/treinos/$slug'
+    | '/treinos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/perfil' | '/progresso' | '/treinos/$slug' | '/treinos'
+  id:
+    | '__root__'
+    | '/'
+    | '/perfil'
+    | '/progresso'
+    | '/treinos'
+    | '/treinos/$slug'
+    | '/treinos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PerfilRoute: typeof PerfilRoute
+  ProgressoRoute: typeof ProgressoRoute
+  TreinosRoute: typeof TreinosRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/treinos': {
+      id: '/treinos'
+      path: '/treinos'
+      fullPath: '/treinos'
+      preLoaderRoute: typeof TreinosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progresso': {
+      id: '/progresso'
+      path: '/progresso'
+      fullPath: '/progresso'
+      preLoaderRoute: typeof ProgressoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +129,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/treinos/': {
+      id: '/treinos/'
+      path: '/'
+      fullPath: '/treinos/'
+      preLoaderRoute: typeof TreinosIndexRouteImport
+      parentRoute: typeof TreinosRoute
+    }
+    '/treinos/$slug': {
+      id: '/treinos/$slug'
+      path: '/$slug'
+      fullPath: '/treinos/$slug'
+      preLoaderRoute: typeof TreinosSlugRouteImport
+      parentRoute: typeof TreinosRoute
+    }
   }
 }
 
+interface TreinosRouteChildren {
+  TreinosSlugRoute: typeof TreinosSlugRoute
+  TreinosIndexRoute: typeof TreinosIndexRoute
+}
+
+const TreinosRouteChildren: TreinosRouteChildren = {
+  TreinosSlugRoute: TreinosSlugRoute,
+  TreinosIndexRoute: TreinosIndexRoute,
+}
+
+const TreinosRouteWithChildren =
+  TreinosRoute._addFileChildren(TreinosRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PerfilRoute: PerfilRoute,
+  ProgressoRoute: ProgressoRoute,
+  TreinosRoute: TreinosRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

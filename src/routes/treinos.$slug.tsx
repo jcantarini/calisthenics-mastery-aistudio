@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Play, Check, Info, Timer, Target } from "lucide-react";
-import { getProgram, LEVEL_META } from "@/lib/programs";
+import { getProgram, LEVEL_META, type Program } from "@/lib/programs";
 import { useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/treinos/$slug")({
       ],
     };
   },
-  loader: ({ params }) => {
+  loader: ({ params }): { program: Program } => {
     const program = getProgram(params.slug);
     if (!program) throw notFound();
     return { program };
