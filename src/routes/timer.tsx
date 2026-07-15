@@ -413,6 +413,22 @@ function TimerPage() {
             <p className="mt-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               {phase === "done" ? "treino finalizado" : "segundos restantes"}
             </p>
+            {phase === "done" && lastLogged && (
+              <div className="mt-4 w-full rounded-2xl border border-primary/40 bg-primary/10 p-3 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                  Sessão registrada no diário
+                </p>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  {Math.round(lastLogged.durationSec / 60)} min · {lastLogged.kcal} kcal queimadas
+                </p>
+                <Link
+                  to="/relatorio"
+                  className="mt-2 inline-block text-[11px] font-semibold uppercase tracking-widest text-primary"
+                >
+                  Ver relatório →
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 h-2 overflow-hidden rounded-full bg-background/50">
