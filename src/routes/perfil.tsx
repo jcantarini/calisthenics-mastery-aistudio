@@ -1,6 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bell, Settings, Share2, Trophy, HeartPulse, BookOpen, Moon, LogOut } from "lucide-react";
-import { useAppState } from "@/lib/store";
+import { useEffect, useState } from "react";
+import { z } from "zod";
+import {
+  Bell,
+  Settings,
+  Share2,
+  Trophy,
+  HeartPulse,
+  BookOpen,
+  Moon,
+  LogOut,
+  Pencil,
+  X,
+} from "lucide-react";
+import { useAppState, initialsFrom, type Profile } from "@/lib/store";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -12,11 +27,37 @@ export const Route = createFileRoute("/perfil")({
   component: PerfilPage,
 });
 
+const profileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Nome muito curto")
+    .max(60, "Máximo de 60 caracteres"),
+  weightKg: z
+    .number({ message: "Peso inválido" })
+    .min(30, "Mínimo 30 kg")
+    .max(250, "Máximo 250 kg"),
+  heightCm: z
+    .number({ message: "Altura inválida" })
+    .min(120, "Mínimo 120 cm")
+    .max(230, "Máximo 230 cm"),
+  birthYear: z
+    .number({ message: "Ano inválido" })
+    .int()
+    .min(1920, "Ano inválido")
+    .max(new Date().getFullYear() - 5, "Ano inválido"),
+});
+
 function PerfilPage() {
   const [state, setState] = useAppState();
+  const [editing, setEditing] = useState(false);
+  const { profile } = state;
+  const bmi = profile.weightKg / Math.pow(profile.heightCm / 100, 2);
+  const age = new Date().getFullYear() - profile.birthYear;
 
   return (
     <div className="px-5 pt-12">
+      <Toaster position="top-center" richColors />
       <header className="flex items-center justify-between">
         <h1 className="text-display text-4xl">Perfil</h1>
         <button
@@ -28,27 +69,48 @@ function PerfilPage() {
       </header>
 
       {/* Athlete card */}
-      <section className="mt-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-surface-elevated to-surface p-5 shadow-card">
+      <section className="relative mt-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-surface-elevated to-surface p-5 shadow-card">
+        <button
+          onClick={() => setEditing(true)}
+          className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary active:scale-95"
+        >
+          <Pencil className="h-3 w-3" />
+          Editar
+        </button>
         <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground">
-            BR
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground">
+            {profile.initials}
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pr-16">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               Atleta · Nível {state.streak > 10 ? "III" : "II"}
             </p>
-            <p className="truncate text-lg font-bold">Bruno Ribeiro</p>
+            <p className="truncate text-lg font-bold">{profile.name}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Desde março · {state.completedSessions.length} sessões
+              Desde {profile.memberSince} · {state.completedSessions.length} sessões
             </p>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border/60 pt-4 text-center">
-          <MiniStat label="Peso" value="72kg" />
-          <MiniStat label="Altura" value="1.78" />
-          <MiniStat label="IMC" value="22.7" />
+        <div className="mt-4 grid grid-cols-4 gap-3 border-t border-border/60 pt-4 text-center">
+          <MiniStat label="Peso" value={`${profile.weightKg}kg`} />
+          <MiniStat label="Altura" value={(profile.heightCm / 100).toFixed(2)} />
+          <MiniStat label="IMC" value={bmi.toFixed(1)} />
+          <MiniStat label="Idade" value={String(age)} />
         </div>
       </section>
+
+      {editing && (
+        <EditProfileSheet
+          initial={profile}
+          onClose={() => setEditing(false)}
+          onSave={(next) => {
+            setState((s) => ({ ...s, profile: next }));
+            setEditing(false);
+            toast.success("Perfil atualizado");
+          }}
+        />
+      )}
+
 
       {/* Weekly goal control */}
       <section className="mt-6 rounded-2xl border border-border/60 bg-surface p-5">
