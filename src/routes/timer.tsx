@@ -14,6 +14,7 @@ import {
   Timer as TimerIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { estimateKcal, logWorkoutSession, useAppState } from "@/lib/store";
 
 export const Route = createFileRoute("/timer")({
   head: () => ({
