@@ -14,6 +14,8 @@ import { Home, Dumbbell, Apple, Target, User } from "lucide-react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { cn } from "@/lib/utils";
+import { useAppState } from "@/lib/store";
+import { useReminderEngine } from "@/lib/reminders";
 
 function NotFoundComponent() {
   return (
@@ -97,6 +99,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icon-192.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -173,6 +177,8 @@ function BottomNav() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [state, setState] = useAppState();
+  useReminderEngine(state, setState);
 
   return (
     <QueryClientProvider client={queryClient}>

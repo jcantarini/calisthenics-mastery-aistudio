@@ -31,6 +31,16 @@ export interface WorkoutSession {
   kcalBurned: number;
 }
 
+export interface RemindersConfig {
+  enabled: boolean;
+  meals: boolean;
+  water: boolean;
+  waterEveryMin: number;
+  waterFrom: string; // HH:MM
+  waterTo: string; // HH:MM
+  lastFired: Record<string, string>; // key -> ISO
+}
+
 export interface AppState {
   streak: number;
   lastSession: string | null; // ISO date
@@ -42,7 +52,18 @@ export interface AppState {
   profile: Profile;
   dietLog: Record<string, DietDayLog>;
   workoutLog: Record<string, WorkoutSession[]>;
+  reminders: RemindersConfig;
 }
+
+export const DEFAULT_REMINDERS: RemindersConfig = {
+  enabled: false,
+  meals: true,
+  water: true,
+  waterEveryMin: 120,
+  waterFrom: "08:00",
+  waterTo: "22:00",
+  lastFired: {},
+};
 
 export function todayKey(d = new Date()) {
   const y = d.getFullYear();
@@ -78,6 +99,7 @@ const defaultState: AppState = {
   },
   dietLog: {},
   workoutLog: {},
+  reminders: DEFAULT_REMINDERS,
 };
 
 /** MET-based kcal burned estimate. */
@@ -134,6 +156,7 @@ export function useAppState() {
           profile: { ...defaultState.profile, ...(parsed.profile ?? {}) },
           dietLog: { ...(parsed.dietLog ?? {}) },
           workoutLog: { ...(parsed.workoutLog ?? {}) },
+          reminders: { ...DEFAULT_REMINDERS, ...(parsed.reminders ?? {}) },
         });
       }
     } catch {}
