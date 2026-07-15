@@ -27,7 +27,7 @@ export const Route = createFileRoute("/treinos/$slug")({
 });
 
 function ProgramPage() {
-  const { program } = Route.useLoaderData();
+  const { program } = Route.useLoaderData() as { program: Program };
   const [state, setState] = useAppState();
   const [playing, setPlaying] = useState<string | null>(null);
 
