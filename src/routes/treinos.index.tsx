@@ -52,6 +52,22 @@ function TreinosPage() {
         <p className="mt-3 max-w-xs text-sm text-muted-foreground">
           Três trilhas progressivas. Escolha onde você está hoje e evolua com clareza.
         </p>
+
+        <Link
+          to="/timer"
+          className="mt-5 flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-3 text-left transition-colors active:scale-[0.99]"
+        >
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary text-primary-foreground shadow-glow">
+            <Timer className="h-5 w-5" />
+          </span>
+          <span className="flex-1">
+            <span className="block text-sm font-bold">Timer de intervalos</span>
+            <span className="block text-[11px] text-muted-foreground">
+              HIIT, Tabata e militar · som + vibração
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
       </header>
 
       {/* Category chips */}
