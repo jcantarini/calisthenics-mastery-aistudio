@@ -63,8 +63,67 @@ function DietaPage() {
   const meals = useMemo(() => buildMealPlan(kcal), [kcal]);
 
   const waterL = Math.max(2, +(profile.weightKg * 0.035).toFixed(1));
+  const waterGoalMl = Math.round(waterL * 1000);
 
-  return (
+  // Diary state
+  const today = todayKey();
+  const todayLog: DietDayLog = state.dietLog[today] ?? { meals: {}, waterMl: 0 };
+  const doneMealIds = meals.filter((m) => todayLog.meals[m.id]);
+  const kcalConsumed = doneMealIds.reduce(
+    (s, m) => s + m.items.reduce((a, i) => a + i.kcal, 0),
+    0,
+  );
+  const kcalPct = Math.min(100, Math.round((kcalConsumed / kcal) * 100));
+  const waterPct = Math.min(100, Math.round((todayLog.waterMl / waterGoalMl) * 100));
+
+  const updateToday = (patch: Partial<DietDayLog>) => {
+    setState((s) => {
+      const prev = s.dietLog[today] ?? { meals: {}, waterMl: 0 };
+      return {
+        ...s,
+        dietLog: {
+          ...s.dietLog,
+          [today]: { ...prev, ...patch, kcalTarget: kcal },
+        },
+      };
+    });
+  };
+
+  const toggleMeal = (id: string) => {
+    updateToday({ meals: { ...todayLog.meals, [id]: !todayLog.meals[id] } });
+  };
+  const addWater = (ml: number) => {
+    updateToday({ waterMl: Math.max(0, todayLog.waterMl + ml) });
+  };
+  const resetToday = () => updateToday({ meals: {}, waterMl: 0 });
+
+  // Week summary (last 7 days including today)
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const key = todayKey(d);
+    const log = state.dietLog[key];
+    const dayMeals = buildMealPlan(log?.kcalTarget ?? kcal);
+    const kcalDone = log
+      ? dayMeals
+          .filter((m) => log.meals[m.id])
+          .reduce((s, m) => s + m.items.reduce((a, i) => a + i.kcal, 0), 0)
+      : 0;
+    return {
+      key,
+      date: d,
+      isToday: key === today,
+      kcalDone,
+      kcalTarget: log?.kcalTarget ?? kcal,
+      waterMl: log?.waterMl ?? 0,
+    };
+  });
+  const weekKcalAvg = Math.round(
+    week.reduce((s, d) => s + d.kcalDone, 0) / week.filter((d) => d.kcalDone > 0).length || 0,
+  );
+  const weekWaterAvg = Math.round(
+    week.reduce((s, d) => s + d.waterMl, 0) / week.filter((d) => d.waterMl > 0).length || 0,
+  );
     <div className="px-5 pt-12">
       <header>
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
