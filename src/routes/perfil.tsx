@@ -1,6 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bell, Settings, Share2, Trophy, HeartPulse, BookOpen, Moon, LogOut } from "lucide-react";
-import { useAppState } from "@/lib/store";
+import { useEffect, useState } from "react";
+import { z } from "zod";
+import {
+  Bell,
+  Settings,
+  Share2,
+  Trophy,
+  HeartPulse,
+  BookOpen,
+  Moon,
+  LogOut,
+  Pencil,
+  X,
+} from "lucide-react";
+import { useAppState, initialsFrom, type Profile } from "@/lib/store";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -12,11 +27,37 @@ export const Route = createFileRoute("/perfil")({
   component: PerfilPage,
 });
 
+const profileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Nome muito curto")
+    .max(60, "Máximo de 60 caracteres"),
+  weightKg: z
+    .number({ message: "Peso inválido" })
+    .min(30, "Mínimo 30 kg")
+    .max(250, "Máximo 250 kg"),
+  heightCm: z
+    .number({ message: "Altura inválida" })
+    .min(120, "Mínimo 120 cm")
+    .max(230, "Máximo 230 cm"),
+  birthYear: z
+    .number({ message: "Ano inválido" })
+    .int()
+    .min(1920, "Ano inválido")
+    .max(new Date().getFullYear() - 5, "Ano inválido"),
+});
+
 function PerfilPage() {
   const [state, setState] = useAppState();
+  const [editing, setEditing] = useState(false);
+  const { profile } = state;
+  const bmi = profile.weightKg / Math.pow(profile.heightCm / 100, 2);
+  const age = new Date().getFullYear() - profile.birthYear;
 
   return (
     <div className="px-5 pt-12">
+      <Toaster position="top-center" richColors />
       <header className="flex items-center justify-between">
         <h1 className="text-display text-4xl">Perfil</h1>
         <button
@@ -28,27 +69,48 @@ function PerfilPage() {
       </header>
 
       {/* Athlete card */}
-      <section className="mt-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-surface-elevated to-surface p-5 shadow-card">
+      <section className="relative mt-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-surface-elevated to-surface p-5 shadow-card">
+        <button
+          onClick={() => setEditing(true)}
+          className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary active:scale-95"
+        >
+          <Pencil className="h-3 w-3" />
+          Editar
+        </button>
         <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground">
-            BR
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground">
+            {profile.initials}
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pr-16">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               Atleta · Nível {state.streak > 10 ? "III" : "II"}
             </p>
-            <p className="truncate text-lg font-bold">Bruno Ribeiro</p>
+            <p className="truncate text-lg font-bold">{profile.name}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Desde março · {state.completedSessions.length} sessões
+              Desde {profile.memberSince} · {state.completedSessions.length} sessões
             </p>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border/60 pt-4 text-center">
-          <MiniStat label="Peso" value="72kg" />
-          <MiniStat label="Altura" value="1.78" />
-          <MiniStat label="IMC" value="22.7" />
+        <div className="mt-4 grid grid-cols-4 gap-3 border-t border-border/60 pt-4 text-center">
+          <MiniStat label="Peso" value={`${profile.weightKg}kg`} />
+          <MiniStat label="Altura" value={(profile.heightCm / 100).toFixed(2)} />
+          <MiniStat label="IMC" value={bmi.toFixed(1)} />
+          <MiniStat label="Idade" value={String(age)} />
         </div>
       </section>
+
+      {editing && (
+        <EditProfileSheet
+          initial={profile}
+          onClose={() => setEditing(false)}
+          onSave={(next) => {
+            setState((s) => ({ ...s, profile: next }));
+            setEditing(false);
+            toast.success("Perfil atualizado");
+          }}
+        />
+      )}
+
 
       {/* Weekly goal control */}
       <section className="mt-6 rounded-2xl border border-border/60 bg-surface p-5">
@@ -165,5 +227,158 @@ function SettingRow({
       </span>
       {value && <span className="text-xs text-muted-foreground">{value}</span>}
     </button>
+  );
+}
+
+function EditProfileSheet({
+  initial,
+  onClose,
+  onSave,
+}: {
+  initial: Profile;
+  onClose: () => void;
+  onSave: (next: Profile) => void;
+}) {
+  const [name, setName] = useState(initial.name);
+  const [weight, setWeight] = useState(String(initial.weightKg));
+  const [height, setHeight] = useState(String(initial.heightCm));
+  const [birthYear, setBirthYear] = useState(String(initial.birthYear));
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = profileSchema.safeParse({
+      name,
+      weightKg: Number(weight.replace(",", ".")),
+      heightCm: Number(height),
+      birthYear: Number(birthYear),
+    });
+    if (!parsed.success) {
+      const next: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0];
+        if (typeof key === "string" && !next[key]) next[key] = issue.message;
+      }
+      setErrors(next);
+      return;
+    }
+    onSave({
+      ...initial,
+      name: parsed.data.name,
+      initials: initialsFrom(parsed.data.name),
+      weightKg: Math.round(parsed.data.weightKg * 10) / 10,
+      heightCm: Math.round(parsed.data.heightCm),
+      birthYear: parsed.data.birthYear,
+    });
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Editar perfil"
+    >
+      <form
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={submit}
+        className="w-full max-w-md rounded-t-3xl border-t border-border/60 bg-surface-elevated p-5 pb-8"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
+      >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+        <div className="flex items-center justify-between">
+          <h2 className="text-display text-2xl">Editar perfil</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-background"
+            aria-label="Fechar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          <Field label="Nome" error={errors.name}>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={60}
+              autoComplete="name"
+              className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Seu nome"
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Peso (kg)" error={errors.weightKg}>
+              <input
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                inputMode="decimal"
+                maxLength={5}
+                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="72"
+              />
+            </Field>
+            <Field label="Altura (cm)" error={errors.heightCm}>
+              <input
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                inputMode="numeric"
+                maxLength={3}
+                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="178"
+              />
+            </Field>
+          </div>
+          <Field label="Ano de nascimento" error={errors.birthYear}>
+            <input
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value)}
+              inputMode="numeric"
+              maxLength={4}
+              className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="1995"
+            />
+          </Field>
+        </div>
+
+        <button
+          type="submit"
+          className="mt-6 w-full rounded-full bg-primary py-3 text-sm font-bold uppercase tracking-widest text-primary-foreground shadow-glow active:scale-[0.98]"
+        >
+          Salvar alterações
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      {children}
+      {error && <span className="mt-1 block text-xs text-destructive">{error}</span>}
+    </label>
   );
 }

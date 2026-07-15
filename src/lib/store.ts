@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 
 const KEY = "barra:state:v1";
 
+export interface Profile {
+  name: string;
+  initials: string;
+  weightKg: number;
+  heightCm: number;
+  birthYear: number;
+  memberSince: string; // e.g. "março de 2025"
+}
+
 export interface AppState {
   streak: number;
   lastSession: string | null; // ISO date
@@ -10,6 +19,7 @@ export interface AppState {
   activeProgram: string | null;
   weeklyGoal: number;
   goals: { id: string; label: string; done: boolean }[];
+  profile: Profile;
 }
 
 const defaultState: AppState = {
@@ -27,7 +37,22 @@ const defaultState: AppState = {
     { id: "g3", label: "30s de prancha lateral", done: true },
     { id: "g4", label: "Primeiro muscle-up", done: false },
   ],
+  profile: {
+    name: "Bruno Ribeiro",
+    initials: "BR",
+    weightKg: 72,
+    heightCm: 178,
+    birthYear: 1995,
+    memberSince: "março de 2025",
+  },
 };
+
+export function initialsFrom(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "??";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 export function useAppState() {
   const [state, setState] = useState<AppState>(defaultState);
@@ -36,7 +61,14 @@ export function useAppState() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) setState({ ...defaultState, ...JSON.parse(raw) });
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setState({
+          ...defaultState,
+          ...parsed,
+          profile: { ...defaultState.profile, ...(parsed.profile ?? {}) },
+        });
+      }
     } catch {}
     setHydrated(true);
   }, []);
