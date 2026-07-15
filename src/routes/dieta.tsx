@@ -494,6 +494,11 @@ function DietaPage() {
         </div>
       </section>
 
+      {/* Reminders */}
+      <RemindersCard />
+
+
+
 
       {/* Weekly summary */}
       <section className="mt-8">
