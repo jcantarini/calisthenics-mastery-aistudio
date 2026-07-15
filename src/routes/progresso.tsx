@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Check, Plus, TrendingUp, Award, Flame } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Check, Plus, TrendingUp, Award, Flame, ChevronRight, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";

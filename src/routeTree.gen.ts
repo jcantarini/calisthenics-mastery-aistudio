@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TreinosRouteImport } from './routes/treinos'
 import { Route as TimerRouteImport } from './routes/timer'
+import { Route as RelatorioRouteImport } from './routes/relatorio'
 import { Route as ProgressoRouteImport } from './routes/progresso'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as DietaRouteImport } from './routes/dieta'
@@ -26,6 +27,11 @@ const TreinosRoute = TreinosRouteImport.update({
 const TimerRoute = TimerRouteImport.update({
   id: '/timer',
   path: '/timer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelatorioRoute = RelatorioRouteImport.update({
+  id: '/relatorio',
+  path: '/relatorio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProgressoRoute = ProgressoRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/dieta': typeof DietaRoute
   '/perfil': typeof PerfilRoute
   '/progresso': typeof ProgressoRoute
+  '/relatorio': typeof RelatorioRoute
   '/timer': typeof TimerRoute
   '/treinos': typeof TreinosRouteWithChildren
   '/treinos/$slug': typeof TreinosSlugRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/dieta': typeof DietaRoute
   '/perfil': typeof PerfilRoute
   '/progresso': typeof ProgressoRoute
+  '/relatorio': typeof RelatorioRoute
   '/timer': typeof TimerRoute
   '/treinos/$slug': typeof TreinosSlugRoute
   '/treinos': typeof TreinosIndexRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/dieta': typeof DietaRoute
   '/perfil': typeof PerfilRoute
   '/progresso': typeof ProgressoRoute
+  '/relatorio': typeof RelatorioRoute
   '/timer': typeof TimerRoute
   '/treinos': typeof TreinosRouteWithChildren
   '/treinos/$slug': typeof TreinosSlugRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/dieta'
     | '/perfil'
     | '/progresso'
+    | '/relatorio'
     | '/timer'
     | '/treinos'
     | '/treinos/$slug'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/dieta'
     | '/perfil'
     | '/progresso'
+    | '/relatorio'
     | '/timer'
     | '/treinos/$slug'
     | '/treinos'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/dieta'
     | '/perfil'
     | '/progresso'
+    | '/relatorio'
     | '/timer'
     | '/treinos'
     | '/treinos/$slug'
@@ -126,6 +138,7 @@ export interface RootRouteChildren {
   DietaRoute: typeof DietaRoute
   PerfilRoute: typeof PerfilRoute
   ProgressoRoute: typeof ProgressoRoute
+  RelatorioRoute: typeof RelatorioRoute
   TimerRoute: typeof TimerRoute
   TreinosRoute: typeof TreinosRouteWithChildren
 }
@@ -144,6 +157,13 @@ declare module '@tanstack/react-router' {
       path: '/timer'
       fullPath: '/timer'
       preLoaderRoute: typeof TimerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relatorio': {
+      id: '/relatorio'
+      path: '/relatorio'
+      fullPath: '/relatorio'
+      preLoaderRoute: typeof RelatorioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/progresso': {
@@ -209,6 +229,7 @@ const rootRouteChildren: RootRouteChildren = {
   DietaRoute: DietaRoute,
   PerfilRoute: PerfilRoute,
   ProgressoRoute: ProgressoRoute,
+  RelatorioRoute: RelatorioRoute,
   TimerRoute: TimerRoute,
   TreinosRoute: TreinosRouteWithChildren,
 }
