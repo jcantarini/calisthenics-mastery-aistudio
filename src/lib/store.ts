@@ -61,7 +61,14 @@ export function useAppState() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) setState({ ...defaultState, ...JSON.parse(raw) });
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setState({
+          ...defaultState,
+          ...parsed,
+          profile: { ...defaultState.profile, ...(parsed.profile ?? {}) },
+        });
+      }
     } catch {}
     setHydrated(true);
   }, []);
