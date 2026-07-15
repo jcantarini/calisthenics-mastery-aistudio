@@ -1,4 +1,5 @@
 export type Level = "iniciante" | "intermediario" | "avancado";
+export type Category = "calistenia" | "cardio" | "militar";
 
 export interface Exercise {
   id: string;
@@ -14,6 +15,7 @@ export interface Program {
   id: string;
   slug: string;
   level: Level;
+  category: Category;
   title: string;
   tagline: string;
   weeks: number;
@@ -42,11 +44,27 @@ export const LEVEL_META: Record<Level, { label: string; description: string; bad
   },
 };
 
+export const CATEGORY_META: Record<Category, { label: string; description: string }> = {
+  calistenia: {
+    label: "Calistenia",
+    description: "Peso do corpo, força e habilidade.",
+  },
+  cardio: {
+    label: "Cardio",
+    description: "Condicionamento, queima calórica e resistência.",
+  },
+  militar: {
+    label: "Militar",
+    description: "Treinos de resistência inspirados em preparação militar.",
+  },
+};
+
 export const PROGRAMS: Program[] = [
   {
     id: "p1",
     slug: "fundacao",
     level: "iniciante",
+    category: "calistenia",
     title: "Fundação",
     tagline: "Do sofá para a barra em 6 semanas",
     weeks: 6,
@@ -97,6 +115,7 @@ export const PROGRAMS: Program[] = [
     id: "p2",
     slug: "barra-fixa",
     level: "intermediario",
+    category: "calistenia",
     title: "Domínio da Barra",
     tagline: "Sua primeira barra estrita, dip e L-sit",
     weeks: 8,
@@ -147,6 +166,7 @@ export const PROGRAMS: Program[] = [
     id: "p3",
     slug: "elite",
     level: "avancado",
+    category: "calistenia",
     title: "Rota Elite",
     tagline: "Muscle-up, front lever e planche progression",
     weeks: 12,
@@ -190,6 +210,177 @@ export const PROGRAMS: Program[] = [
         focus: "Ombros, equilíbrio",
         videoId: "xMFRkQpXVoI",
         cue: "Pressione o chão. Costela para dentro.",
+      },
+    ],
+  },
+  {
+    id: "p4",
+    slug: "cardio-ignicao",
+    level: "iniciante",
+    category: "cardio",
+    title: "Cardio Ignição",
+    tagline: "Condicionamento sem equipamento em 20 minutos",
+    weeks: 4,
+    daysPerWeek: 3,
+    duration: "20 min",
+    goal: "10 min contínuos de trote + 50 polichinelos seguidos",
+    color: "oklch(0.75 0.14 220)",
+    exercises: [
+      {
+        id: "e13",
+        name: "Polichinelo",
+        sets: "4 × 45s",
+        rest: "30s",
+        focus: "Frequência cardíaca, panturrilhas",
+        videoId: "c4DAnQ6DtF8",
+        cue: "Salte leve, braços na altura da cabeça.",
+      },
+      {
+        id: "e14",
+        name: "Elevação de joelhos",
+        sets: "4 × 30s",
+        rest: "30s",
+        focus: "Cardio, flexores de quadril",
+        videoId: "OAJ_J3EZkdY",
+        cue: "Joelhos na altura do quadril. Braços ativos.",
+      },
+      {
+        id: "e15",
+        name: "Escalador (mountain climber)",
+        sets: "4 × 30s",
+        rest: "30s",
+        focus: "Core, cardio",
+        videoId: "cnyTQDSE884",
+        cue: "Quadril baixo. Alterne rápido sem saltar o quadril.",
+      },
+      {
+        id: "e16",
+        name: "Agachamento com salto",
+        sets: "3 × 12",
+        rest: "45s",
+        focus: "Potência, pernas",
+        videoId: "A-cFYWvaHr0",
+        cue: "Aterrissagem suave, joelhos alinhados.",
+      },
+    ],
+  },
+  {
+    id: "p5",
+    slug: "cardio-hiit",
+    level: "intermediario",
+    category: "cardio",
+    title: "HIIT Metabólico",
+    tagline: "20 min de alta intensidade para queimar gordura",
+    weeks: 6,
+    daysPerWeek: 3,
+    duration: "25 min",
+    goal: "5 rounds Tabata sem falhar + 15 burpees em 60s",
+    color: "var(--ember)",
+    exercises: [
+      {
+        id: "e17",
+        name: "Burpee completo",
+        sets: "6 × 40s / 20s",
+        rest: "20s",
+        focus: "Corpo inteiro, cardio",
+        videoId: "JZQA08SlJnM",
+        cue: "Peito no chão, salte com braços estendidos.",
+      },
+      {
+        id: "e18",
+        name: "Pular corda (ou imaginária)",
+        sets: "5 × 60s",
+        rest: "30s",
+        focus: "Coordenação, panturrilhas",
+        videoId: "FJmRQ5iTXKE",
+        cue: "Salto baixo. Punhos giram, não os ombros.",
+      },
+      {
+        id: "e19",
+        name: "Skater lateral",
+        sets: "4 × 40s",
+        rest: "20s",
+        focus: "Glúteos, cardio",
+        videoId: "P3GgQm1Dx7g",
+        cue: "Salto lateral longo, aterrisse em uma perna.",
+      },
+      {
+        id: "e20",
+        name: "Sprint estacionário",
+        sets: "6 × 20s / 40s",
+        rest: "0s",
+        focus: "VO2 máx, potência",
+        videoId: "5w25oz-YSiw",
+        cue: "Corrida máxima no lugar. Braços rápidos.",
+      },
+    ],
+  },
+  {
+    id: "p6",
+    slug: "calistenia-militar",
+    level: "avancado",
+    category: "militar",
+    title: "Calistenia Militar",
+    tagline: "Treino inspirado em preparação de forças especiais",
+    weeks: 8,
+    daysPerWeek: 5,
+    duration: "50 min",
+    goal: "50 flexões + 20 barras + 100 abdominais + 3 km corrida",
+    color: "var(--lime)",
+    exercises: [
+      {
+        id: "e21",
+        name: "Flexão militar (mãos próximas)",
+        sets: "5 × máx",
+        rest: "90s",
+        focus: "Tríceps, peito, ombros",
+        videoId: "wxJEuah1sYU",
+        cue: "Cotovelos rentes ao corpo. Corpo em prancha rígida.",
+      },
+      {
+        id: "e22",
+        name: "Barra fixa pronada",
+        sets: "5 × máx",
+        rest: "120s",
+        focus: "Dorsais, bíceps, antebraço",
+        videoId: "eGo4IYlbE5g",
+        cue: "Queixo passa da barra. Descida controlada.",
+      },
+      {
+        id: "e23",
+        name: "Abdominal completo militar",
+        sets: "4 × 25",
+        rest: "45s",
+        focus: "Core, flexores de quadril",
+        videoId: "1919eTCoESo",
+        cue: "Cotovelos tocam os joelhos. Sem tranco.",
+      },
+      {
+        id: "e24",
+        name: "Burpee com barra",
+        sets: "5 × 8",
+        rest: "90s",
+        focus: "Explosão, corpo inteiro",
+        videoId: "auBLPXO8Fww",
+        cue: "Burpee + salto na barra + 1 barra. Ciclo contínuo.",
+      },
+      {
+        id: "e25",
+        name: "Corrida intervalada",
+        sets: "8 × 400m",
+        rest: "60s",
+        focus: "Resistência aeróbica",
+        videoId: "brFHyOtTwH4",
+        cue: "Ritmo forte constante. Foco na respiração.",
+      },
+      {
+        id: "e26",
+        name: "Bear crawl",
+        sets: "4 × 20m",
+        rest: "60s",
+        focus: "Core, coordenação, resistência",
+        videoId: "t0iDvz1S0K8",
+        cue: "Quadril baixo. Braço e perna opostos.",
       },
     ],
   },
