@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronRight, Clock, Calendar, Target } from "lucide-react";
-import { PROGRAMS, LEVEL_META, type Level } from "@/lib/programs";
+import { ChevronRight, Clock, Calendar, Target, Dumbbell, Heart, Shield } from "lucide-react";
+import { PROGRAMS, LEVEL_META, CATEGORY_META, type Level, type Category } from "@/lib/programs";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/treinos/")({
@@ -11,23 +11,33 @@ export const Route = createFileRoute("/treinos/")({
       {
         name: "description",
         content:
-          "Escolha um programa de calistenia do iniciante ao avançado, com vídeos e progressões guiadas.",
+          "Programas de calistenia, cardio e treino militar do iniciante ao avançado, com vídeos e progressões guiadas.",
       },
     ],
   }),
   component: TreinosPage,
 });
 
-const FILTERS: { key: Level | "todos"; label: string }[] = [
+const LEVEL_FILTERS: { key: Level | "todos"; label: string }[] = [
   { key: "todos", label: "Todos" },
   { key: "iniciante", label: "Iniciante" },
   { key: "intermediario", label: "Intermediário" },
   { key: "avancado", label: "Avançado" },
 ];
 
+const CATEGORY_FILTERS: { key: Category | "todas"; label: string; icon: typeof Dumbbell }[] = [
+  { key: "todas", label: "Todas", icon: Target },
+  { key: "calistenia", label: "Calistenia", icon: Dumbbell },
+  { key: "cardio", label: "Cardio", icon: Heart },
+  { key: "militar", label: "Militar", icon: Shield },
+];
+
 function TreinosPage() {
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("todos");
-  const list = filter === "todos" ? PROGRAMS : PROGRAMS.filter((p) => p.level === filter);
+  const [level, setLevel] = useState<(typeof LEVEL_FILTERS)[number]["key"]>("todos");
+  const [category, setCategory] = useState<(typeof CATEGORY_FILTERS)[number]["key"]>("todas");
+  const list = PROGRAMS.filter(
+    (p) => (level === "todos" || p.level === level) && (category === "todas" || p.category === category),
+  );
 
   return (
     <div className="px-5 pt-12">
