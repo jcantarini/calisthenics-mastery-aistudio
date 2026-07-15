@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronRight, Clock, Calendar, Target, Dumbbell, Heart, Shield } from "lucide-react";
+import { ChevronRight, Clock, Calendar, Target, Dumbbell, Heart, Shield, Timer } from "lucide-react";
 import { PROGRAMS, LEVEL_META, CATEGORY_META, type Level, type Category } from "@/lib/programs";
 import { cn } from "@/lib/utils";
 
