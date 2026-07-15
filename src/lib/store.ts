@@ -156,6 +156,7 @@ export function useAppState() {
           profile: { ...defaultState.profile, ...(parsed.profile ?? {}) },
           dietLog: { ...(parsed.dietLog ?? {}) },
           workoutLog: { ...(parsed.workoutLog ?? {}) },
+          reminders: { ...DEFAULT_REMINDERS, ...(parsed.reminders ?? {}) },
         });
       }
     } catch {}
