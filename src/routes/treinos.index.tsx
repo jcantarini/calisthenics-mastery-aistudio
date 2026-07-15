@@ -125,7 +125,7 @@ function TreinosPage() {
                     className="font-mono text-[11px] font-bold uppercase tracking-widest"
                     style={{ color: p.color }}
                   >
-                    {LEVEL_META[p.level].badge} · {LEVEL_META[p.level].label}
+                    {LEVEL_META[p.level].badge} · {LEVEL_META[p.level].label} · {CATEGORY_META[p.category].label}
                   </p>
                   <h3 className="mt-1 text-display text-3xl leading-none">{p.title}</h3>
                 </div>
