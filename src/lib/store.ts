@@ -99,6 +99,7 @@ const defaultState: AppState = {
   },
   dietLog: {},
   workoutLog: {},
+  reminders: DEFAULT_REMINDERS,
 };
 
 /** MET-based kcal burned estimate. */
