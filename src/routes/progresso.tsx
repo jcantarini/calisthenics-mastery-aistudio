@@ -60,6 +60,22 @@ function ProgressoPage() {
         </h1>
       </header>
 
+      <Link
+        to="/relatorio"
+        className="mt-5 flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-3 transition-colors active:scale-[0.99]"
+      >
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary text-primary-foreground shadow-glow">
+          <BarChart3 className="h-5 w-5" />
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-bold">Relatório semanal</span>
+          <span className="block text-[11px] text-muted-foreground">
+            Treinos, calorias, água e adesão
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
+
       {/* Big stats */}
       <section className="mt-6 grid grid-cols-3 gap-3">
         <BigStat icon={<Flame className="h-4 w-4" />} value={state.streak} label="dias" sub="sequência" />
