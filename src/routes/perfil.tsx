@@ -229,3 +229,156 @@ function SettingRow({
     </button>
   );
 }
+
+function EditProfileSheet({
+  initial,
+  onClose,
+  onSave,
+}: {
+  initial: Profile;
+  onClose: () => void;
+  onSave: (next: Profile) => void;
+}) {
+  const [name, setName] = useState(initial.name);
+  const [weight, setWeight] = useState(String(initial.weightKg));
+  const [height, setHeight] = useState(String(initial.heightCm));
+  const [birthYear, setBirthYear] = useState(String(initial.birthYear));
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = profileSchema.safeParse({
+      name,
+      weightKg: Number(weight.replace(",", ".")),
+      heightCm: Number(height),
+      birthYear: Number(birthYear),
+    });
+    if (!parsed.success) {
+      const next: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0];
+        if (typeof key === "string" && !next[key]) next[key] = issue.message;
+      }
+      setErrors(next);
+      return;
+    }
+    onSave({
+      ...initial,
+      name: parsed.data.name,
+      initials: initialsFrom(parsed.data.name),
+      weightKg: Math.round(parsed.data.weightKg * 10) / 10,
+      heightCm: Math.round(parsed.data.heightCm),
+      birthYear: parsed.data.birthYear,
+    });
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Editar perfil"
+    >
+      <form
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={submit}
+        className="w-full max-w-md rounded-t-3xl border-t border-border/60 bg-surface-elevated p-5 pb-8"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
+      >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+        <div className="flex items-center justify-between">
+          <h2 className="text-display text-2xl">Editar perfil</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-background"
+            aria-label="Fechar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          <Field label="Nome" error={errors.name}>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={60}
+              autoComplete="name"
+              className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Seu nome"
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Peso (kg)" error={errors.weightKg}>
+              <input
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                inputMode="decimal"
+                maxLength={5}
+                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="72"
+              />
+            </Field>
+            <Field label="Altura (cm)" error={errors.heightCm}>
+              <input
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                inputMode="numeric"
+                maxLength={3}
+                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="178"
+              />
+            </Field>
+          </div>
+          <Field label="Ano de nascimento" error={errors.birthYear}>
+            <input
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value)}
+              inputMode="numeric"
+              maxLength={4}
+              className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="1995"
+            />
+          </Field>
+        </div>
+
+        <button
+          type="submit"
+          className="mt-6 w-full rounded-full bg-primary py-3 text-sm font-bold uppercase tracking-widest text-primary-foreground shadow-glow active:scale-[0.98]"
+        >
+          Salvar alterações
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      {children}
+      {error && <span className="mt-1 block text-xs text-destructive">{error}</span>}
+    </label>
+  );
+}
