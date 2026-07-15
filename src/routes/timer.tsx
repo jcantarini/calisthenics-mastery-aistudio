@@ -257,6 +257,7 @@ function TimerPage() {
   const applyPreset = (key: (typeof PRESETS)[number]["key"]) => {
     const p = PRESETS.find((x) => x.key === key);
     if (!p) return;
+    setPresetKey(key);
     const next = {
       ...config,
       prep: p.prep,
