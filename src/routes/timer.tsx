@@ -64,8 +64,11 @@ const DEFAULT_CONFIG: Config = {
 };
 
 function TimerPage() {
+  const [state, setState] = useAppState();
   const [config, setConfig] = useState<Config>(DEFAULT_CONFIG);
   const [hydrated, setHydrated] = useState(false);
+  const [presetKey, setPresetKey] = useState<(typeof PRESETS)[number]["key"]>("hiit");
+  const [lastLogged, setLastLogged] = useState<{ kcal: number; durationSec: number } | null>(null);
 
   const [running, setRunning] = useState(false);
   const [phase, setPhase] = useState<Phase>("prep");
@@ -75,6 +78,10 @@ function TimerPage() {
   const [isSetRest, setIsSetRest] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // Hydrate config
   useEffect(() => {
