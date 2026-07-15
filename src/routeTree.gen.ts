@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TreinosRouteImport } from './routes/treinos'
 import { Route as ProgressoRouteImport } from './routes/progresso'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as DietaRouteImport } from './routes/dieta'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TreinosIndexRouteImport } from './routes/treinos.index'
 import { Route as TreinosSlugRouteImport } from './routes/treinos.$slug'
@@ -29,6 +30,11 @@ const ProgressoRoute = ProgressoRouteImport.update({
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DietaRoute = DietaRouteImport.update({
+  id: '/dieta',
+  path: '/dieta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -49,6 +55,7 @@ const TreinosSlugRoute = TreinosSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dieta': typeof DietaRoute
   '/perfil': typeof PerfilRoute
   '/progresso': typeof ProgressoRoute
   '/treinos': typeof TreinosRouteWithChildren
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dieta': typeof DietaRoute
   '/perfil': typeof PerfilRoute
   '/progresso': typeof ProgressoRoute
   '/treinos/$slug': typeof TreinosSlugRoute
@@ -65,6 +73,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dieta': typeof DietaRoute
   '/perfil': typeof PerfilRoute
   '/progresso': typeof ProgressoRoute
   '/treinos': typeof TreinosRouteWithChildren
@@ -75,16 +84,18 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dieta'
     | '/perfil'
     | '/progresso'
     | '/treinos'
     | '/treinos/$slug'
     | '/treinos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/perfil' | '/progresso' | '/treinos/$slug' | '/treinos'
+  to: '/' | '/dieta' | '/perfil' | '/progresso' | '/treinos/$slug' | '/treinos'
   id:
     | '__root__'
     | '/'
+    | '/dieta'
     | '/perfil'
     | '/progresso'
     | '/treinos'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DietaRoute: typeof DietaRoute
   PerfilRoute: typeof PerfilRoute
   ProgressoRoute: typeof ProgressoRoute
   TreinosRoute: typeof TreinosRouteWithChildren
@@ -120,6 +132,13 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dieta': {
+      id: '/dieta'
+      path: '/dieta'
+      fullPath: '/dieta'
+      preLoaderRoute: typeof DietaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -161,6 +180,7 @@ const TreinosRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DietaRoute: DietaRoute,
   PerfilRoute: PerfilRoute,
   ProgressoRoute: ProgressoRoute,
   TreinosRoute: TreinosRouteWithChildren,

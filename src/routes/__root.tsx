@@ -9,7 +9,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Home, Dumbbell, Target, User } from "lucide-react";
+import { Home, Dumbbell, Apple, Target, User } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -128,6 +128,7 @@ function RootShell({ children }: { children: ReactNode }) {
 const navItems = [
   { to: "/", label: "Início", icon: Home },
   { to: "/treinos", label: "Treinos", icon: Dumbbell },
+  { to: "/dieta", label: "Dieta", icon: Apple },
   { to: "/progresso", label: "Progresso", icon: Target },
   { to: "/perfil", label: "Perfil", icon: User },
 ] as const;
@@ -139,7 +140,7 @@ function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-5">
         {navItems.map(({ to, label, icon: Icon }) => {
           const active =
             to === "/" ? pathname === "/" : pathname.startsWith(to);
