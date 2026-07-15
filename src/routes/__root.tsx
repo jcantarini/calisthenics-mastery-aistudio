@@ -14,6 +14,8 @@ import { Home, Dumbbell, Apple, Target, User } from "lucide-react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { cn } from "@/lib/utils";
+import { useAppState } from "@/lib/store";
+import { useReminderEngine } from "@/lib/reminders";
 
 function NotFoundComponent() {
   return (
