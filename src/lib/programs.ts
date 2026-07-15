@@ -61,7 +61,7 @@ export const PROGRAMS: Program[] = [
         sets: "4 × 8-12",
         rest: "60s",
         focus: "Peito, tríceps, core",
-        videoId: "wxRRYQ_-l3g",
+        videoId: "cfns5VDVVvk",
         cue: "Corpo em linha reta. Cotovelos a 45°.",
       },
       {
@@ -79,7 +79,7 @@ export const PROGRAMS: Program[] = [
         sets: "3 × 10",
         rest: "90s",
         focus: "Costas, bíceps",
-        videoId: "KOaCA-4tqk0",
+        videoId: "dnpDUwqMX04",
         cue: "Puxe o peito até a barra. Escápulas retraídas.",
       },
       {
@@ -129,7 +129,7 @@ export const PROGRAMS: Program[] = [
         sets: "5 × 10s",
         rest: "60s",
         focus: "Core, flexores de quadril",
-        videoId: "IucRTUP7Q1I",
+        videoId: "IUZJoSP66HI",
         cue: "Deprima os ombros. Joelhos no peito.",
       },
       {
@@ -161,7 +161,7 @@ export const PROGRAMS: Program[] = [
         sets: "6 × 2",
         rest: "180s",
         focus: "Dorsais, tríceps, potência",
-        videoId: "s1_TmnPeaJk",
+        videoId: "_iYvlSMgUGE",
         cue: "Puxe alto, gire os punhos, empurre.",
       },
       {
@@ -170,7 +170,7 @@ export const PROGRAMS: Program[] = [
         sets: "5 × 10-15s",
         rest: "120s",
         focus: "Dorsais, core",
-        videoId: "cUsIJ9m9WPk",
+        videoId: "AGhb8V8M758",
         cue: "Escápulas deprimidas. Corpo paralelo ao solo.",
       },
       {
@@ -179,7 +179,7 @@ export const PROGRAMS: Program[] = [
         sets: "5 × 20s",
         rest: "120s",
         focus: "Ombros, peito, core",
-        videoId: "sICzM66sZbc",
+        videoId: "wKV5zVJTYBo",
         cue: "Incline até os ombros passarem dos punhos.",
       },
       {
@@ -188,7 +188,7 @@ export const PROGRAMS: Program[] = [
         sets: "5 × 30-60s",
         rest: "90s",
         focus: "Ombros, equilíbrio",
-        videoId: "MyKFhKtvIfg",
+        videoId: "xMFRkQpXVoI",
         cue: "Pressione o chão. Costela para dentro.",
       },
     ],
