@@ -10,8 +10,13 @@ import {
   Info,
   Activity,
   UserCog,
+  Check,
+  Minus,
+  Plus,
+  BookOpen,
+  RotateCcw,
 } from "lucide-react";
-import { useAppState } from "@/lib/store";
+import { useAppState, todayKey, type DietDayLog } from "@/lib/store";
 import {
   ACTIVITY_META,
   BMI_META,
@@ -58,6 +63,67 @@ function DietaPage() {
   const meals = useMemo(() => buildMealPlan(kcal), [kcal]);
 
   const waterL = Math.max(2, +(profile.weightKg * 0.035).toFixed(1));
+  const waterGoalMl = Math.round(waterL * 1000);
+
+  // Diary state
+  const today = todayKey();
+  const todayLog: DietDayLog = state.dietLog[today] ?? { meals: {}, waterMl: 0 };
+  const doneMealIds = meals.filter((m) => todayLog.meals[m.id]);
+  const kcalConsumed = doneMealIds.reduce(
+    (s, m) => s + m.items.reduce((a, i) => a + i.kcal, 0),
+    0,
+  );
+  const kcalPct = Math.min(100, Math.round((kcalConsumed / kcal) * 100));
+  const waterPct = Math.min(100, Math.round((todayLog.waterMl / waterGoalMl) * 100));
+
+  const updateToday = (patch: Partial<DietDayLog>) => {
+    setState((s) => {
+      const prev = s.dietLog[today] ?? { meals: {}, waterMl: 0 };
+      return {
+        ...s,
+        dietLog: {
+          ...s.dietLog,
+          [today]: { ...prev, ...patch, kcalTarget: kcal },
+        },
+      };
+    });
+  };
+
+  const toggleMeal = (id: string) => {
+    updateToday({ meals: { ...todayLog.meals, [id]: !todayLog.meals[id] } });
+  };
+  const addWater = (ml: number) => {
+    updateToday({ waterMl: Math.max(0, todayLog.waterMl + ml) });
+  };
+  const resetToday = () => updateToday({ meals: {}, waterMl: 0 });
+
+  // Week summary (last 7 days including today)
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const key = todayKey(d);
+    const log = state.dietLog[key];
+    const dayMeals = buildMealPlan(log?.kcalTarget ?? kcal);
+    const kcalDone = log
+      ? dayMeals
+          .filter((m) => log.meals[m.id])
+          .reduce((s, m) => s + m.items.reduce((a, i) => a + i.kcal, 0), 0)
+      : 0;
+    return {
+      key,
+      date: d,
+      isToday: key === today,
+      kcalDone,
+      kcalTarget: log?.kcalTarget ?? kcal,
+      waterMl: log?.waterMl ?? 0,
+    };
+  });
+  const weekKcalAvg = Math.round(
+    week.reduce((s, d) => s + d.kcalDone, 0) / week.filter((d) => d.kcalDone > 0).length || 0,
+  );
+  const weekWaterAvg = Math.round(
+    week.reduce((s, d) => s + d.waterMl, 0) / week.filter((d) => d.waterMl > 0).length || 0,
+  );
 
   return (
     <div className="px-5 pt-12">
@@ -245,17 +311,42 @@ function DietaPage() {
             {meals.length} refeições
           </span>
         </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Toque no círculo para marcar a refeição como feita e acompanhar no diário.
+        </p>
         <ul className="mt-3 space-y-3">
           {meals.map((m) => {
             const total = m.items.reduce((s, i) => s + i.kcal, 0);
+            const done = !!todayLog.meals[m.id];
             return (
-              <li key={m.id} className="overflow-hidden rounded-2xl border border-border/60 bg-surface">
-                <div className="flex items-center justify-between border-b border-border/60 bg-background/40 px-4 py-3">
-                  <div>
+              <li
+                key={m.id}
+                className={cn(
+                  "overflow-hidden rounded-2xl border bg-surface transition-colors",
+                  done ? "border-primary/60" : "border-border/60",
+                )}
+              >
+                <div className="flex items-center gap-3 border-b border-border/60 bg-background/40 px-4 py-3">
+                  <button
+                    onClick={() => toggleMeal(m.id)}
+                    aria-pressed={done}
+                    aria-label={`Marcar ${m.name} como feita`}
+                    className={cn(
+                      "grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-all active:scale-90",
+                      done
+                        ? "border-primary bg-primary text-primary-foreground shadow-glow"
+                        : "border-border/70 bg-background",
+                    )}
+                  >
+                    {done && <Check className="h-4 w-4" strokeWidth={3} />}
+                  </button>
+                  <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       {m.time}
                     </p>
-                    <p className="font-bold">{m.name}</p>
+                    <p className={cn("font-bold", done && "line-through opacity-60")}>
+                      {m.name}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-display text-lg leading-none">{total}</p>
@@ -281,6 +372,164 @@ function DietaPage() {
             );
           })}
         </ul>
+      </section>
+
+      {/* Diary — today */}
+      <section className="mt-8">
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-primary" />
+            <h2 className="text-display text-2xl">Diário de hoje</h2>
+          </div>
+          <button
+            onClick={resetToday}
+            className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground active:scale-95"
+          >
+            <RotateCcw className="h-3 w-3" /> Zerar
+          </button>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {/* Calories today */}
+          <div className="rounded-2xl border border-border/60 bg-surface-elevated p-4">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+              <Flame className="h-3 w-3" /> Calorias
+            </div>
+            <p className="mt-2 text-display text-2xl leading-none">
+              {kcalConsumed}
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                / {kcal}
+              </span>
+            </p>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-background/60">
+              <div
+                className="h-full bg-primary transition-[width] duration-500"
+                style={{ width: `${kcalPct}%` }}
+              />
+            </div>
+            <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              {doneMealIds.length}/{meals.length} refeições
+            </p>
+          </div>
+
+          {/* Water today */}
+          <div className="rounded-2xl border border-border/60 bg-surface-elevated p-4">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest" style={{ color: "oklch(0.75 0.14 220)" }}>
+              <Droplet className="h-3 w-3" /> Água
+            </div>
+            <p className="mt-2 text-display text-2xl leading-none">
+              {(todayLog.waterMl / 1000).toFixed(1)}
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                / {waterL}L
+              </span>
+            </p>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-background/60">
+              <div
+                className="h-full transition-[width] duration-500"
+                style={{ width: `${waterPct}%`, background: "oklch(0.75 0.14 220)" }}
+              />
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                onClick={() => addWater(-250)}
+                aria-label="Remover 250ml"
+                className="grid h-7 w-7 place-items-center rounded-full border border-border/60 bg-background active:scale-90"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className="flex-1 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                250 ml
+              </span>
+              <button
+                onClick={() => addWater(250)}
+                aria-label="Adicionar 250ml"
+                className="grid h-7 w-7 place-items-center rounded-full border border-primary bg-primary/10 text-primary active:scale-90"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Weekly summary */}
+      <section className="mt-8">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-display text-2xl">Sua semana</h2>
+          <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            últimos 7 dias
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-border/60 bg-surface p-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Média calórica
+            </p>
+            <p className="mt-1 text-display text-xl leading-none">
+              {weekKcalAvg || 0}
+              <span className="ml-1 text-[10px] font-normal text-muted-foreground">kcal</span>
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border/60 bg-surface p-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Média de água
+            </p>
+            <p className="mt-1 text-display text-xl leading-none">
+              {((weekWaterAvg || 0) / 1000).toFixed(1)}
+              <span className="ml-1 text-[10px] font-normal text-muted-foreground">L</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-border/60 bg-surface-elevated p-4">
+          <div className="flex items-end justify-between gap-1">
+            {week.map((d) => {
+              const kPct = Math.min(100, Math.round((d.kcalDone / d.kcalTarget) * 100));
+              const wPct = Math.min(100, Math.round((d.waterMl / waterGoalMl) * 100));
+              const label = d.date.toLocaleDateString("pt-BR", { weekday: "short" }).slice(0, 3);
+              return (
+                <div key={d.key} className="flex flex-1 flex-col items-center gap-1.5">
+                  <div className="flex h-24 w-full items-end gap-0.5">
+                    <div
+                      className="flex-1 rounded-t bg-primary/80 transition-all"
+                      style={{ height: `${Math.max(4, kPct)}%` }}
+                      title={`${d.kcalDone} kcal`}
+                    />
+                    <div
+                      className="flex-1 rounded-t transition-all"
+                      style={{
+                        height: `${Math.max(4, wPct)}%`,
+                        background: "oklch(0.75 0.14 220 / 0.85)",
+                      }}
+                      title={`${(d.waterMl / 1000).toFixed(1)}L`}
+                    />
+                  </div>
+                  <p
+                    className={cn(
+                      "font-mono text-[9px] uppercase tracking-widest",
+                      d.isToday ? "text-primary" : "text-muted-foreground",
+                    )}
+                  >
+                    {label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex justify-center gap-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <span className="h-2 w-2 rounded-sm bg-primary/80" /> Calorias
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span
+                className="h-2 w-2 rounded-sm"
+                style={{ background: "oklch(0.75 0.14 220 / 0.85)" }}
+              />
+              Água
+            </span>
+          </div>
+        </div>
       </section>
 
       {/* Tips */}

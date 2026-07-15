@@ -16,6 +16,12 @@ export interface Profile {
   activity: ActivityLevel;
 }
 
+export interface DietDayLog {
+  meals: Record<string, boolean>;
+  waterMl: number;
+  kcalTarget?: number;
+}
+
 export interface AppState {
   streak: number;
   lastSession: string | null; // ISO date
@@ -25,6 +31,14 @@ export interface AppState {
   weeklyGoal: number;
   goals: { id: string; label: string; done: boolean }[];
   profile: Profile;
+  dietLog: Record<string, DietDayLog>;
+}
+
+export function todayKey(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 const defaultState: AppState = {
@@ -52,6 +66,7 @@ const defaultState: AppState = {
     sex: "masculino",
     activity: "moderado",
   },
+  dietLog: {},
 };
 
 export function initialsFrom(name: string) {
@@ -74,6 +89,7 @@ export function useAppState() {
           ...defaultState,
           ...parsed,
           profile: { ...defaultState.profile, ...(parsed.profile ?? {}) },
+          dietLog: { ...(parsed.dietLog ?? {}) },
         });
       }
     } catch {}
