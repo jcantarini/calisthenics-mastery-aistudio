@@ -124,6 +124,8 @@ function DietaPage() {
   const weekWaterAvg = Math.round(
     week.reduce((s, d) => s + d.waterMl, 0) / week.filter((d) => d.waterMl > 0).length || 0,
   );
+
+  return (
     <div className="px-5 pt-12">
       <header>
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
