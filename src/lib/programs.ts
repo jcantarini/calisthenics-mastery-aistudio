@@ -1,4 +1,5 @@
 export type Level = "iniciante" | "intermediario" | "avancado";
+export type Category = "calistenia" | "cardio" | "militar";
 
 export interface Exercise {
   id: string;
@@ -14,6 +15,7 @@ export interface Program {
   id: string;
   slug: string;
   level: Level;
+  category: Category;
   title: string;
   tagline: string;
   weeks: number;
@@ -39,6 +41,21 @@ export const LEVEL_META: Record<Level, { label: string; description: string; bad
     label: "Avançado",
     description: "Muscle-up, front lever e planche em construção.",
     badge: "03",
+  },
+};
+
+export const CATEGORY_META: Record<Category, { label: string; description: string }> = {
+  calistenia: {
+    label: "Calistenia",
+    description: "Peso do corpo, força e habilidade.",
+  },
+  cardio: {
+    label: "Cardio",
+    description: "Condicionamento, queima calórica e resistência.",
+  },
+  militar: {
+    label: "Militar",
+    description: "Treinos de resistência inspirados em preparação militar.",
   },
 };
 
