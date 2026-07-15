@@ -177,6 +177,24 @@ function TimerPage() {
         beep(880, 0.4, "triangle");
         setTimeout(() => beep(1200, 0.5, "triangle"), 220);
         vibrate([200, 100, 200, 100, 400]);
+        // Auto-log workout session
+        const met = presetKey === "tabata" ? 10 : presetKey === "militar" ? 9 : presetKey === "hiit" ? 8.5 : 7;
+        const durationSec =
+          config.prep +
+          config.sets * (config.work * config.rounds + config.rest * Math.max(0, config.rounds - 1)) +
+          Math.max(0, config.sets - 1) * config.setRest;
+        const kcal = estimateKcal(met, stateRef.current.profile.weightKg, durationSec);
+        const label =
+          PRESETS.find((p) => p.key === presetKey)?.label ?? "Timer HIIT";
+        setState((s) =>
+          logWorkoutSession(s, {
+            source: "timer",
+            label: `Timer · ${label}`,
+            durationSec,
+            kcalBurned: kcal,
+          }),
+        );
+        setLastLogged({ kcal, durationSec });
       }
       return;
     }
