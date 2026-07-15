@@ -54,17 +54,42 @@ function TreinosPage() {
         </p>
       </header>
 
-      {/* Filter chips */}
+      {/* Category chips */}
       <div className="mt-6 -mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex gap-2">
-          {FILTERS.map((f) => (
+          {CATEGORY_FILTERS.map((f) => {
+            const Icon = f.icon;
+            const active = category === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setCategory(f.key)}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors",
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border/60 text-muted-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Level chips */}
+      <div className="mt-3 -mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2">
+          {LEVEL_FILTERS.map((f) => (
             <button
               key={f.key}
-              onClick={() => setFilter(f.key)}
+              onClick={() => setLevel(f.key)}
               className={cn(
-                "shrink-0 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors",
-                filter === f.key
-                  ? "border-primary bg-primary text-primary-foreground"
+                "shrink-0 rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors",
+                level === f.key
+                  ? "border-accent bg-accent/15 text-accent"
                   : "border-border/60 text-muted-foreground",
               )}
             >
@@ -73,6 +98,12 @@ function TreinosPage() {
           ))}
         </div>
       </div>
+
+      {list.length === 0 && (
+        <p className="mt-8 rounded-2xl border border-border/60 bg-surface p-6 text-center text-sm text-muted-foreground">
+          Nenhum programa nessa combinação. Ajuste os filtros.
+        </p>
+      )}
 
       <ul className="mt-6 space-y-4">
         {list.map((p) => (
