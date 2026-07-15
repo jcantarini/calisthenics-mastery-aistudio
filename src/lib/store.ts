@@ -89,6 +89,7 @@ export function useAppState() {
           ...defaultState,
           ...parsed,
           profile: { ...defaultState.profile, ...(parsed.profile ?? {}) },
+          dietLog: { ...(parsed.dietLog ?? {}) },
         });
       }
     } catch {}
