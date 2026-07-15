@@ -73,6 +73,12 @@ function DietaPage() {
     (s, m) => s + m.items.reduce((a, i) => a + i.kcal, 0),
     0,
   );
+  const kcalBurnedToday = (state.workoutLog[today] ?? []).reduce(
+    (s, w) => s + w.kcalBurned,
+    0,
+  );
+  const workoutsToday = state.workoutLog[today] ?? [];
+  const netKcal = kcalConsumed - kcalBurnedToday;
   const kcalPct = Math.min(100, Math.round((kcalConsumed / kcal) * 100));
   const waterPct = Math.min(100, Math.round((todayLog.waterMl / waterGoalMl) * 100));
 
