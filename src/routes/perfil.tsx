@@ -9,6 +9,7 @@ import {
   HeartPulse,
   BookOpen,
   Moon,
+  Sun,
   LogOut,
   Pencil,
   X,
