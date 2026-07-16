@@ -262,35 +262,35 @@ function DietaPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary">
-              <Flame className="h-3.5 w-3.5" /> Meta calórica
+              <Flame className="h-3.5 w-3.5" /> {t("diet.kcalGoal")}
             </p>
             <p className="mt-1 text-display text-5xl leading-none">
-              {kcal.toLocaleString("pt-BR")}
-              <span className="ml-2 text-sm font-normal text-muted-foreground">kcal/dia</span>
+              {kcal.toLocaleString(localeMap[locale])}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">{t("diet.kcalDay")}</span>
             </p>
           </div>
           <div className="text-right text-[11px] text-muted-foreground">
-            <p>TMB {bmrValue}</p>
-            <p>Gasto {tdeeValue}</p>
+            <p>{t("diet.bmr")} {bmrValue}</p>
+            <p>{t("diet.tdee")} {tdeeValue}</p>
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-3 gap-2">
           <MacroPill
             icon={<Beef className="h-3.5 w-3.5" />}
-            label="Proteína"
+            label={t("diet.protein")}
             value={`${macros.proteinG}g`}
             color="var(--lime)"
           />
           <MacroPill
             icon={<Wheat className="h-3.5 w-3.5" />}
-            label="Carboidrato"
+            label={t("diet.carbs")}
             value={`${macros.carbsG}g`}
             color="var(--ember)"
           />
           <MacroPill
             icon={<Droplet className="h-3.5 w-3.5" />}
-            label="Gordura"
+            label={t("diet.fat")}
             value={`${macros.fatG}g`}
             color="oklch(0.75 0.14 220)"
           />
@@ -304,13 +304,13 @@ function DietaPage() {
 
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <Droplet className="h-3 w-3" /> Água {waterL}L/dia
+            <Droplet className="h-3 w-3" /> {t("diet.water")} {waterL}{t("diet.waterDay")}
           </span>
           <Link
             to="/perfil"
             className="inline-flex items-center gap-1 font-semibold text-primary"
           >
-            <UserCog className="h-3 w-3" /> Ajustar perfil
+            <UserCog className="h-3 w-3" /> {t("diet.adjustProfile")}
           </Link>
         </div>
       </section>
@@ -318,14 +318,12 @@ function DietaPage() {
       {/* Meal plan */}
       <section className="mt-8">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">Cardápio exemplo</h2>
+          <h2 className="text-display text-2xl">{t("diet.menu")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            {meals.length} refeições
+            {meals.length} {t("diet.meals")}
           </span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Toque no círculo para marcar a refeição como feita e acompanhar no diário.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("diet.menuHint")}</p>
         <ul className="mt-3 space-y-3">
           {meals.map((m) => {
             const total = m.items.reduce((s, i) => s + i.kcal, 0);
