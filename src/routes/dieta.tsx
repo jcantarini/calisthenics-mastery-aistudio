@@ -389,13 +389,13 @@ function DietaPage() {
         <div className="flex items-baseline justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
-            <h2 className="text-display text-2xl">Diário de hoje</h2>
+            <h2 className="text-display text-2xl">{t("diet.diary")}</h2>
           </div>
           <button
             onClick={resetToday}
             className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground active:scale-95"
           >
-            <RotateCcw className="h-3 w-3" /> Zerar
+            <RotateCcw className="h-3 w-3" /> {t("common.reset")}
           </button>
         </div>
 
@@ -403,7 +403,7 @@ function DietaPage() {
           {/* Calories today */}
           <div className="rounded-2xl border border-border/60 bg-surface-elevated p-4">
             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
-              <Flame className="h-3 w-3" /> Calorias
+              <Flame className="h-3 w-3" /> {t("diet.calories")}
             </div>
             <p className="mt-2 text-display text-2xl leading-none">
               {kcalConsumed}
