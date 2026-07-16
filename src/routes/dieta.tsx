@@ -418,14 +418,14 @@ function DietaPage() {
               />
             </div>
             <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              {doneMealIds.length}/{meals.length} refeições
+              {doneMealIds.length}/{meals.length} {t("diet.mealsCount")}
             </p>
           </div>
 
           {/* Water today */}
           <div className="rounded-2xl border border-border/60 bg-surface-elevated p-4">
             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest" style={{ color: "oklch(0.75 0.14 220)" }}>
-              <Droplet className="h-3 w-3" /> Água
+              <Droplet className="h-3 w-3" /> {t("diet.waterShort")}
             </div>
             <p className="mt-2 text-display text-2xl leading-none">
               {(todayLog.waterMl / 1000).toFixed(1)}
@@ -442,7 +442,7 @@ function DietaPage() {
             <div className="mt-2 flex items-center gap-2">
               <button
                 onClick={() => addWater(-250)}
-                aria-label="Remover 250ml"
+                aria-label={t("diet.remove250")}
                 className="grid h-7 w-7 place-items-center rounded-full border border-border/60 bg-background active:scale-90"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -452,7 +452,7 @@ function DietaPage() {
               </span>
               <button
                 onClick={() => addWater(250)}
-                aria-label="Adicionar 250ml"
+                aria-label={t("diet.add250")}
                 className="grid h-7 w-7 place-items-center rounded-full border border-primary bg-primary/10 text-primary active:scale-90"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -471,14 +471,14 @@ function DietaPage() {
           </span>
           <div className="flex-1">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Queimadas no treino
+              {t("diet.burned")}
             </p>
             <p className="text-sm">
               <span className="font-bold" style={{ color: "var(--ember)" }}>
                 {kcalBurnedToday}
               </span>{" "}
               <span className="text-xs text-muted-foreground">
-                kcal · {workoutsToday.length} sessão(ões) · saldo{" "}
+                kcal · {workoutsToday.length} {t("diet.sessionsShort")}{" "}
                 <span className={netKcal < 0 ? "text-primary" : ""}>
                   {netKcal > 0 ? "+" : ""}
                   {netKcal}
@@ -490,7 +490,7 @@ function DietaPage() {
             to="/relatorio"
             className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary"
           >
-            Relatório
+            {t("diet.report")}
           </Link>
         </div>
       </section>
