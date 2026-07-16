@@ -721,6 +721,7 @@ const it: Dict = {
   "profile.ach.programs3": "3 programmi",
   "profile.appearance": "Aspetto",
   "profile.dark": "Scuro",
+  "profile.light": "Chiaro",
   "profile.share": "Condividi l'app",
   "share.title": "Barra — Calisthenics",
   "share.text": "Mi alleno con Barra, un'app di calisthenics con programmi dal principiante all'avanzato. Unisciti a me:",
