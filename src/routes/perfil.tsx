@@ -234,12 +234,14 @@ function SettingRow({
   value,
   danger,
   to,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   value?: string;
   danger?: boolean;
   to?: string;
+  onClick?: () => void;
 }) {
   const inner = (
     <>
@@ -269,7 +271,10 @@ function SettingRow({
     );
   }
   return (
-    <button className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors active:bg-surface-elevated">
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors active:bg-surface-elevated"
+    >
       {inner}
     </button>
   );
