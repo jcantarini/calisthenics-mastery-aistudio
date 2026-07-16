@@ -340,7 +340,7 @@ function DietaPage() {
                   <button
                     onClick={() => toggleMeal(m.id)}
                     aria-pressed={done}
-                    aria-label={`Marcar ${m.name} como feita`}
+                    aria-label={t("diet.markMeal")}
                     className={cn(
                       "grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-all active:scale-90",
                       done
@@ -355,7 +355,7 @@ function DietaPage() {
                       {m.time}
                     </p>
                     <p className={cn("font-bold", done && "line-through opacity-60")}>
-                      {m.name}
+                      {t(`meal.${m.id}`)}
                     </p>
                   </div>
                   <div className="text-right">
