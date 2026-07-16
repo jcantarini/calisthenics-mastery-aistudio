@@ -258,6 +258,7 @@ function EditProfileSheet({
   onClose: () => void;
   onSave: (next: Profile) => void;
 }) {
+  const { t } = useT();
   const [name, setName] = useState(initial.name);
   const [weight, setWeight] = useState(String(initial.weightKg));
   const [height, setHeight] = useState(String(initial.heightCm));
