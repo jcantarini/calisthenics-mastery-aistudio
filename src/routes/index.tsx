@@ -159,11 +159,11 @@ function HomePage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {LEVEL_META[p.level].label}
+                    {tLevel(locale, p.level)}
                   </p>
-                  <p className="truncate font-bold">{p.title}</p>
+                  <p className="truncate font-bold">{tProgram(locale, p.id).title}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {p.weeks} {t("home.weeks")} · {p.daysPerWeek}{t("home.perWeek")} · {p.duration}
+                    {p.weeks} {t("home.weeks")} · {p.daysPerWeek}{t("home.perWeek")} · {tProgram(locale, p.id).duration}
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
