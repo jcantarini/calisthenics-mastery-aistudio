@@ -775,21 +775,21 @@ function RemindersCard() {
 
         {denied && (
           <p className="mt-3 rounded-2xl border border-border/60 bg-background/60 p-3 text-xs text-muted-foreground">
-            Para liberar, abra as configurações do site no navegador e permita notificações.
+            {t("diet.deniedHint")}
           </p>
         )}
 
         {on && (
           <div className="mt-4 space-y-3">
             <ReminderToggle
-              label="Nas horas das refeições"
-              hint="Toca no horário de cada refeição do cardápio, se ainda não marcada."
+              label={t("diet.remindMeals")}
+              hint={t("diet.remindMealsHint")}
               value={r.meals}
               onChange={(v) => setR({ meals: v })}
             />
             <ReminderToggle
-              label="Beber água"
-              hint="Só quando você ainda não bateu a meta diária."
+              label={t("diet.remindWater")}
+              hint={t("diet.remindWaterHint")}
               value={r.water}
               onChange={(v) => setR({ water: v })}
             />
@@ -798,24 +798,24 @@ function RemindersCard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      A cada
+                      {t("diet.every")}
                     </p>
                     <p className="text-display text-xl leading-none">
                       {r.waterEveryMin}
-                      <span className="ml-1 text-xs font-normal text-muted-foreground">min</span>
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">{t("common.min")}</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setR({ waterEveryMin: Math.max(30, r.waterEveryMin - 30) })}
-                      aria-label="Diminuir intervalo"
+                      aria-label={t("diet.decreaseInterval")}
                       className="grid h-8 w-8 place-items-center rounded-full border border-border/60 active:scale-95"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setR({ waterEveryMin: Math.min(360, r.waterEveryMin + 30) })}
-                      aria-label="Aumentar intervalo"
+                      aria-label={t("diet.increaseInterval")}
                       className="grid h-8 w-8 place-items-center rounded-full border border-primary bg-primary/10 text-primary active:scale-95"
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -824,12 +824,12 @@ function RemindersCard() {
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <TimeField
-                    label="Início"
+                    label={t("diet.startTime")}
                     value={r.waterFrom}
                     onChange={(v) => setR({ waterFrom: v })}
                   />
                   <TimeField
-                    label="Fim"
+                    label={t("diet.endTime")}
                     value={r.waterTo}
                     onChange={(v) => setR({ waterTo: v })}
                   />
