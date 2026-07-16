@@ -98,7 +98,7 @@ function HomePage() {
               <p className="mt-2 text-sm text-muted-foreground">{tProgram(locale, active.id).tagline}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-[11px] font-medium">
-                  {active.duration}
+                  {tProgram(locale, active.id).duration}
                 </span>
                 <span className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-[11px] font-medium">
                   {active.exercises.length} {t("home.exercises")}
