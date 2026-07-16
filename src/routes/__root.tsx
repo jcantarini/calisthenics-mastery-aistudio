@@ -183,14 +183,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nBootstrap>
-        <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
-          <main className="pb-28">
-            <Outlet />
-          </main>
-          <BottomNav />
-        </div>
-      </I18nBootstrap>
+      <ThemeBootstrap>
+        <I18nBootstrap>
+          <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
+            <main className="pb-28">
+              <Outlet />
+            </main>
+            <BottomNav />
+          </div>
+        </I18nBootstrap>
+      </ThemeBootstrap>
     </QueryClientProvider>
   );
 }
