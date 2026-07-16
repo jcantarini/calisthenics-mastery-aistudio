@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { requestNotifPermission, useNotifPermission } from "@/lib/reminders";
 import { useAppState, todayKey, type DietDayLog } from "@/lib/store";
+import { useT } from "@/lib/i18n";
 import {
   ACTIVITY_META,
   BMI_META,
