@@ -444,14 +444,14 @@ function TimerPage() {
             <button
               onClick={() => reset()}
               className="grid h-14 place-items-center rounded-2xl border border-border/60 bg-background/40 text-muted-foreground active:scale-[0.98]"
-              aria-label="Reiniciar"
+              aria-label={t("timer.restart")}
             >
               <RotateCcw className="h-5 w-5" />
             </button>
             <button
               onClick={running ? pause : start}
               className="grid h-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-glow active:scale-[0.98]"
-              aria-label={running ? "Pausar" : "Iniciar"}
+              aria-label={running ? t("timer.pause") : t("timer.play")}
             >
               {running ? (
                 <Pause className="h-6 w-6 fill-current" strokeWidth={0} />
@@ -462,7 +462,7 @@ function TimerPage() {
             <button
               onClick={skip}
               className="grid h-14 place-items-center rounded-2xl border border-border/60 bg-background/40 text-muted-foreground active:scale-[0.98]"
-              aria-label="Pular fase"
+              aria-label={t("timer.skip")}
             >
               <SkipForward className="h-5 w-5" />
             </button>
