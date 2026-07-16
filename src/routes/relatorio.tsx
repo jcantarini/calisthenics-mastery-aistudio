@@ -287,21 +287,21 @@ function RelatorioPage() {
 
       {/* Sessions list */}
       <section className="mt-8">
-        <h2 className="text-display text-2xl">Sessões registradas</h2>
+        <h2 className="text-display text-2xl">{t("report.sessions")}</h2>
         {allSessions.length === 0 ? (
           <div className="mt-3 rounded-2xl border border-dashed border-border/60 bg-surface p-6 text-center text-sm text-muted-foreground">
-            Nenhum treino registrado esta semana. Termine um timer para adicionar aqui.
+            {t("report.empty")}
           </div>
         ) : (
           <ul className="mt-3 space-y-2">
             {allSessions.map((s) => {
               const d = new Date(s.at);
-              const day = d.toLocaleDateString("pt-BR", {
+              const day = d.toLocaleDateString(localeMap[locale], {
                 weekday: "short",
                 day: "2-digit",
                 month: "2-digit",
               });
-              const time = d.toLocaleTimeString("pt-BR", {
+              const time = d.toLocaleTimeString(localeMap[locale], {
                 hour: "2-digit",
                 minute: "2-digit",
               });
@@ -321,7 +321,7 @@ function RelatorioPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-mono text-xs text-muted-foreground">
-                      {Math.round(s.durationSec / 60)} min
+                      {Math.round(s.durationSec / 60)} {t("common.min")}
                     </p>
                     <p className="text-display text-base leading-none text-ember">
                       {s.kcalBurned}{" "}
