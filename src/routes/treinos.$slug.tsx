@@ -81,15 +81,15 @@ function ProgramPage() {
         <p className="mt-3 text-sm text-muted-foreground">{program.tagline}</p>
 
         <div className="mt-5 grid grid-cols-3 gap-2">
-          <Stat label="Semanas" value={String(program.weeks)} />
-          <Stat label="Duração" value={program.duration} />
-          <Stat label="Dias/sem" value={String(program.daysPerWeek)} />
+          <Stat label={t("program.weeksLabel")} value={String(program.weeks)} />
+          <Stat label={t("program.duration")} value={program.duration} />
+          <Stat label={t("program.daysPerWeek")} value={String(program.daysPerWeek)} />
         </div>
 
         <div className="mt-5 rounded-2xl border border-border/60 bg-surface-elevated/70 p-4 backdrop-blur">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Target className="h-4 w-4" />
-            <p className="text-[11px] font-semibold uppercase tracking-widest">Meta do programa</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest">{t("program.goal")}</p>
           </div>
           <p className="mt-1.5 text-sm font-medium">{program.goal}</p>
         </div>
