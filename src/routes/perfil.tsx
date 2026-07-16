@@ -207,14 +207,16 @@ function SettingRow({
   label,
   value,
   danger,
+  to,
 }: {
   icon: React.ReactNode;
   label: string;
   value?: string;
   danger?: boolean;
+  to?: string;
 }) {
-  return (
-    <button className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors active:bg-surface-elevated">
+  const inner = (
+    <>
       <span
         className={
           danger
@@ -228,6 +230,21 @@ function SettingRow({
         {label}
       </span>
       {value && <span className="text-xs text-muted-foreground">{value}</span>}
+    </>
+  );
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors active:bg-surface-elevated"
+      >
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors active:bg-surface-elevated">
+      {inner}
     </button>
   );
 }
