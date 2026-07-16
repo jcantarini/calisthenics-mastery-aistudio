@@ -52,6 +52,7 @@ const profileSchema = z.object({
 function PerfilPage() {
   const [state, setState] = useAppState();
   const [editing, setEditing] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const { t } = useT();
   const { profile } = state;
   const bmi = profile.weightKg / Math.pow(profile.heightCm / 100, 2);
