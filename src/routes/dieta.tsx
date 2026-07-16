@@ -504,16 +504,16 @@ function DietaPage() {
       {/* Weekly summary */}
       <section className="mt-8">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">Sua semana</h2>
+          <h2 className="text-display text-2xl">{t("diet.week")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            últimos 7 dias
+            {t("common.last7")}
           </span>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-border/60 bg-surface p-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Média calórica
+              {t("diet.avgCal")}
             </p>
             <p className="mt-1 text-display text-xl leading-none">
               {weekKcalAvg || 0}
@@ -522,7 +522,7 @@ function DietaPage() {
           </div>
           <div className="rounded-2xl border border-border/60 bg-surface p-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Média de água
+              {t("diet.avgWater")}
             </p>
             <p className="mt-1 text-display text-xl leading-none">
               {((weekWaterAvg || 0) / 1000).toFixed(1)}
@@ -536,7 +536,7 @@ function DietaPage() {
             {week.map((d) => {
               const kPct = Math.min(100, Math.round((d.kcalDone / d.kcalTarget) * 100));
               const wPct = Math.min(100, Math.round((d.waterMl / waterGoalMl) * 100));
-              const label = d.date.toLocaleDateString("pt-BR", { weekday: "short" }).slice(0, 3);
+              const label = d.date.toLocaleDateString(localeMap[locale], { weekday: "short" }).slice(0, 3);
               return (
                 <div key={d.key} className="flex flex-1 flex-col items-center gap-1.5">
                   <div className="flex h-24 w-full items-end gap-0.5">
@@ -568,14 +568,14 @@ function DietaPage() {
           </div>
           <div className="mt-3 flex justify-center gap-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             <span className="inline-flex items-center gap-1">
-              <span className="h-2 w-2 rounded-sm bg-primary/80" /> Calorias
+              <span className="h-2 w-2 rounded-sm bg-primary/80" /> {t("diet.legend.cal")}
             </span>
             <span className="inline-flex items-center gap-1">
               <span
                 className="h-2 w-2 rounded-sm"
                 style={{ background: "oklch(0.75 0.14 220 / 0.85)" }}
               />
-              Água
+              {t("diet.legend.water")}
             </span>
           </div>
         </div>
@@ -585,27 +585,24 @@ function DietaPage() {
       <section className="mt-8 rounded-3xl border border-accent/30 bg-accent/5 p-5">
         <div className="flex items-center gap-2 text-accent">
           <Activity className="h-4 w-4" />
-          <p className="text-[11px] font-semibold uppercase tracking-widest">Princípios</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest">{t("diet.principles")}</p>
         </div>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed">
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            Priorize <span className="font-bold">proteína magra</span> em todas as refeições para
-            preservar massa muscular.
+            {t("diet.tip1a")} <span className="font-bold">{t("diet.tip1b")}</span> {t("diet.tip1c")}
           </li>
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            Concentre os <span className="font-bold">carboidratos</span> perto do treino para mais
-            energia e recuperação.
+            {t("diet.tip2a")} <span className="font-bold">{t("diet.tip2b")}</span> {t("diet.tip2c")}
           </li>
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            Fibras, vegetais e água ajudam na saciedade e no rendimento.
+            {t("diet.tip3")}
           </li>
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            Estes valores são <span className="font-bold">estimativas</span>. Para prescrição
-            individual, consulte um(a) nutricionista.
+            {t("diet.tip4a")} <span className="font-bold">{t("diet.tip4b")}</span>{t("diet.tip4c")}
           </li>
         </ul>
       </section>
