@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronRight, Clock, Calendar, Target, Dumbbell, Heart, Shield, Timer } from "lucide-react";
-import { PROGRAMS, LEVEL_META, CATEGORY_META, type Level, type Category } from "@/lib/programs";
+import { PROGRAMS, LEVEL_META, type Level, type Category } from "@/lib/programs";
 import { useT } from "@/lib/i18n";
+import { tLevel, tCategory, tProgram } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/treinos/")({
