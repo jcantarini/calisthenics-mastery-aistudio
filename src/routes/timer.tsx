@@ -555,6 +555,7 @@ function Stepper({
   min?: number;
   suffix?: string;
 }) {
+  const { t } = useT();
   return (
     <div className="rounded-2xl border border-border/60 bg-surface p-3">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -564,7 +565,7 @@ function Stepper({
         <button
           onClick={() => onChange(Math.max(min, value - step))}
           className="grid h-8 w-8 place-items-center rounded-full border border-border/60 text-muted-foreground active:scale-95"
-          aria-label={`Diminuir ${label}`}
+          aria-label={`${t("timer.decrease")} ${label}`}
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
@@ -575,7 +576,7 @@ function Stepper({
         <button
           onClick={() => onChange(value + step)}
           className="grid h-8 w-8 place-items-center rounded-full border border-border/60 text-muted-foreground active:scale-95"
-          aria-label={`Aumentar ${label}`}
+          aria-label={`${t("timer.increase")} ${label}`}
         >
           <Plus className="h-3.5 w-3.5" />
         </button>
