@@ -62,6 +62,7 @@ function PerfilPage() {
   const [editing, setEditing] = useState(false);
   const [sharing, setSharing] = useState(false);
   const { t } = useT();
+  const { theme, toggle: toggleTheme } = useTheme();
   const { profile } = state;
   const bmi = profile.weightKg / Math.pow(profile.heightCm / 100, 2);
   const age = new Date().getFullYear() - profile.birthYear;
