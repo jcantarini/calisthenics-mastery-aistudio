@@ -65,7 +65,7 @@ function ProgramPage() {
           <Link
             to="/treinos"
             className="grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-background/60 backdrop-blur"
-            aria-label="Voltar"
+            aria-label={t("common.back")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
