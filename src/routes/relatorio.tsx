@@ -172,11 +172,9 @@ function RelatorioPage() {
       <section className="mt-8">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-primary" />
-          <h2 className="text-display text-2xl">Balanço calórico</h2>
+          <h2 className="text-display text-2xl">{t("report.balance")}</h2>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Consumo (verde) vs queimadas no treino (laranja) por dia.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("report.balanceSub")}</p>
         <div className="mt-4 rounded-3xl border border-border/60 bg-surface p-4">
           <div className="flex h-40 items-end justify-between gap-1">
             {week.map((d) => {
@@ -184,7 +182,7 @@ function RelatorioPage() {
               const outPct = (d.kcalOut / maxBar) * 100;
               const targetPct = (d.kcalTarget / maxBar) * 100;
               const label = d.date
-                .toLocaleDateString("pt-BR", { weekday: "short" })
+                .toLocaleDateString(localeMap[locale], { weekday: "short" })
                 .slice(0, 3);
               return (
                 <div key={d.key} className="flex flex-1 flex-col items-center gap-1">
