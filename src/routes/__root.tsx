@@ -16,22 +16,22 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { cn } from "@/lib/utils";
 import { useAppState } from "@/lib/store";
 import { useReminderEngine } from "@/lib/reminders";
+import { I18nBootstrap, useT } from "@/lib/i18n";
 
 function NotFoundComponent() {
+  const { t } = useT();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-display text-7xl text-primary">404</h1>
-        <h2 className="mt-4 text-xl font-semibold">Página não encontrada</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Essa rota não existe. Volte para o treino.
-        </p>
+        <h2 className="mt-4 text-xl font-semibold">{t("404.title")}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("404.desc")}</p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
           >
-            Voltar ao início
+            {t("404.back")}
           </Link>
         </div>
       </div>
@@ -42,6 +42,7 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const { t } = useT();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -49,10 +50,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold">Algo deu errado</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Tente novamente ou volte para o início.
-        </p>
+        <h1 className="text-xl font-semibold">{t("error.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("error.desc")}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -61,13 +60,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
           >
-            Tentar novamente
+            {t("common.retry")}
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-medium"
           >
-            Início
+            {t("common.start")}
           </a>
         </div>
       </div>
@@ -130,22 +129,23 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 const navItems = [
-  { to: "/", label: "Início", icon: Home },
-  { to: "/treinos", label: "Treinos", icon: Dumbbell },
-  { to: "/dieta", label: "Dieta", icon: Apple },
-  { to: "/progresso", label: "Progresso", icon: Target },
-  { to: "/perfil", label: "Perfil", icon: User },
+  { to: "/", key: "nav.home", icon: Home },
+  { to: "/treinos", key: "nav.workouts", icon: Dumbbell },
+  { to: "/dieta", key: "nav.diet", icon: Apple },
+  { to: "/progresso", key: "nav.progress", icon: Target },
+  { to: "/perfil", key: "nav.profile", icon: User },
 ] as const;
 
 function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = useT();
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="mx-auto grid max-w-md grid-cols-5">
-        {navItems.map(({ to, label, icon: Icon }) => {
+        {navItems.map(({ to, key, icon: Icon }) => {
           const active =
             to === "/" ? pathname === "/" : pathname.startsWith(to);
           return (
@@ -165,7 +165,7 @@ function BottomNav() {
                 >
                   <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.5 : 2} />
                 </span>
-                {label}
+                {t(key)}
               </Link>
             </li>
           );
@@ -182,12 +182,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
-        <main className="pb-28">
-          <Outlet />
-        </main>
-        <BottomNav />
-      </div>
+      <I18nBootstrap>
+        <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
+          <main className="pb-28">
+            <Outlet />
+          </main>
+          <BottomNav />
+        </div>
+      </I18nBootstrap>
     </QueryClientProvider>
   );
 }
