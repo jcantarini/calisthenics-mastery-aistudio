@@ -286,16 +286,16 @@ function TimerPage() {
 
   const label =
     phase === "prep"
-      ? "Preparação"
+      ? t("timer.phase.prep")
       : phase === "work"
         ? isSetRest
-          ? "Descanso"
-          : "Executar"
+          ? t("timer.phase.rest")
+          : t("timer.phase.work")
         : isSetRest
-          ? "Descanso entre séries"
+          ? t("timer.phase.setRest")
           : phase === "rest"
-            ? "Descanso"
-            : "Concluído";
+            ? t("timer.phase.rest")
+            : t("timer.phase.done");
 
   const phaseColor =
     phase === "work"
