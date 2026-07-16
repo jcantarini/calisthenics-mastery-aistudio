@@ -9,6 +9,7 @@ import {
   HeartPulse,
   BookOpen,
   Moon,
+  Sun,
   LogOut,
   Pencil,
   X,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAppState, initialsFrom, type Profile, type Sex } from "@/lib/store";
 import { useT } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -60,6 +62,7 @@ function PerfilPage() {
   const [editing, setEditing] = useState(false);
   const [sharing, setSharing] = useState(false);
   const { t } = useT();
+  const { theme, toggle: toggleTheme } = useTheme();
   const { profile } = state;
   const bmi = profile.weightKg / Math.pow(profile.heightCm / 100, 2);
   const age = new Date().getFullYear() - profile.birthYear;
@@ -174,7 +177,12 @@ function PerfilPage() {
 
       {/* Settings list */}
       <section className="mt-6 divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-surface">
-        <SettingRow icon={<Moon className="h-4 w-4" />} label={t("profile.appearance")} value={t("profile.dark")} />
+        <SettingRow
+          icon={theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          label={t("profile.appearance")}
+          value={theme === "dark" ? t("profile.dark") : t("profile.light")}
+          onClick={toggleTheme}
+        />
         <SettingRow
           icon={<Share2 className="h-4 w-4" />}
           label={t("profile.share")}
