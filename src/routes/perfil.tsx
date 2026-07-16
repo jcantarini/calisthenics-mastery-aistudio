@@ -181,6 +181,7 @@ function PerfilPage() {
       <p className="mt-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
         {t("profile.footer")}
       </p>
+      {sharing && <ShareSheet onClose={() => setSharing(false)} />}
     </div>
   );
 }
