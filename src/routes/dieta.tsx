@@ -225,7 +225,7 @@ function DietaPage() {
 
       {/* Goal */}
       <section className="mt-6">
-        <h2 className="text-display text-2xl">Objetivo</h2>
+        <h2 className="text-display text-2xl">{t("diet.goal")}</h2>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {(Object.keys(GOAL_META) as DietGoal[]).map((g) => {
             const active = goal === g;
