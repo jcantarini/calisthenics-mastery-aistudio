@@ -722,12 +722,9 @@ function RemindersCard() {
     <section className="mt-8">
       <div className="flex items-center gap-2">
         <Bell className="h-4 w-4 text-primary" />
-        <h2 className="text-display text-2xl">Lembretes</h2>
+        <h2 className="text-display text-2xl">{t("diet.reminders")}</h2>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Avisos para marcar refeições e registrar água. Instale o app na tela inicial do
-        celular para receber com o app fechado.
-      </p>
+      <p className="mt-1 text-xs text-muted-foreground">{t("diet.remindersDesc")}</p>
 
       <div
         className={cn(
