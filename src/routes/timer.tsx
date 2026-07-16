@@ -376,7 +376,7 @@ function TimerPage() {
                 onClick={() => applyPreset(p.key)}
                 className="shrink-0 rounded-full border border-border/60 bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors active:scale-[0.98]"
               >
-                {p.label}
+                {t(`timer.preset.${p.key}`)}
               </button>
             ))}
           </div>
