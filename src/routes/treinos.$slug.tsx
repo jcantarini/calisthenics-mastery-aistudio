@@ -152,7 +152,7 @@ function ProgramPage() {
                       <h3 className="truncate font-bold">{ex.name}</h3>
                       <button
                         onClick={() => toggle(ex.id)}
-                        aria-label={done ? "Desmarcar" : "Marcar como feito"}
+                        aria-label={done ? t("program.uncheck") : t("program.markDone")}
                         className={cn(
                           "grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors",
                           done
