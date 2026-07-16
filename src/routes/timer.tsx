@@ -66,6 +66,7 @@ const DEFAULT_CONFIG: Config = {
 
 function TimerPage() {
   const [state, setState] = useAppState();
+  const { t } = useT();
   const [config, setConfig] = useState<Config>(DEFAULT_CONFIG);
   const [hydrated, setHydrated] = useState(false);
   const [presetKey, setPresetKey] = useState<(typeof PRESETS)[number]["key"]>("hiit");
