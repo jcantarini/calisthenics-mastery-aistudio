@@ -80,7 +80,7 @@ function HomePage() {
         <div className="flex items-baseline justify-between">
           <h2 className="text-display text-2xl">{t("home.todayWorkout")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            {LEVEL_META[active.level].badge} · {LEVEL_META[active.level].label}
+            {LEVEL_META[active.level].badge} · {tLevel(locale, active.level)}
           </span>
         </div>
 
