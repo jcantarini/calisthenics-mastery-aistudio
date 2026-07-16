@@ -34,10 +34,10 @@ export const Route = createFileRoute("/timer")({
 type Phase = "prep" | "work" | "rest" | "done";
 
 const PRESETS = [
-  { key: "tabata", label: "Tabata", work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60, prep: 10 },
-  { key: "hiit", label: "HIIT 40/20", work: 40, rest: 20, rounds: 6, sets: 3, setRest: 60, prep: 10 },
-  { key: "militar", label: "Militar EMOM", work: 45, rest: 15, rounds: 10, sets: 1, setRest: 0, prep: 10 },
-  { key: "custom", label: "Personalizado", work: 30, rest: 15, rounds: 8, sets: 2, setRest: 45, prep: 10 },
+  { key: "tabata", work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60, prep: 10 },
+  { key: "hiit", work: 40, rest: 20, rounds: 6, sets: 3, setRest: 60, prep: 10 },
+  { key: "militar", work: 45, rest: 15, rounds: 10, sets: 1, setRest: 0, prep: 10 },
+  { key: "custom", work: 30, rest: 15, rounds: 8, sets: 2, setRest: 45, prep: 10 },
 ] as const;
 
 const CONFIG_KEY = "barra:timer:v1";
