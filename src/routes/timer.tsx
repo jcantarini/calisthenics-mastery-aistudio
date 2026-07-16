@@ -323,7 +323,7 @@ function TimerPage() {
           <Link
             to="/treinos"
             className="grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-background/60 backdrop-blur"
-            aria-label="Voltar"
+            aria-label={t("common.back")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -336,7 +336,7 @@ function TimerPage() {
                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border/60 text-muted-foreground",
               )}
-              aria-label="Alternar som"
+              aria-label={t("timer.toggleSound")}
             >
               {config.sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </button>
@@ -348,7 +348,7 @@ function TimerPage() {
                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border/60 text-muted-foreground",
               )}
-              aria-label="Alternar vibração"
+              aria-label={t("timer.toggleVibrate")}
             >
               <Vibrate className="h-4 w-4" />
             </button>
@@ -357,14 +357,12 @@ function TimerPage() {
 
         <div className="mt-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Intervalo
+            {t("timer.eyebrow")}
           </p>
           <h1 className="mt-1 text-display text-4xl">
-            Timer <span className="text-primary">HIIT</span>
+            {t("timer.titlePart")} <span className="text-primary">{t("timer.titleHl")}</span>
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Chamadas em tela, bipes e vibração a cada troca de fase.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("timer.intro")}</p>
         </div>
 
         {/* Presets */}
