@@ -228,18 +228,18 @@ function RelatorioPage() {
 
       {/* Diet averages */}
       <section className="mt-8">
-        <h2 className="text-display text-2xl">Dieta</h2>
+        <h2 className="text-display text-2xl">{t("report.diet")}</h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <StatCard
             icon={<Flame className="h-3.5 w-3.5" />}
-            label="Consumo médio"
+            label={t("report.avgIntake")}
             value={`${avgKcalIn}`}
             suffix="kcal"
             color="var(--primary)"
           />
           <StatCard
             icon={<Droplet className="h-3.5 w-3.5" />}
-            label="Hidratação"
+            label={t("report.hydration")}
             value={`${(avgWater / 1000).toFixed(1)}`}
             suffix={`L / ${(waterGoalMl / 1000).toFixed(1)}L`}
             color="oklch(0.75 0.14 220)"
@@ -248,14 +248,14 @@ function RelatorioPage() {
 
         <div className="mt-4 rounded-3xl border border-border/60 bg-surface-elevated p-4">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Adesão diária ao cardápio
+            {t("report.dailyAdhesion")}
           </p>
           <ul className="mt-3 space-y-2">
             {week.map((d) => {
               const pct = d.totalMeals
                 ? Math.round((d.doneMeals / d.totalMeals) * 100)
                 : 0;
-              const label = d.date.toLocaleDateString("pt-BR", {
+              const label = d.date.toLocaleDateString(localeMap[locale], {
                 weekday: "short",
                 day: "2-digit",
               });
