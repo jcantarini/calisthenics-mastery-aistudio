@@ -152,7 +152,7 @@ function ProgramPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="truncate font-bold">{ex.name}</h3>
+                      <h3 className="truncate font-bold">{ex18n.name}</h3>
                       <button
                         onClick={() => toggle(ex.id)}
                         aria-label={done ? t("program.uncheck") : t("program.markDone")}
