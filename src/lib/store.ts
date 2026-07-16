@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const KEY = "barra:state:v1";
+const KEY = "barra:state:v2";
 
 export type Sex = "masculino" | "feminino";
 export type ActivityLevel = "sedentario" | "leve" | "moderado" | "intenso" | "atleta";
@@ -73,27 +73,20 @@ export function todayKey(d = new Date()) {
 }
 
 const defaultState: AppState = {
-  streak: 4,
-  lastSession: new Date(Date.now() - 86400000).toISOString(),
-  completedSessions: Array.from({ length: 12 }, (_, i) =>
-    new Date(Date.now() - i * 86400000 * 2).toISOString(),
-  ),
+  streak: 0,
+  lastSession: null,
+  completedSessions: [],
   completedExercises: {},
-  activeProgram: "fundacao",
+  activeProgram: null,
   weeklyGoal: 4,
-  goals: [
-    { id: "g1", label: "5 barras estritas seguidas", done: false },
-    { id: "g2", label: "10 flexões diamante", done: true },
-    { id: "g3", label: "30s de prancha lateral", done: true },
-    { id: "g4", label: "Primeiro muscle-up", done: false },
-  ],
+  goals: [],
   profile: {
-    name: "Bruno Ribeiro",
-    initials: "BR",
-    weightKg: 72,
-    heightCm: 178,
-    birthYear: 1995,
-    memberSince: "março de 2025",
+    name: "",
+    initials: "??",
+    weightKg: 70,
+    heightCm: 170,
+    birthYear: new Date().getFullYear() - 25,
+    memberSince: new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
     sex: "masculino",
     activity: "moderado",
   },
