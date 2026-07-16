@@ -129,22 +129,23 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 const navItems = [
-  { to: "/", label: "Início", icon: Home },
-  { to: "/treinos", label: "Treinos", icon: Dumbbell },
-  { to: "/dieta", label: "Dieta", icon: Apple },
-  { to: "/progresso", label: "Progresso", icon: Target },
-  { to: "/perfil", label: "Perfil", icon: User },
+  { to: "/", key: "nav.home", icon: Home },
+  { to: "/treinos", key: "nav.workouts", icon: Dumbbell },
+  { to: "/dieta", key: "nav.diet", icon: Apple },
+  { to: "/progresso", key: "nav.progress", icon: Target },
+  { to: "/perfil", key: "nav.profile", icon: User },
 ] as const;
 
 function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = useT();
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="mx-auto grid max-w-md grid-cols-5">
-        {navItems.map(({ to, label, icon: Icon }) => {
+        {navItems.map(({ to, key, icon: Icon }) => {
           const active =
             to === "/" ? pathname === "/" : pathname.startsWith(to);
           return (
@@ -164,7 +165,7 @@ function BottomNav() {
                 >
                   <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.5 : 2} />
                 </span>
-                {label}
+                {t(key)}
               </Link>
             </li>
           );
@@ -181,12 +182,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
-        <main className="pb-28">
-          <Outlet />
-        </main>
-        <BottomNav />
-      </div>
+      <I18nBootstrap>
+        <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
+          <main className="pb-28">
+            <Outlet />
+          </main>
+          <BottomNav />
+        </div>
+      </I18nBootstrap>
     </QueryClientProvider>
   );
 }
