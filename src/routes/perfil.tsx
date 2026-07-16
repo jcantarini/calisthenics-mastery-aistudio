@@ -61,10 +61,10 @@ function PerfilPage() {
     <div className="px-5 pt-12">
       <Toaster position="top-center" richColors />
       <header className="flex items-center justify-between">
-        <h1 className="text-display text-4xl">Perfil</h1>
+        <h1 className="text-display text-4xl">{t("profile.title")}</h1>
         <button
           className="grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-surface"
-          aria-label="Notificações"
+          aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
         </button>
@@ -77,7 +77,7 @@ function PerfilPage() {
           className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary active:scale-95"
         >
           <Pencil className="h-3 w-3" />
-          Editar
+          {t("profile.edit")}
         </button>
         <div className="flex items-center gap-4">
           <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground">
@@ -85,19 +85,19 @@ function PerfilPage() {
           </div>
           <div className="min-w-0 flex-1 pr-16">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Atleta · Nível {state.streak > 10 ? "III" : "II"}
+              {t("profile.athlete")} {state.streak > 10 ? "III" : "II"}
             </p>
             <p className="truncate text-lg font-bold">{profile.name}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Desde {profile.memberSince} · {state.completedSessions.length} sessões
+              {t("profile.since")} {profile.memberSince} · {state.completedSessions.length} {t("profile.sessions")}
             </p>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-4 gap-3 border-t border-border/60 pt-4 text-center">
-          <MiniStat label="Peso" value={`${profile.weightKg}kg`} />
-          <MiniStat label="Altura" value={(profile.heightCm / 100).toFixed(2)} />
-          <MiniStat label="IMC" value={bmi.toFixed(1)} />
-          <MiniStat label="Idade" value={String(age)} />
+          <MiniStat label={t("profile.stat.weight")} value={`${profile.weightKg}kg`} />
+          <MiniStat label={t("profile.stat.height")} value={(profile.heightCm / 100).toFixed(2)} />
+          <MiniStat label={t("profile.stat.bmi")} value={bmi.toFixed(1)} />
+          <MiniStat label={t("profile.stat.age")} value={String(age)} />
         </div>
       </section>
 
@@ -108,7 +108,7 @@ function PerfilPage() {
           onSave={(next) => {
             setState((s) => ({ ...s, profile: next }));
             setEditing(false);
-            toast.success("Perfil atualizado");
+            toast.success(t("profile.updated"));
           }}
         />
       )}
@@ -119,11 +119,11 @@ function PerfilPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Meta semanal
+              {t("profile.weeklyGoal")}
             </p>
             <p className="mt-1 text-display text-2xl">
               {state.weeklyGoal}
-              <span className="ml-1 text-sm font-normal text-muted-foreground">treinos/sem</span>
+              <span className="ml-1 text-sm font-normal text-muted-foreground">{t("profile.perWeek")}</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -145,12 +145,12 @@ function PerfilPage() {
 
       {/* Achievements */}
       <section className="mt-6">
-        <h2 className="text-display text-xl">Conquistas</h2>
+        <h2 className="text-display text-xl">{t("profile.achievements")}</h2>
         <div className="mt-3 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[
-            { icon: <Trophy />, label: "10 sessões" },
-            { icon: <HeartPulse />, label: "Semana perfeita" },
-            { icon: <BookOpen />, label: "3 programas" },
+            { icon: <Trophy />, label: t("profile.ach.sessions10") },
+            { icon: <HeartPulse />, label: t("profile.ach.perfectWeek") },
+            { icon: <BookOpen />, label: t("profile.ach.programs3") },
           ].map((a, i) => (
             <div
               key={i}
@@ -167,14 +167,14 @@ function PerfilPage() {
 
       {/* Settings list */}
       <section className="mt-6 divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-surface">
-        <SettingRow icon={<Moon className="h-4 w-4" />} label="Aparência" value="Escuro" />
-        <SettingRow icon={<Share2 className="h-4 w-4" />} label="Compartilhar app" />
-        <SettingRow icon={<Settings className="h-4 w-4" />} label="Preferências" />
-        <SettingRow icon={<LogOut className="h-4 w-4" />} label="Sair" danger />
+        <SettingRow icon={<Moon className="h-4 w-4" />} label={t("profile.appearance")} value={t("profile.dark")} />
+        <SettingRow icon={<Share2 className="h-4 w-4" />} label={t("profile.share")} />
+        <SettingRow icon={<Settings className="h-4 w-4" />} label={t("profile.settings")} to="/preferencias" />
+        <SettingRow icon={<LogOut className="h-4 w-4" />} label={t("profile.logout")} danger />
       </section>
 
       <p className="mt-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
-        Barra v1.0 · Calistenia sem desculpa
+        {t("profile.footer")}
       </p>
     </div>
   );
