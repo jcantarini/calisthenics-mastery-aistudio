@@ -688,7 +688,9 @@ function MacroBar({
 function RemindersCard() {
   const [state, setState] = useAppState();
   const [perm, setPerm] = useNotifPermission();
+  const { t } = useT();
   const r = state.reminders;
+
 
   const setR = (patch: Partial<typeof r>) =>
     setState((s) => ({ ...s, reminders: { ...s.reminders, ...patch } }));
