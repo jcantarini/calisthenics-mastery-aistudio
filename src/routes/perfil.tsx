@@ -177,7 +177,12 @@ function PerfilPage() {
 
       {/* Settings list */}
       <section className="mt-6 divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-surface">
-        <SettingRow icon={<Moon className="h-4 w-4" />} label={t("profile.appearance")} value={t("profile.dark")} />
+        <SettingRow
+          icon={theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          label={t("profile.appearance")}
+          value={theme === "dark" ? t("profile.dark") : t("profile.light")}
+          onClick={toggleTheme}
+        />
         <SettingRow
           icon={<Share2 className="h-4 w-4" />}
           label={t("profile.share")}
