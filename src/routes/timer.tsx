@@ -398,7 +398,7 @@ function TimerPage() {
               {label}
             </span>
             <span className="font-mono text-[11px] text-muted-foreground">
-              série {set}/{config.sets} · round {round}/{config.rounds}
+              {t("timer.set")} {set}/{config.sets} · {t("timer.round")} {round}/{config.rounds}
             </span>
           </div>
 
