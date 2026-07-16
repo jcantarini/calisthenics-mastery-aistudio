@@ -245,7 +245,7 @@ function DietaPage() {
                     active ? "text-primary" : "text-muted-foreground",
                   )}
                 >
-                  {info.label}
+                  {t(`goal.${g}.label`)}
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold">
                   {info.delta === 0 ? "±0%" : `${info.delta > 0 ? "+" : ""}${Math.round(info.delta * 100)}%`}
@@ -254,7 +254,7 @@ function DietaPage() {
             );
           })}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">{GOAL_META[goal].description}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{t(`goal.${goal}.desc`)}</p>
       </section>
 
       {/* Target calories */}
