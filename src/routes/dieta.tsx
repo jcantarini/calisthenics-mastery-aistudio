@@ -213,9 +213,9 @@ function DietaPage() {
                       active ? "text-primary" : "text-muted-foreground",
                     )}
                   >
-                    {ACTIVITY_META[k].label}
+                    {t(`activity.${k}.label`)}
                   </p>
-                  <p className="mt-0.5 text-xs">{ACTIVITY_META[k].description}</p>
+                  <p className="mt-0.5 text-xs">{t(`activity.${k}.desc`)}</p>
                 </button>
               );
             })}
