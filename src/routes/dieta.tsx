@@ -143,15 +143,13 @@ function DietaPage() {
     <div className="px-5 pt-12">
       <header>
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Nutrição
+          {t("diet.eyebrow")}
         </p>
         <h1 className="mt-1 text-display text-4xl">
-          Dieta baseada<br />
-          no seu <span className="text-primary">IMC</span>
+          {t("diet.title1")}<br />
+          {t("diet.title2")} <span className="text-primary">{t("diet.title3")}</span>
         </h1>
-        <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-          Calculamos calorias e macros com Mifflin–St Jeor e adaptamos ao seu objetivo.
-        </p>
+        <p className="mt-3 max-w-xs text-sm text-muted-foreground">{t("diet.intro")}</p>
       </header>
 
       {/* IMC card */}
@@ -159,7 +157,7 @@ function DietaPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Seu IMC
+              {t("diet.yourBmi")}
             </p>
             <p className="mt-1 text-display text-5xl leading-none">{bmiValue.toFixed(1)}</p>
           </div>
@@ -168,10 +166,10 @@ function DietaPage() {
               className="rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-widest"
               style={{ borderColor: meta.color, color: meta.color }}
             >
-              {meta.label}
+              {t(`bmi.${bmiCat}.label`)}
             </p>
             <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-              faixa {meta.range}
+              {t("diet.range")} {meta.range}
             </p>
           </div>
         </div>
@@ -180,7 +178,7 @@ function DietaPage() {
 
         <p className="mt-4 flex items-start gap-2 rounded-2xl border border-border/60 bg-background/40 p-3 text-xs leading-relaxed text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-          {meta.note}
+          {t(`bmi.${bmiCat}.note`)}
         </p>
       </section>
 
