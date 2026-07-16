@@ -186,7 +186,7 @@ function ProgramPage() {
                     <button
                       onClick={() => setPlaying(ex.id)}
                       className="group absolute inset-0 flex items-center justify-center"
-                      aria-label={`Reproduzir vídeo de ${ex.name}`}
+                      aria-label={`${t("program.playVideo")} ${ex.name}`}
                     >
                       <img
                         src={`https://i.ytimg.com/vi/${ex.videoId}/hqdefault.jpg`}
