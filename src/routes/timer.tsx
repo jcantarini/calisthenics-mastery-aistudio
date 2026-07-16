@@ -185,8 +185,7 @@ function TimerPage() {
           config.sets * (config.work * config.rounds + config.rest * Math.max(0, config.rounds - 1)) +
           Math.max(0, config.sets - 1) * config.setRest;
         const kcal = estimateKcal(met, stateRef.current.profile.weightKg, durationSec);
-        const label =
-          PRESETS.find((p) => p.key === presetKey)?.label ?? "Timer HIIT";
+        const label = t(`timer.preset.${presetKey}`);
         setState((s) =>
           logWorkoutSession(s, {
             source: "timer",
