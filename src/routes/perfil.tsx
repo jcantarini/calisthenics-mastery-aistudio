@@ -308,7 +308,7 @@ function EditProfileSheet({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Editar perfil"
+      aria-label={t("profile.editTitle")}
     >
       <form
         onClick={(e) => e.stopPropagation()}
@@ -318,30 +318,30 @@ function EditProfileSheet({
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
         <div className="flex items-center justify-between">
-          <h2 className="text-display text-2xl">Editar perfil</h2>
+          <h2 className="text-display text-2xl">{t("profile.editTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
             className="grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-background"
-            aria-label="Fechar"
+            aria-label={t("common.close")}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="mt-5 space-y-4">
-          <Field label="Nome" error={errors.name}>
+          <Field label={t("profile.name")} error={errors.name}>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={60}
               autoComplete="name"
               className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="Seu nome"
+              placeholder={t("profile.name")}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Peso (kg)" error={errors.weightKg}>
+            <Field label={t("profile.weight")} error={errors.weightKg}>
               <input
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
@@ -351,7 +351,7 @@ function EditProfileSheet({
                 placeholder="72"
               />
             </Field>
-            <Field label="Altura (cm)" error={errors.heightCm}>
+            <Field label={t("profile.height")} error={errors.heightCm}>
               <input
                 value={height}
                 onChange={(e) => setHeight(e.target.value)}
@@ -362,7 +362,7 @@ function EditProfileSheet({
               />
             </Field>
           </div>
-          <Field label="Ano de nascimento" error={errors.birthYear}>
+          <Field label={t("profile.birthYear")} error={errors.birthYear}>
             <input
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
@@ -372,7 +372,7 @@ function EditProfileSheet({
               placeholder="1995"
             />
           </Field>
-          <Field label="Sexo biológico (para cálculo calórico)">
+          <Field label={t("profile.sex")}>
             <div className="grid grid-cols-2 gap-2">
               {(["masculino", "feminino"] as const).map((s) => (
                 <button
@@ -385,7 +385,7 @@ function EditProfileSheet({
                       : "rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm font-medium capitalize text-muted-foreground"
                   }
                 >
-                  {s}
+                  {s === "masculino" ? t("profile.male") : t("profile.female")}
                 </button>
               ))}
             </div>
@@ -396,7 +396,7 @@ function EditProfileSheet({
           type="submit"
           className="mt-6 w-full rounded-full bg-primary py-3 text-sm font-bold uppercase tracking-widest text-primary-foreground shadow-glow active:scale-[0.98]"
         >
-          Salvar alterações
+          {t("profile.saveChanges")}
         </button>
       </form>
     </div>
