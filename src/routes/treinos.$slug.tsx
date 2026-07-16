@@ -30,6 +30,7 @@ export const Route = createFileRoute("/treinos/$slug")({
 function ProgramPage() {
   const { program } = Route.useLoaderData() as { program: Program };
   const [state, setState] = useAppState();
+  const { t } = useT();
   const [playing, setPlaying] = useState<string | null>(null);
 
   const doneCount = program.exercises.filter((e) => state.completedExercises[e.id]).length;
