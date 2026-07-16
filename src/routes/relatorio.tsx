@@ -37,7 +37,11 @@ export const Route = createFileRoute("/relatorio")({
 
 function RelatorioPage() {
   const [state] = useAppState();
+  const { t, locale } = useT();
   const { profile } = state;
+  const localeMap: Record<string, string> = {
+    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+  };
 
   const bmiValue = bmi(profile);
   const bmiCat = bmiCategory(bmiValue);
