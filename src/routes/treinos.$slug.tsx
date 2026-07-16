@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowLeft, Play, Check, Info, Timer, Target } from "lucide-react";
 import { getProgram, LEVEL_META, type Program } from "@/lib/programs";
 import { useAppState } from "@/lib/store";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/treinos/$slug")({
