@@ -178,21 +178,35 @@ function PerfilPage() {
               text: t("share.text"),
               url,
             };
-            try {
-              if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+            const shareText = `${shareData.text} ${url}`.trim();
+            const canUseShare =
+              typeof navigator !== "undefined" &&
+              typeof navigator.share === "function" &&
+              // In sandboxed iframes (like the Lovable preview) share is blocked.
+              window.top === window.self;
+            if (canUseShare) {
+              try {
                 await navigator.share(shareData);
                 return;
+              } catch (err) {
+                if ((err as { name?: string })?.name === "AbortError") return;
+                // fall through to clipboard fallback
               }
-              if (typeof navigator !== "undefined" && navigator.clipboard) {
-                await navigator.clipboard.writeText(`${shareData.text} ${url}`.trim());
+            }
+            try {
+              if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(shareText);
                 toast.success(t("share.copied"));
                 return;
               }
-              toast.error(t("share.failed"));
-            } catch (err) {
-              if ((err as { name?: string })?.name === "AbortError") return;
-              toast.error(t("share.failed"));
+            } catch {
+              // fall through to prompt
             }
+            if (typeof window !== "undefined" && typeof window.prompt === "function") {
+              window.prompt(t("share.title"), shareText);
+              return;
+            }
+            toast.error(t("share.failed"));
           }}
         />
         <SettingRow icon={<Settings className="h-4 w-4" />} label={t("profile.settings")} to="/preferencias" />
