@@ -168,7 +168,33 @@ function PerfilPage() {
       {/* Settings list */}
       <section className="mt-6 divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-surface">
         <SettingRow icon={<Moon className="h-4 w-4" />} label={t("profile.appearance")} value={t("profile.dark")} />
-        <SettingRow icon={<Share2 className="h-4 w-4" />} label={t("profile.share")} />
+        <SettingRow
+          icon={<Share2 className="h-4 w-4" />}
+          label={t("profile.share")}
+          onClick={async () => {
+            const url = typeof window !== "undefined" ? window.location.origin : "";
+            const shareData = {
+              title: t("share.title"),
+              text: t("share.text"),
+              url,
+            };
+            try {
+              if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+                await navigator.share(shareData);
+                return;
+              }
+              if (typeof navigator !== "undefined" && navigator.clipboard) {
+                await navigator.clipboard.writeText(`${shareData.text} ${url}`.trim());
+                toast.success(t("share.copied"));
+                return;
+              }
+              toast.error(t("share.failed"));
+            } catch (err) {
+              if ((err as { name?: string })?.name === "AbortError") return;
+              toast.error(t("share.failed"));
+            }
+          }}
+        />
         <SettingRow icon={<Settings className="h-4 w-4" />} label={t("profile.settings")} to="/preferencias" />
         <SettingRow icon={<LogOut className="h-4 w-4" />} label={t("profile.logout")} danger />
       </section>
