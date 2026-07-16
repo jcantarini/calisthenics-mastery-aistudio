@@ -18,6 +18,7 @@ import {
   buildMealPlan,
   targetCalories,
 } from "@/lib/nutrition";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/relatorio")({
