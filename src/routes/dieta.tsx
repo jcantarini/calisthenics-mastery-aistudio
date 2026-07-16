@@ -704,8 +704,8 @@ function RemindersCard() {
     if (p === "granted") {
       setR({ enabled: true });
       try {
-        new Notification("Lembretes ativados", {
-          body: "Vamos te avisar nas refeições e para beber água.",
+        new Notification(t("diet.remindersEnabledTitle"), {
+          body: t("diet.remindersEnabledBody"),
           icon: "/icon-192.png",
         });
       } catch {}
