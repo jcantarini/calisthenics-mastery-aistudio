@@ -219,9 +219,9 @@ function RelatorioPage() {
             })}
           </div>
           <div className="mt-3 flex justify-center gap-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            <Legend color="var(--primary)" label="Consumo" />
-            <Legend color="var(--ember)" label="Queima" />
-            <Legend color="var(--border)" label="Meta" dashed />
+            <Legend color="var(--primary)" label={t("report.legend.intake")} />
+            <Legend color="var(--ember)" label={t("report.legend.burn")} />
+            <Legend color="var(--border)" label={t("report.legend.goal")} dashed />
           </div>
         </div>
       </section>
