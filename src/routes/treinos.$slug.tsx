@@ -206,7 +206,7 @@ function ProgramPage() {
 
                 <div className="flex items-start gap-2 border-t border-border/60 bg-background/30 p-3 text-xs text-muted-foreground">
                   <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-                  <p>{ex.cue}</p>
+                  <p>{ex18n.cue}</p>
                 </div>
               </li>
             );
