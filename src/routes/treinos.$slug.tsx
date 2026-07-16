@@ -180,7 +180,7 @@ function ProgramPage() {
                   {isPlaying ? (
                     <iframe
                       src={`https://www.youtube.com/embed/${ex.videoId}?autoplay=1&rel=0`}
-                      title={ex.name}
+                      title={ex18n.name}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       className="absolute inset-0 h-full w-full"
