@@ -3,6 +3,7 @@ import { Flame, Play, TrendingUp, Trophy, ChevronRight, Zap } from "lucide-react
 import { PROGRAMS, LEVEL_META } from "@/lib/programs";
 import { useAppState } from "@/lib/store";
 import { useT } from "@/lib/i18n";
+import { tLevel, tProgram } from "@/lib/content-i18n";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
