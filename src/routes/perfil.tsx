@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import {
@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useAppState, initialsFrom, type Profile, type Sex } from "@/lib/store";
+import { useT } from "@/lib/i18n";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
