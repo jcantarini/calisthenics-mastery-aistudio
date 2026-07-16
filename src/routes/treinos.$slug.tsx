@@ -137,6 +137,7 @@ function ProgramPage() {
           {program.exercises.map((ex, i) => {
             const done = !!state.completedExercises[ex.id];
             const isPlaying = playing === ex.id;
+            const ex18n = tExercise(locale, ex.id);
             return (
               <li
                 key={ex.id}
