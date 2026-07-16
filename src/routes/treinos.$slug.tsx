@@ -128,10 +128,8 @@ function ProgramPage() {
 
       {/* Exercises */}
       <div className="px-5 pt-8">
-        <h2 className="text-display text-2xl">Exercícios</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Toque no vídeo para ver a execução. Marque cada exercício concluído.
-        </p>
+        <h2 className="text-display text-2xl">{t("program.exercises")}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">{t("program.exercisesDesc")}</p>
 
         <ol className="mt-4 space-y-3">
           {program.exercises.map((ex, i) => {
