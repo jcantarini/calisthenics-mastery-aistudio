@@ -743,16 +743,16 @@ function RemindersCard() {
           </span>
           <div className="flex-1">
             <p className="text-sm font-bold">
-              {on ? "Lembretes ativos" : "Lembretes desativados"}
+              {on ? t("diet.remindersOn") : t("diet.remindersOff")}
             </p>
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               {unsupported
-                ? "não suportado neste navegador"
+                ? t("diet.permUnsupported")
                 : denied
-                  ? "permissão bloqueada nas configurações"
+                  ? t("diet.permDenied")
                   : perm === "granted"
-                    ? "permissão concedida"
-                    : "permissão pendente"}
+                    ? t("diet.permGranted")
+                    : t("diet.permPending")}
             </p>
           </div>
           {on ? (
@@ -760,7 +760,7 @@ function RemindersCard() {
               onClick={disable}
               className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground active:scale-95"
             >
-              Desativar
+              {t("diet.disable")}
             </button>
           ) : (
             <button
@@ -768,7 +768,7 @@ function RemindersCard() {
               disabled={unsupported || denied}
               className="rounded-full bg-primary px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-primary-foreground shadow-glow active:scale-95 disabled:opacity-50"
             >
-              {denied ? "Bloqueado" : "Ativar"}
+              {denied ? t("diet.blocked") : t("diet.enable")}
             </button>
           )}
         </div>
