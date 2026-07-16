@@ -94,8 +94,8 @@ function HomePage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-primary">
                 {t("home.activeProgram")}
               </p>
-              <h3 className="mt-1 text-display text-3xl leading-none">{active.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{active.tagline}</p>
+              <h3 className="mt-1 text-display text-3xl leading-none">{tProgram(locale, active.id).title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{tProgram(locale, active.id).tagline}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-[11px] font-medium">
                   {active.duration}
