@@ -4,6 +4,7 @@ import { ArrowLeft, Play, Check, Info, Timer, Target } from "lucide-react";
 import { getProgram, LEVEL_META, type Program } from "@/lib/programs";
 import { useAppState } from "@/lib/store";
 import { useT } from "@/lib/i18n";
+import { tLevel, tProgram, tExercise } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/treinos/$slug")({
@@ -30,8 +31,9 @@ export const Route = createFileRoute("/treinos/$slug")({
 function ProgramPage() {
   const { program } = Route.useLoaderData() as { program: Program };
   const [state, setState] = useAppState();
-  const { t } = useT();
+  const { t, locale } = useT();
   const [playing, setPlaying] = useState<string | null>(null);
+  const p18n = tProgram(locale, program.id);
 
   const doneCount = program.exercises.filter((e) => state.completedExercises[e.id]).length;
   const pct = (doneCount / program.exercises.length) * 100;
@@ -73,16 +75,16 @@ function ProgramPage() {
             className="rounded-full border px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-widest"
             style={{ borderColor: program.color, color: program.color }}
           >
-            {LEVEL_META[program.level].badge} · {LEVEL_META[program.level].label}
+            {LEVEL_META[program.level].badge} · {tLevel(locale, program.level)}
           </span>
         </div>
 
-        <h1 className="mt-6 text-display text-5xl leading-none">{program.title}</h1>
-        <p className="mt-3 text-sm text-muted-foreground">{program.tagline}</p>
+        <h1 className="mt-6 text-display text-5xl leading-none">{p18n.title}</h1>
+        <p className="mt-3 text-sm text-muted-foreground">{p18n.tagline}</p>
 
         <div className="mt-5 grid grid-cols-3 gap-2">
           <Stat label={t("program.weeksLabel")} value={String(program.weeks)} />
-          <Stat label={t("program.duration")} value={program.duration} />
+          <Stat label={t("program.duration")} value={p18n.duration} />
           <Stat label={t("program.daysPerWeek")} value={String(program.daysPerWeek)} />
         </div>
 
@@ -91,7 +93,7 @@ function ProgramPage() {
             <Target className="h-4 w-4" />
             <p className="text-[11px] font-semibold uppercase tracking-widest">{t("program.goal")}</p>
           </div>
-          <p className="mt-1.5 text-sm font-medium">{program.goal}</p>
+          <p className="mt-1.5 text-sm font-medium">{p18n.goal}</p>
         </div>
       </div>
 
@@ -135,6 +137,7 @@ function ProgramPage() {
           {program.exercises.map((ex, i) => {
             const done = !!state.completedExercises[ex.id];
             const isPlaying = playing === ex.id;
+            const ex18n = tExercise(locale, ex.id);
             return (
               <li
                 key={ex.id}
@@ -149,7 +152,7 @@ function ProgramPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="truncate font-bold">{ex.name}</h3>
+                      <h3 className="truncate font-bold">{ex18n.name}</h3>
                       <button
                         onClick={() => toggle(ex.id)}
                         aria-label={done ? t("program.uncheck") : t("program.markDone")}
@@ -163,7 +166,7 @@ function ProgramPage() {
                         {done && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
                       </button>
                     </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{ex.focus}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{ex18n.focus}</p>
 
                     <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
                       <Tag icon={<Target className="h-3 w-3" />} value={ex.sets} />
@@ -177,7 +180,7 @@ function ProgramPage() {
                   {isPlaying ? (
                     <iframe
                       src={`https://www.youtube.com/embed/${ex.videoId}?autoplay=1&rel=0`}
-                      title={ex.name}
+                      title={ex18n.name}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       className="absolute inset-0 h-full w-full"
@@ -186,7 +189,7 @@ function ProgramPage() {
                     <button
                       onClick={() => setPlaying(ex.id)}
                       className="group absolute inset-0 flex items-center justify-center"
-                      aria-label={`${t("program.playVideo")} ${ex.name}`}
+                      aria-label={`${t("program.playVideo")} ${ex18n.name}`}
                     >
                       <img
                         src={`https://i.ytimg.com/vi/${ex.videoId}/hqdefault.jpg`}
@@ -203,7 +206,7 @@ function ProgramPage() {
 
                 <div className="flex items-start gap-2 border-t border-border/60 bg-background/30 p-3 text-xs text-muted-foreground">
                   <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-                  <p>{ex.cue}</p>
+                  <p>{ex18n.cue}</p>
                 </div>
               </li>
             );

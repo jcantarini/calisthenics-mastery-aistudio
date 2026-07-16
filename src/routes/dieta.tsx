@@ -21,6 +21,7 @@ import {
 import { requestNotifPermission, useNotifPermission } from "@/lib/reminders";
 import { useAppState, todayKey, type DietDayLog } from "@/lib/store";
 import { useT } from "@/lib/i18n";
+import { tFood, tQty } from "@/lib/content-i18n";
 import {
   ACTIVITY_META,
   BMI_META,
@@ -369,8 +370,8 @@ function DietaPage() {
                   {m.items.map((i, idx) => (
                     <li key={idx} className="flex items-center justify-between px-4 py-2.5 text-sm">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{i.food}</p>
-                        <p className="text-xs text-muted-foreground">{i.qty}</p>
+                        <p className="truncate font-medium">{tFood(locale, i.food)}</p>
+                        <p className="text-xs text-muted-foreground">{tQty(locale, i.qty)}</p>
                       </div>
                       <span className="font-mono text-xs text-muted-foreground">
                         {i.kcal} kcal

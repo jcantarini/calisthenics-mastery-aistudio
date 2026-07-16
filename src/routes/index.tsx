@@ -3,6 +3,7 @@ import { Flame, Play, TrendingUp, Trophy, ChevronRight, Zap } from "lucide-react
 import { PROGRAMS, LEVEL_META } from "@/lib/programs";
 import { useAppState } from "@/lib/store";
 import { useT } from "@/lib/i18n";
+import { tLevel, tProgram } from "@/lib/content-i18n";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -79,7 +80,7 @@ function HomePage() {
         <div className="flex items-baseline justify-between">
           <h2 className="text-display text-2xl">{t("home.todayWorkout")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            {LEVEL_META[active.level].badge} · {LEVEL_META[active.level].label}
+            {LEVEL_META[active.level].badge} · {tLevel(locale, active.level)}
           </span>
         </div>
 
@@ -93,11 +94,11 @@ function HomePage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-primary">
                 {t("home.activeProgram")}
               </p>
-              <h3 className="mt-1 text-display text-3xl leading-none">{active.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{active.tagline}</p>
+              <h3 className="mt-1 text-display text-3xl leading-none">{tProgram(locale, active.id).title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{tProgram(locale, active.id).tagline}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-[11px] font-medium">
-                  {active.duration}
+                  {tProgram(locale, active.id).duration}
                 </span>
                 <span className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-[11px] font-medium">
                   {active.exercises.length} {t("home.exercises")}
@@ -158,11 +159,11 @@ function HomePage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {LEVEL_META[p.level].label}
+                    {tLevel(locale, p.level)}
                   </p>
-                  <p className="truncate font-bold">{p.title}</p>
+                  <p className="truncate font-bold">{tProgram(locale, p.id).title}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {p.weeks} {t("home.weeks")} · {p.daysPerWeek}{t("home.perWeek")} · {p.duration}
+                    {p.weeks} {t("home.weeks")} · {p.daysPerWeek}{t("home.perWeek")} · {tProgram(locale, p.id).duration}
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
