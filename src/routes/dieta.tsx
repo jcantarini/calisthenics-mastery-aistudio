@@ -185,7 +185,7 @@ function DietaPage() {
       {/* Activity level */}
       <section className="mt-6">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">Nível de atividade</h2>
+          <h2 className="text-display text-2xl">{t("diet.activity")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
             × {ACTIVITY_META[profile.activity].multiplier}
           </span>
