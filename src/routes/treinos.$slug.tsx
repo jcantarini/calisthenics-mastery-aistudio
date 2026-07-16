@@ -100,7 +100,7 @@ function ProgramPage() {
         <div className="rounded-2xl border border-border/60 bg-surface p-4">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Progresso da sessão
+              {t("program.sessionProgress")}
             </p>
             <p className="font-mono text-xs text-muted-foreground">
               {doneCount}/{program.exercises.length}
@@ -121,7 +121,7 @@ function ProgramPage() {
                 : "bg-primary text-primary-foreground shadow-glow",
             )}
           >
-            {isActive ? "Registrar sessão" : "Ativar programa"}
+            {isActive ? t("program.register") : t("program.activate")}
           </button>
         </div>
       </div>
