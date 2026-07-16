@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAppState, initialsFrom, type Profile, type Sex } from "@/lib/store";
 import { useT } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
