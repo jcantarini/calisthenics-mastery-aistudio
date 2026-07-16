@@ -18,6 +18,7 @@ import {
   buildMealPlan,
   targetCalories,
 } from "@/lib/nutrition";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/relatorio")({
@@ -36,7 +37,11 @@ export const Route = createFileRoute("/relatorio")({
 
 function RelatorioPage() {
   const [state] = useAppState();
+  const { t, locale } = useT();
   const { profile } = state;
+  const localeMap: Record<string, string> = {
+    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+  };
 
   const bmiValue = bmi(profile);
   const bmiCat = bmiCategory(bmiValue);
@@ -113,21 +118,21 @@ function RelatorioPage() {
         <Link
           to="/progresso"
           className="grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-background/60 backdrop-blur"
-          aria-label="Voltar"
+          aria-label={t("common.back")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-          últimos 7 dias
+          {t("common.last7")}
         </span>
       </div>
 
       <header className="mt-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Relatório
+          {t("report.eyebrow")}
         </p>
         <h1 className="mt-1 text-display text-4xl">
-          Sua <span className="text-primary">semana</span>
+          {t("report.title1")} <span className="text-primary">{t("report.title2")}</span>
         </h1>
       </header>
 
@@ -136,29 +141,29 @@ function RelatorioPage() {
         <KpiCard
           icon={<Dumbbell className="h-4 w-4" />}
           value={totalWorkouts}
-          label="treinos"
-          sub={`${trainDays}/7 dias`}
+          label={t("report.kpi.workouts")}
+          sub={`${trainDays}${t("report.kpi.days")}`}
           color="var(--lime)"
         />
         <KpiCard
           icon={<Clock className="h-4 w-4" />}
           value={totalMin}
-          label="min ativos"
-          sub={`meta ${state.weeklyGoal}× / sem`}
+          label={t("report.kpi.minActive")}
+          sub={`${t("report.kpi.goal")} ${state.weeklyGoal}× / ${t("home.weeks")}`}
           color="oklch(0.75 0.14 220)"
         />
         <KpiCard
           icon={<Flame className="h-4 w-4" />}
           value={totalKcalOut}
-          label="kcal queimadas"
-          sub={`média ${Math.round(totalKcalOut / 7)}/dia`}
+          label={t("report.kpi.kcalBurned")}
+          sub={`${t("report.kpi.avg")} ${Math.round(totalKcalOut / 7)}${t("report.kpi.perDay")}`}
           color="var(--ember)"
         />
         <KpiCard
           icon={<Utensils className="h-4 w-4" />}
           value={`${mealAdherence}%`}
-          label="adesão"
-          sub={`${totalDoneMeals}/${totalPlanned} refeições`}
+          label={t("report.kpi.adhesion")}
+          sub={`${totalDoneMeals}/${totalPlanned} ${t("report.kpi.meals")}`}
           color="var(--lime)"
         />
       </section>
@@ -167,11 +172,9 @@ function RelatorioPage() {
       <section className="mt-8">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-primary" />
-          <h2 className="text-display text-2xl">Balanço calórico</h2>
+          <h2 className="text-display text-2xl">{t("report.balance")}</h2>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Consumo (verde) vs queimadas no treino (laranja) por dia.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("report.balanceSub")}</p>
         <div className="mt-4 rounded-3xl border border-border/60 bg-surface p-4">
           <div className="flex h-40 items-end justify-between gap-1">
             {week.map((d) => {
@@ -179,7 +182,7 @@ function RelatorioPage() {
               const outPct = (d.kcalOut / maxBar) * 100;
               const targetPct = (d.kcalTarget / maxBar) * 100;
               const label = d.date
-                .toLocaleDateString("pt-BR", { weekday: "short" })
+                .toLocaleDateString(localeMap[locale], { weekday: "short" })
                 .slice(0, 3);
               return (
                 <div key={d.key} className="flex flex-1 flex-col items-center gap-1">
@@ -216,27 +219,27 @@ function RelatorioPage() {
             })}
           </div>
           <div className="mt-3 flex justify-center gap-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            <Legend color="var(--primary)" label="Consumo" />
-            <Legend color="var(--ember)" label="Queima" />
-            <Legend color="var(--border)" label="Meta" dashed />
+            <Legend color="var(--primary)" label={t("report.legend.intake")} />
+            <Legend color="var(--ember)" label={t("report.legend.burn")} />
+            <Legend color="var(--border)" label={t("report.legend.goal")} dashed />
           </div>
         </div>
       </section>
 
       {/* Diet averages */}
       <section className="mt-8">
-        <h2 className="text-display text-2xl">Dieta</h2>
+        <h2 className="text-display text-2xl">{t("report.diet")}</h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <StatCard
             icon={<Flame className="h-3.5 w-3.5" />}
-            label="Consumo médio"
+            label={t("report.avgIntake")}
             value={`${avgKcalIn}`}
             suffix="kcal"
             color="var(--primary)"
           />
           <StatCard
             icon={<Droplet className="h-3.5 w-3.5" />}
-            label="Hidratação"
+            label={t("report.hydration")}
             value={`${(avgWater / 1000).toFixed(1)}`}
             suffix={`L / ${(waterGoalMl / 1000).toFixed(1)}L`}
             color="oklch(0.75 0.14 220)"
@@ -245,14 +248,14 @@ function RelatorioPage() {
 
         <div className="mt-4 rounded-3xl border border-border/60 bg-surface-elevated p-4">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Adesão diária ao cardápio
+            {t("report.dailyAdhesion")}
           </p>
           <ul className="mt-3 space-y-2">
             {week.map((d) => {
               const pct = d.totalMeals
                 ? Math.round((d.doneMeals / d.totalMeals) * 100)
                 : 0;
-              const label = d.date.toLocaleDateString("pt-BR", {
+              const label = d.date.toLocaleDateString(localeMap[locale], {
                 weekday: "short",
                 day: "2-digit",
               });
@@ -284,21 +287,21 @@ function RelatorioPage() {
 
       {/* Sessions list */}
       <section className="mt-8">
-        <h2 className="text-display text-2xl">Sessões registradas</h2>
+        <h2 className="text-display text-2xl">{t("report.sessions")}</h2>
         {allSessions.length === 0 ? (
           <div className="mt-3 rounded-2xl border border-dashed border-border/60 bg-surface p-6 text-center text-sm text-muted-foreground">
-            Nenhum treino registrado esta semana. Termine um timer para adicionar aqui.
+            {t("report.empty")}
           </div>
         ) : (
           <ul className="mt-3 space-y-2">
             {allSessions.map((s) => {
               const d = new Date(s.at);
-              const day = d.toLocaleDateString("pt-BR", {
+              const day = d.toLocaleDateString(localeMap[locale], {
                 weekday: "short",
                 day: "2-digit",
                 month: "2-digit",
               });
-              const time = d.toLocaleTimeString("pt-BR", {
+              const time = d.toLocaleTimeString(localeMap[locale], {
                 hour: "2-digit",
                 minute: "2-digit",
               });
@@ -318,7 +321,7 @@ function RelatorioPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-mono text-xs text-muted-foreground">
-                      {Math.round(s.durationSec / 60)} min
+                      {Math.round(s.durationSec / 60)} {t("common.min")}
                     </p>
                     <p className="text-display text-base leading-none text-ember">
                       {s.kcalBurned}{" "}

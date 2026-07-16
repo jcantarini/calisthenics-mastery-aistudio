@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowLeft, Play, Check, Info, Timer, Target } from "lucide-react";
 import { getProgram, LEVEL_META, type Program } from "@/lib/programs";
 import { useAppState } from "@/lib/store";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/treinos/$slug")({
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/treinos/$slug")({
 function ProgramPage() {
   const { program } = Route.useLoaderData() as { program: Program };
   const [state, setState] = useAppState();
+  const { t } = useT();
   const [playing, setPlaying] = useState<string | null>(null);
 
   const doneCount = program.exercises.filter((e) => state.completedExercises[e.id]).length;
@@ -63,7 +65,7 @@ function ProgramPage() {
           <Link
             to="/treinos"
             className="grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-background/60 backdrop-blur"
-            aria-label="Voltar"
+            aria-label={t("common.back")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -79,15 +81,15 @@ function ProgramPage() {
         <p className="mt-3 text-sm text-muted-foreground">{program.tagline}</p>
 
         <div className="mt-5 grid grid-cols-3 gap-2">
-          <Stat label="Semanas" value={String(program.weeks)} />
-          <Stat label="Duração" value={program.duration} />
-          <Stat label="Dias/sem" value={String(program.daysPerWeek)} />
+          <Stat label={t("program.weeksLabel")} value={String(program.weeks)} />
+          <Stat label={t("program.duration")} value={program.duration} />
+          <Stat label={t("program.daysPerWeek")} value={String(program.daysPerWeek)} />
         </div>
 
         <div className="mt-5 rounded-2xl border border-border/60 bg-surface-elevated/70 p-4 backdrop-blur">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Target className="h-4 w-4" />
-            <p className="text-[11px] font-semibold uppercase tracking-widest">Meta do programa</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest">{t("program.goal")}</p>
           </div>
           <p className="mt-1.5 text-sm font-medium">{program.goal}</p>
         </div>
@@ -98,7 +100,7 @@ function ProgramPage() {
         <div className="rounded-2xl border border-border/60 bg-surface p-4">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Progresso da sessão
+              {t("program.sessionProgress")}
             </p>
             <p className="font-mono text-xs text-muted-foreground">
               {doneCount}/{program.exercises.length}
@@ -119,17 +121,15 @@ function ProgramPage() {
                 : "bg-primary text-primary-foreground shadow-glow",
             )}
           >
-            {isActive ? "Registrar sessão" : "Ativar programa"}
+            {isActive ? t("program.register") : t("program.activate")}
           </button>
         </div>
       </div>
 
       {/* Exercises */}
       <div className="px-5 pt-8">
-        <h2 className="text-display text-2xl">Exercícios</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Toque no vídeo para ver a execução. Marque cada exercício concluído.
-        </p>
+        <h2 className="text-display text-2xl">{t("program.exercises")}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">{t("program.exercisesDesc")}</p>
 
         <ol className="mt-4 space-y-3">
           {program.exercises.map((ex, i) => {
@@ -152,7 +152,7 @@ function ProgramPage() {
                       <h3 className="truncate font-bold">{ex.name}</h3>
                       <button
                         onClick={() => toggle(ex.id)}
-                        aria-label={done ? "Desmarcar" : "Marcar como feito"}
+                        aria-label={done ? t("program.uncheck") : t("program.markDone")}
                         className={cn(
                           "grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors",
                           done
@@ -167,7 +167,7 @@ function ProgramPage() {
 
                     <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
                       <Tag icon={<Target className="h-3 w-3" />} value={ex.sets} />
-                      <Tag icon={<Timer className="h-3 w-3" />} value={`descanso ${ex.rest}`} />
+                      <Tag icon={<Timer className="h-3 w-3" />} value={`${t("program.rest")} ${ex.rest}`} />
                     </div>
                   </div>
                 </div>
@@ -186,7 +186,7 @@ function ProgramPage() {
                     <button
                       onClick={() => setPlaying(ex.id)}
                       className="group absolute inset-0 flex items-center justify-center"
-                      aria-label={`Reproduzir vídeo de ${ex.name}`}
+                      aria-label={`${t("program.playVideo")} ${ex.name}`}
                     >
                       <img
                         src={`https://i.ytimg.com/vi/${ex.videoId}/hqdefault.jpg`}

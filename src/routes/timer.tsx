@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { estimateKcal, logWorkoutSession, useAppState } from "@/lib/store";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/timer")({
   head: () => ({
@@ -33,10 +34,10 @@ export const Route = createFileRoute("/timer")({
 type Phase = "prep" | "work" | "rest" | "done";
 
 const PRESETS = [
-  { key: "tabata", label: "Tabata", work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60, prep: 10 },
-  { key: "hiit", label: "HIIT 40/20", work: 40, rest: 20, rounds: 6, sets: 3, setRest: 60, prep: 10 },
-  { key: "militar", label: "Militar EMOM", work: 45, rest: 15, rounds: 10, sets: 1, setRest: 0, prep: 10 },
-  { key: "custom", label: "Personalizado", work: 30, rest: 15, rounds: 8, sets: 2, setRest: 45, prep: 10 },
+  { key: "tabata", work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60, prep: 10 },
+  { key: "hiit", work: 40, rest: 20, rounds: 6, sets: 3, setRest: 60, prep: 10 },
+  { key: "militar", work: 45, rest: 15, rounds: 10, sets: 1, setRest: 0, prep: 10 },
+  { key: "custom", work: 30, rest: 15, rounds: 8, sets: 2, setRest: 45, prep: 10 },
 ] as const;
 
 const CONFIG_KEY = "barra:timer:v1";
@@ -65,6 +66,7 @@ const DEFAULT_CONFIG: Config = {
 
 function TimerPage() {
   const [state, setState] = useAppState();
+  const { t } = useT();
   const [config, setConfig] = useState<Config>(DEFAULT_CONFIG);
   const [hydrated, setHydrated] = useState(false);
   const [presetKey, setPresetKey] = useState<(typeof PRESETS)[number]["key"]>("hiit");
@@ -184,8 +186,7 @@ function TimerPage() {
           config.sets * (config.work * config.rounds + config.rest * Math.max(0, config.rounds - 1)) +
           Math.max(0, config.sets - 1) * config.setRest;
         const kcal = estimateKcal(met, stateRef.current.profile.weightKg, durationSec);
-        const label =
-          PRESETS.find((p) => p.key === presetKey)?.label ?? "Timer HIIT";
+        const label = t(`timer.preset.${presetKey}`);
         setState((s) =>
           logWorkoutSession(s, {
             source: "timer",
@@ -285,16 +286,16 @@ function TimerPage() {
 
   const label =
     phase === "prep"
-      ? "Preparação"
+      ? t("timer.phase.prep")
       : phase === "work"
         ? isSetRest
-          ? "Descanso"
-          : "Executar"
+          ? t("timer.phase.rest")
+          : t("timer.phase.work")
         : isSetRest
-          ? "Descanso entre séries"
+          ? t("timer.phase.setRest")
           : phase === "rest"
-            ? "Descanso"
-            : "Concluído";
+            ? t("timer.phase.rest")
+            : t("timer.phase.done");
 
   const phaseColor =
     phase === "work"
@@ -322,7 +323,7 @@ function TimerPage() {
           <Link
             to="/treinos"
             className="grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-background/60 backdrop-blur"
-            aria-label="Voltar"
+            aria-label={t("common.back")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -335,7 +336,7 @@ function TimerPage() {
                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border/60 text-muted-foreground",
               )}
-              aria-label="Alternar som"
+              aria-label={t("timer.toggleSound")}
             >
               {config.sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </button>
@@ -347,7 +348,7 @@ function TimerPage() {
                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border/60 text-muted-foreground",
               )}
-              aria-label="Alternar vibração"
+              aria-label={t("timer.toggleVibrate")}
             >
               <Vibrate className="h-4 w-4" />
             </button>
@@ -356,14 +357,12 @@ function TimerPage() {
 
         <div className="mt-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Intervalo
+            {t("timer.eyebrow")}
           </p>
           <h1 className="mt-1 text-display text-4xl">
-            Timer <span className="text-primary">HIIT</span>
+            {t("timer.titlePart")} <span className="text-primary">{t("timer.titleHl")}</span>
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Chamadas em tela, bipes e vibração a cada troca de fase.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("timer.intro")}</p>
         </div>
 
         {/* Presets */}
@@ -375,7 +374,7 @@ function TimerPage() {
                 onClick={() => applyPreset(p.key)}
                 className="shrink-0 rounded-full border border-border/60 bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors active:scale-[0.98]"
               >
-                {p.label}
+                {t(`timer.preset.${p.key}`)}
               </button>
             ))}
           </div>
@@ -399,7 +398,7 @@ function TimerPage() {
               {label}
             </span>
             <span className="font-mono text-[11px] text-muted-foreground">
-              série {set}/{config.sets} · round {round}/{config.rounds}
+              {t("timer.set")} {set}/{config.sets} · {t("timer.round")} {round}/{config.rounds}
             </span>
           </div>
 
@@ -411,21 +410,21 @@ function TimerPage() {
               {String(Math.max(0, remaining)).padStart(2, "0")}
             </div>
             <p className="mt-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-              {phase === "done" ? "treino finalizado" : "segundos restantes"}
+              {phase === "done" ? t("timer.done") : t("timer.remaining")}
             </p>
             {phase === "done" && lastLogged && (
               <div className="mt-4 w-full rounded-2xl border border-primary/40 bg-primary/10 p-3 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                  Sessão registrada no diário
+                  {t("timer.logged")}
                 </p>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  {Math.round(lastLogged.durationSec / 60)} min · {lastLogged.kcal} kcal queimadas
+                  {Math.round(lastLogged.durationSec / 60)} {t("common.min")} · {lastLogged.kcal} {t("timer.kcalBurned")}
                 </p>
                 <Link
                   to="/relatorio"
                   className="mt-2 inline-block text-[11px] font-semibold uppercase tracking-widest text-primary"
                 >
-                  Ver relatório →
+                  {t("timer.seeReport")}
                 </Link>
               </div>
             )}
@@ -445,14 +444,14 @@ function TimerPage() {
             <button
               onClick={() => reset()}
               className="grid h-14 place-items-center rounded-2xl border border-border/60 bg-background/40 text-muted-foreground active:scale-[0.98]"
-              aria-label="Reiniciar"
+              aria-label={t("timer.restart")}
             >
               <RotateCcw className="h-5 w-5" />
             </button>
             <button
               onClick={running ? pause : start}
               className="grid h-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-glow active:scale-[0.98]"
-              aria-label={running ? "Pausar" : "Iniciar"}
+              aria-label={running ? t("timer.pause") : t("timer.play")}
             >
               {running ? (
                 <Pause className="h-6 w-6 fill-current" strokeWidth={0} />
@@ -463,7 +462,7 @@ function TimerPage() {
             <button
               onClick={skip}
               className="grid h-14 place-items-center rounded-2xl border border-border/60 bg-background/40 text-muted-foreground active:scale-[0.98]"
-              aria-label="Pular fase"
+              aria-label={t("timer.skip")}
             >
               <SkipForward className="h-5 w-5" />
             </button>
@@ -475,12 +474,12 @@ function TimerPage() {
       <div className="mt-8 px-5">
         <div className="flex items-center gap-2 text-muted-foreground">
           <TimerIcon className="h-4 w-4" />
-          <p className="text-[11px] font-semibold uppercase tracking-widest">Configuração</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest">{t("timer.config")}</p>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
           <Stepper
-            label="Preparação"
+            label={t("timer.field.prep")}
             value={config.prep}
             suffix="s"
             step={5}
@@ -491,7 +490,7 @@ function TimerPage() {
             }}
           />
           <Stepper
-            label="Execução"
+            label={t("timer.field.work")}
             value={config.work}
             suffix="s"
             step={5}
@@ -499,7 +498,7 @@ function TimerPage() {
             onChange={(v) => setConfig((c) => ({ ...c, work: v }))}
           />
           <Stepper
-            label="Descanso"
+            label={t("timer.field.rest")}
             value={config.rest}
             suffix="s"
             step={5}
@@ -507,21 +506,21 @@ function TimerPage() {
             onChange={(v) => setConfig((c) => ({ ...c, rest: v }))}
           />
           <Stepper
-            label="Rounds"
+            label={t("timer.field.rounds")}
             value={config.rounds}
             step={1}
             min={1}
             onChange={(v) => setConfig((c) => ({ ...c, rounds: v }))}
           />
           <Stepper
-            label="Séries"
+            label={t("timer.field.sets")}
             value={config.sets}
             step={1}
             min={1}
             onChange={(v) => setConfig((c) => ({ ...c, sets: v }))}
           />
           <Stepper
-            label="Desc. série"
+            label={t("timer.field.setRest")}
             value={config.setRest}
             suffix="s"
             step={15}
@@ -531,9 +530,9 @@ function TimerPage() {
         </div>
 
         <p className="mt-4 text-center font-mono text-xs text-muted-foreground">
-          Tempo total estimado ·{" "}
+          {t("timer.total")}{" "}
           <span className="text-foreground">
-            {Math.floor(totalSeconds / 60)}min {totalSeconds % 60}s
+            {Math.floor(totalSeconds / 60)}{t("common.min")} {totalSeconds % 60}s
           </span>
         </p>
       </div>
@@ -556,6 +555,7 @@ function Stepper({
   min?: number;
   suffix?: string;
 }) {
+  const { t } = useT();
   return (
     <div className="rounded-2xl border border-border/60 bg-surface p-3">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -565,7 +565,7 @@ function Stepper({
         <button
           onClick={() => onChange(Math.max(min, value - step))}
           className="grid h-8 w-8 place-items-center rounded-full border border-border/60 text-muted-foreground active:scale-95"
-          aria-label={`Diminuir ${label}`}
+          aria-label={`${t("timer.decrease")} ${label}`}
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
@@ -576,7 +576,7 @@ function Stepper({
         <button
           onClick={() => onChange(value + step)}
           className="grid h-8 w-8 place-items-center rounded-full border border-border/60 text-muted-foreground active:scale-95"
-          aria-label={`Aumentar ${label}`}
+          aria-label={`${t("timer.increase")} ${label}`}
         >
           <Plus className="h-3.5 w-3.5" />
         </button>

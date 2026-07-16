@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, Plus, TrendingUp, Award, Flame, ChevronRight, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { useAppState } from "@/lib/store";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/progresso")({
@@ -19,13 +20,16 @@ export const Route = createFileRoute("/progresso")({
 
 function ProgressoPage() {
   const [state, setState] = useAppState();
+  const { t, locale } = useT();
   const [newGoal, setNewGoal] = useState("");
+  const localeMap: Record<string, string> = {
+    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+  };
 
   const doneSet = new Set(
     state.completedSessions.map((d) => new Date(d).toDateString()),
   );
 
-  // last 35 days heatmap
   const days = Array.from({ length: 35 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (34 - i));
@@ -52,11 +56,11 @@ function ProgressoPage() {
     <div className="px-5 pt-12">
       <header>
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Seu caminho
+          {t("progress.eyebrow")}
         </p>
         <h1 className="mt-1 text-display text-4xl">
-          Progresso &<br />
-          <span className="text-primary">metas</span>
+          {t("progress.title1")}<br />
+          <span className="text-primary">{t("progress.title2")}</span>
         </h1>
       </header>
 
@@ -68,37 +72,35 @@ function ProgressoPage() {
           <BarChart3 className="h-5 w-5" />
         </span>
         <span className="flex-1">
-          <span className="block text-sm font-bold">Relatório semanal</span>
+          <span className="block text-sm font-bold">{t("progress.weeklyReport")}</span>
           <span className="block text-[11px] text-muted-foreground">
-            Treinos, calorias, água e adesão
+            {t("progress.weeklyReportSub")}
           </span>
         </span>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
 
-      {/* Big stats */}
       <section className="mt-6 grid grid-cols-3 gap-3">
-        <BigStat icon={<Flame className="h-4 w-4" />} value={state.streak} label="dias" sub="sequência" />
+        <BigStat icon={<Flame className="h-4 w-4" />} value={state.streak} label={t("common.days")} sub={t("progress.streakSub")} />
         <BigStat
           icon={<TrendingUp className="h-4 w-4" />}
           value={state.completedSessions.length}
-          label="sessões"
-          sub="total"
+          label={t("progress.sessionsLabel")}
+          sub={t("progress.totalSub")}
         />
         <BigStat
           icon={<Award className="h-4 w-4" />}
           value={state.goals.filter((g) => g.done).length}
-          label="metas"
-          sub="batidas"
+          label={t("progress.goalsLabel")}
+          sub={t("progress.goalsSub")}
         />
       </section>
 
-      {/* Heatmap */}
       <section className="mt-8">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">Últimos 5 semanas</h2>
+          <h2 className="text-display text-2xl">{t("progress.last5Weeks")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            {doneSet.size} ativos
+            {doneSet.size} {t("progress.activeDays")}
           </span>
         </div>
         <div className="mt-4 rounded-3xl border border-border/60 bg-surface p-4">
@@ -116,27 +118,26 @@ function ProgressoPage() {
                       : "border-border/40 bg-background/40",
                     today && "ring-2 ring-accent ring-offset-2 ring-offset-surface",
                   )}
-                  title={d.toLocaleDateString("pt-BR")}
+                  title={d.toLocaleDateString(localeMap[locale])}
                 />
               );
             })}
           </div>
           <div className="mt-3 flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-            <span>Menos</span>
+            <span>{t("progress.less")}</span>
             <div className="flex gap-1">
               <span className="h-2 w-4 rounded-sm bg-background/60" />
               <span className="h-2 w-4 rounded-sm bg-primary/30" />
               <span className="h-2 w-4 rounded-sm bg-primary/60" />
               <span className="h-2 w-4 rounded-sm bg-primary" />
             </div>
-            <span>Mais</span>
+            <span>{t("progress.more")}</span>
           </div>
         </div>
       </section>
 
-      {/* Goals */}
       <section className="mt-8">
-        <h2 className="text-display text-2xl">Metas</h2>
+        <h2 className="text-display text-2xl">{t("progress.goals")}</h2>
         <ul className="mt-3 space-y-2">
           {state.goals.map((g) => (
             <li key={g.id}>
@@ -180,13 +181,13 @@ function ProgressoPage() {
           <input
             value={newGoal}
             onChange={(e) => setNewGoal(e.target.value)}
-            placeholder="Nova meta (ex: 1 pull-up)"
+            placeholder={t("progress.newGoal")}
             className="flex-1 rounded-2xl border border-border/60 bg-surface px-4 py-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           />
           <button
             type="submit"
             className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-glow active:scale-95"
-            aria-label="Adicionar meta"
+            aria-label={t("progress.addGoal")}
           >
             <Plus className="h-5 w-5" strokeWidth={2.5} />
           </button>

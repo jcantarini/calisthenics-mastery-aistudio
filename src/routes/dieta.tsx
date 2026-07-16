@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { requestNotifPermission, useNotifPermission } from "@/lib/reminders";
 import { useAppState, todayKey, type DietDayLog } from "@/lib/store";
+import { useT } from "@/lib/i18n";
 import {
   ACTIVITY_META,
   BMI_META,
@@ -51,6 +52,10 @@ export const Route = createFileRoute("/dieta")({
 
 function DietaPage() {
   const [state, setState] = useAppState();
+  const { t, locale } = useT();
+  const localeMap: Record<string, string> = {
+    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+  };
   const { profile } = state;
 
   const bmiValue = bmi(profile);
@@ -138,15 +143,13 @@ function DietaPage() {
     <div className="px-5 pt-12">
       <header>
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Nutrição
+          {t("diet.eyebrow")}
         </p>
         <h1 className="mt-1 text-display text-4xl">
-          Dieta baseada<br />
-          no seu <span className="text-primary">IMC</span>
+          {t("diet.title1")}<br />
+          {t("diet.title2")} <span className="text-primary">{t("diet.title3")}</span>
         </h1>
-        <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-          Calculamos calorias e macros com Mifflin–St Jeor e adaptamos ao seu objetivo.
-        </p>
+        <p className="mt-3 max-w-xs text-sm text-muted-foreground">{t("diet.intro")}</p>
       </header>
 
       {/* IMC card */}
@@ -154,7 +157,7 @@ function DietaPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Seu IMC
+              {t("diet.yourBmi")}
             </p>
             <p className="mt-1 text-display text-5xl leading-none">{bmiValue.toFixed(1)}</p>
           </div>
@@ -163,10 +166,10 @@ function DietaPage() {
               className="rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-widest"
               style={{ borderColor: meta.color, color: meta.color }}
             >
-              {meta.label}
+              {t(`bmi.${bmiCat}.label`)}
             </p>
             <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-              faixa {meta.range}
+              {t("diet.range")} {meta.range}
             </p>
           </div>
         </div>
@@ -175,14 +178,14 @@ function DietaPage() {
 
         <p className="mt-4 flex items-start gap-2 rounded-2xl border border-border/60 bg-background/40 p-3 text-xs leading-relaxed text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-          {meta.note}
+          {t(`bmi.${bmiCat}.note`)}
         </p>
       </section>
 
       {/* Activity level */}
       <section className="mt-6">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">Nível de atividade</h2>
+          <h2 className="text-display text-2xl">{t("diet.activity")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
             × {ACTIVITY_META[profile.activity].multiplier}
           </span>
@@ -210,9 +213,9 @@ function DietaPage() {
                       active ? "text-primary" : "text-muted-foreground",
                     )}
                   >
-                    {ACTIVITY_META[k].label}
+                    {t(`activity.${k}.label`)}
                   </p>
-                  <p className="mt-0.5 text-xs">{ACTIVITY_META[k].description}</p>
+                  <p className="mt-0.5 text-xs">{t(`activity.${k}.desc`)}</p>
                 </button>
               );
             })}
@@ -222,7 +225,7 @@ function DietaPage() {
 
       {/* Goal */}
       <section className="mt-6">
-        <h2 className="text-display text-2xl">Objetivo</h2>
+        <h2 className="text-display text-2xl">{t("diet.goal")}</h2>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {(Object.keys(GOAL_META) as DietGoal[]).map((g) => {
             const active = goal === g;
@@ -242,7 +245,7 @@ function DietaPage() {
                     active ? "text-primary" : "text-muted-foreground",
                   )}
                 >
-                  {info.label}
+                  {t(`goal.${g}.label`)}
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold">
                   {info.delta === 0 ? "±0%" : `${info.delta > 0 ? "+" : ""}${Math.round(info.delta * 100)}%`}
@@ -251,7 +254,7 @@ function DietaPage() {
             );
           })}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">{GOAL_META[goal].description}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{t(`goal.${goal}.desc`)}</p>
       </section>
 
       {/* Target calories */}
@@ -259,35 +262,35 @@ function DietaPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary">
-              <Flame className="h-3.5 w-3.5" /> Meta calórica
+              <Flame className="h-3.5 w-3.5" /> {t("diet.kcalGoal")}
             </p>
             <p className="mt-1 text-display text-5xl leading-none">
-              {kcal.toLocaleString("pt-BR")}
-              <span className="ml-2 text-sm font-normal text-muted-foreground">kcal/dia</span>
+              {kcal.toLocaleString(localeMap[locale])}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">{t("diet.kcalDay")}</span>
             </p>
           </div>
           <div className="text-right text-[11px] text-muted-foreground">
-            <p>TMB {bmrValue}</p>
-            <p>Gasto {tdeeValue}</p>
+            <p>{t("diet.bmr")} {bmrValue}</p>
+            <p>{t("diet.tdee")} {tdeeValue}</p>
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-3 gap-2">
           <MacroPill
             icon={<Beef className="h-3.5 w-3.5" />}
-            label="Proteína"
+            label={t("diet.protein")}
             value={`${macros.proteinG}g`}
             color="var(--lime)"
           />
           <MacroPill
             icon={<Wheat className="h-3.5 w-3.5" />}
-            label="Carboidrato"
+            label={t("diet.carbs")}
             value={`${macros.carbsG}g`}
             color="var(--ember)"
           />
           <MacroPill
             icon={<Droplet className="h-3.5 w-3.5" />}
-            label="Gordura"
+            label={t("diet.fat")}
             value={`${macros.fatG}g`}
             color="oklch(0.75 0.14 220)"
           />
@@ -301,13 +304,13 @@ function DietaPage() {
 
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <Droplet className="h-3 w-3" /> Água {waterL}L/dia
+            <Droplet className="h-3 w-3" /> {t("diet.water")} {waterL}{t("diet.waterDay")}
           </span>
           <Link
             to="/perfil"
             className="inline-flex items-center gap-1 font-semibold text-primary"
           >
-            <UserCog className="h-3 w-3" /> Ajustar perfil
+            <UserCog className="h-3 w-3" /> {t("diet.adjustProfile")}
           </Link>
         </div>
       </section>
@@ -315,14 +318,12 @@ function DietaPage() {
       {/* Meal plan */}
       <section className="mt-8">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">Cardápio exemplo</h2>
+          <h2 className="text-display text-2xl">{t("diet.menu")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            {meals.length} refeições
+            {meals.length} {t("diet.meals")}
           </span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Toque no círculo para marcar a refeição como feita e acompanhar no diário.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("diet.menuHint")}</p>
         <ul className="mt-3 space-y-3">
           {meals.map((m) => {
             const total = m.items.reduce((s, i) => s + i.kcal, 0);
@@ -339,7 +340,7 @@ function DietaPage() {
                   <button
                     onClick={() => toggleMeal(m.id)}
                     aria-pressed={done}
-                    aria-label={`Marcar ${m.name} como feita`}
+                    aria-label={t("diet.markMeal")}
                     className={cn(
                       "grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-all active:scale-90",
                       done
@@ -354,7 +355,7 @@ function DietaPage() {
                       {m.time}
                     </p>
                     <p className={cn("font-bold", done && "line-through opacity-60")}>
-                      {m.name}
+                      {t(`meal.${m.id}`)}
                     </p>
                   </div>
                   <div className="text-right">
@@ -388,13 +389,13 @@ function DietaPage() {
         <div className="flex items-baseline justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
-            <h2 className="text-display text-2xl">Diário de hoje</h2>
+            <h2 className="text-display text-2xl">{t("diet.diary")}</h2>
           </div>
           <button
             onClick={resetToday}
             className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground active:scale-95"
           >
-            <RotateCcw className="h-3 w-3" /> Zerar
+            <RotateCcw className="h-3 w-3" /> {t("common.reset")}
           </button>
         </div>
 
@@ -402,7 +403,7 @@ function DietaPage() {
           {/* Calories today */}
           <div className="rounded-2xl border border-border/60 bg-surface-elevated p-4">
             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
-              <Flame className="h-3 w-3" /> Calorias
+              <Flame className="h-3 w-3" /> {t("diet.calories")}
             </div>
             <p className="mt-2 text-display text-2xl leading-none">
               {kcalConsumed}
@@ -417,14 +418,14 @@ function DietaPage() {
               />
             </div>
             <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              {doneMealIds.length}/{meals.length} refeições
+              {doneMealIds.length}/{meals.length} {t("diet.mealsCount")}
             </p>
           </div>
 
           {/* Water today */}
           <div className="rounded-2xl border border-border/60 bg-surface-elevated p-4">
             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest" style={{ color: "oklch(0.75 0.14 220)" }}>
-              <Droplet className="h-3 w-3" /> Água
+              <Droplet className="h-3 w-3" /> {t("diet.waterShort")}
             </div>
             <p className="mt-2 text-display text-2xl leading-none">
               {(todayLog.waterMl / 1000).toFixed(1)}
@@ -441,7 +442,7 @@ function DietaPage() {
             <div className="mt-2 flex items-center gap-2">
               <button
                 onClick={() => addWater(-250)}
-                aria-label="Remover 250ml"
+                aria-label={t("diet.remove250")}
                 className="grid h-7 w-7 place-items-center rounded-full border border-border/60 bg-background active:scale-90"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -451,7 +452,7 @@ function DietaPage() {
               </span>
               <button
                 onClick={() => addWater(250)}
-                aria-label="Adicionar 250ml"
+                aria-label={t("diet.add250")}
                 className="grid h-7 w-7 place-items-center rounded-full border border-primary bg-primary/10 text-primary active:scale-90"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -470,14 +471,14 @@ function DietaPage() {
           </span>
           <div className="flex-1">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Queimadas no treino
+              {t("diet.burned")}
             </p>
             <p className="text-sm">
               <span className="font-bold" style={{ color: "var(--ember)" }}>
                 {kcalBurnedToday}
               </span>{" "}
               <span className="text-xs text-muted-foreground">
-                kcal · {workoutsToday.length} sessão(ões) · saldo{" "}
+                kcal · {workoutsToday.length} {t("diet.sessionsShort")}{" "}
                 <span className={netKcal < 0 ? "text-primary" : ""}>
                   {netKcal > 0 ? "+" : ""}
                   {netKcal}
@@ -489,7 +490,7 @@ function DietaPage() {
             to="/relatorio"
             className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary"
           >
-            Relatório
+            {t("diet.report")}
           </Link>
         </div>
       </section>
@@ -503,16 +504,16 @@ function DietaPage() {
       {/* Weekly summary */}
       <section className="mt-8">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">Sua semana</h2>
+          <h2 className="text-display text-2xl">{t("diet.week")}</h2>
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            últimos 7 dias
+            {t("common.last7")}
           </span>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-border/60 bg-surface p-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Média calórica
+              {t("diet.avgCal")}
             </p>
             <p className="mt-1 text-display text-xl leading-none">
               {weekKcalAvg || 0}
@@ -521,7 +522,7 @@ function DietaPage() {
           </div>
           <div className="rounded-2xl border border-border/60 bg-surface p-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Média de água
+              {t("diet.avgWater")}
             </p>
             <p className="mt-1 text-display text-xl leading-none">
               {((weekWaterAvg || 0) / 1000).toFixed(1)}
@@ -535,7 +536,7 @@ function DietaPage() {
             {week.map((d) => {
               const kPct = Math.min(100, Math.round((d.kcalDone / d.kcalTarget) * 100));
               const wPct = Math.min(100, Math.round((d.waterMl / waterGoalMl) * 100));
-              const label = d.date.toLocaleDateString("pt-BR", { weekday: "short" }).slice(0, 3);
+              const label = d.date.toLocaleDateString(localeMap[locale], { weekday: "short" }).slice(0, 3);
               return (
                 <div key={d.key} className="flex flex-1 flex-col items-center gap-1.5">
                   <div className="flex h-24 w-full items-end gap-0.5">
@@ -567,14 +568,14 @@ function DietaPage() {
           </div>
           <div className="mt-3 flex justify-center gap-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             <span className="inline-flex items-center gap-1">
-              <span className="h-2 w-2 rounded-sm bg-primary/80" /> Calorias
+              <span className="h-2 w-2 rounded-sm bg-primary/80" /> {t("diet.legend.cal")}
             </span>
             <span className="inline-flex items-center gap-1">
               <span
                 className="h-2 w-2 rounded-sm"
                 style={{ background: "oklch(0.75 0.14 220 / 0.85)" }}
               />
-              Água
+              {t("diet.legend.water")}
             </span>
           </div>
         </div>
@@ -584,27 +585,24 @@ function DietaPage() {
       <section className="mt-8 rounded-3xl border border-accent/30 bg-accent/5 p-5">
         <div className="flex items-center gap-2 text-accent">
           <Activity className="h-4 w-4" />
-          <p className="text-[11px] font-semibold uppercase tracking-widest">Princípios</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest">{t("diet.principles")}</p>
         </div>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed">
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            Priorize <span className="font-bold">proteína magra</span> em todas as refeições para
-            preservar massa muscular.
+            {t("diet.tip1a")} <span className="font-bold">{t("diet.tip1b")}</span> {t("diet.tip1c")}
           </li>
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            Concentre os <span className="font-bold">carboidratos</span> perto do treino para mais
-            energia e recuperação.
+            {t("diet.tip2a")} <span className="font-bold">{t("diet.tip2b")}</span> {t("diet.tip2c")}
           </li>
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            Fibras, vegetais e água ajudam na saciedade e no rendimento.
+            {t("diet.tip3")}
           </li>
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            Estes valores são <span className="font-bold">estimativas</span>. Para prescrição
-            individual, consulte um(a) nutricionista.
+            {t("diet.tip4a")} <span className="font-bold">{t("diet.tip4b")}</span>{t("diet.tip4c")}
           </li>
         </ul>
       </section>
@@ -690,7 +688,9 @@ function MacroBar({
 function RemindersCard() {
   const [state, setState] = useAppState();
   const [perm, setPerm] = useNotifPermission();
+  const { t } = useT();
   const r = state.reminders;
+
 
   const setR = (patch: Partial<typeof r>) =>
     setState((s) => ({ ...s, reminders: { ...s.reminders, ...patch } }));
@@ -704,8 +704,8 @@ function RemindersCard() {
     if (p === "granted") {
       setR({ enabled: true });
       try {
-        new Notification("Lembretes ativados", {
-          body: "Vamos te avisar nas refeições e para beber água.",
+        new Notification(t("diet.remindersEnabledTitle"), {
+          body: t("diet.remindersEnabledBody"),
           icon: "/icon-192.png",
         });
       } catch {}
@@ -722,12 +722,9 @@ function RemindersCard() {
     <section className="mt-8">
       <div className="flex items-center gap-2">
         <Bell className="h-4 w-4 text-primary" />
-        <h2 className="text-display text-2xl">Lembretes</h2>
+        <h2 className="text-display text-2xl">{t("diet.reminders")}</h2>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Avisos para marcar refeições e registrar água. Instale o app na tela inicial do
-        celular para receber com o app fechado.
-      </p>
+      <p className="mt-1 text-xs text-muted-foreground">{t("diet.remindersDesc")}</p>
 
       <div
         className={cn(
@@ -746,16 +743,16 @@ function RemindersCard() {
           </span>
           <div className="flex-1">
             <p className="text-sm font-bold">
-              {on ? "Lembretes ativos" : "Lembretes desativados"}
+              {on ? t("diet.remindersOn") : t("diet.remindersOff")}
             </p>
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               {unsupported
-                ? "não suportado neste navegador"
+                ? t("diet.permUnsupported")
                 : denied
-                  ? "permissão bloqueada nas configurações"
+                  ? t("diet.permDenied")
                   : perm === "granted"
-                    ? "permissão concedida"
-                    : "permissão pendente"}
+                    ? t("diet.permGranted")
+                    : t("diet.permPending")}
             </p>
           </div>
           {on ? (
@@ -763,7 +760,7 @@ function RemindersCard() {
               onClick={disable}
               className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground active:scale-95"
             >
-              Desativar
+              {t("diet.disable")}
             </button>
           ) : (
             <button
@@ -771,28 +768,28 @@ function RemindersCard() {
               disabled={unsupported || denied}
               className="rounded-full bg-primary px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-primary-foreground shadow-glow active:scale-95 disabled:opacity-50"
             >
-              {denied ? "Bloqueado" : "Ativar"}
+              {denied ? t("diet.blocked") : t("diet.enable")}
             </button>
           )}
         </div>
 
         {denied && (
           <p className="mt-3 rounded-2xl border border-border/60 bg-background/60 p-3 text-xs text-muted-foreground">
-            Para liberar, abra as configurações do site no navegador e permita notificações.
+            {t("diet.deniedHint")}
           </p>
         )}
 
         {on && (
           <div className="mt-4 space-y-3">
             <ReminderToggle
-              label="Nas horas das refeições"
-              hint="Toca no horário de cada refeição do cardápio, se ainda não marcada."
+              label={t("diet.remindMeals")}
+              hint={t("diet.remindMealsHint")}
               value={r.meals}
               onChange={(v) => setR({ meals: v })}
             />
             <ReminderToggle
-              label="Beber água"
-              hint="Só quando você ainda não bateu a meta diária."
+              label={t("diet.remindWater")}
+              hint={t("diet.remindWaterHint")}
               value={r.water}
               onChange={(v) => setR({ water: v })}
             />
@@ -801,24 +798,24 @@ function RemindersCard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      A cada
+                      {t("diet.every")}
                     </p>
                     <p className="text-display text-xl leading-none">
                       {r.waterEveryMin}
-                      <span className="ml-1 text-xs font-normal text-muted-foreground">min</span>
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">{t("common.min")}</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setR({ waterEveryMin: Math.max(30, r.waterEveryMin - 30) })}
-                      aria-label="Diminuir intervalo"
+                      aria-label={t("diet.decreaseInterval")}
                       className="grid h-8 w-8 place-items-center rounded-full border border-border/60 active:scale-95"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setR({ waterEveryMin: Math.min(360, r.waterEveryMin + 30) })}
-                      aria-label="Aumentar intervalo"
+                      aria-label={t("diet.increaseInterval")}
                       className="grid h-8 w-8 place-items-center rounded-full border border-primary bg-primary/10 text-primary active:scale-95"
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -827,12 +824,12 @@ function RemindersCard() {
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <TimeField
-                    label="Início"
+                    label={t("diet.startTime")}
                     value={r.waterFrom}
                     onChange={(v) => setR({ waterFrom: v })}
                   />
                   <TimeField
-                    label="Fim"
+                    label={t("diet.endTime")}
                     value={r.waterTo}
                     onChange={(v) => setR({ waterTo: v })}
                   />
