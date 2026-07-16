@@ -12,6 +12,12 @@ import {
   LogOut,
   Pencil,
   X,
+  Mail,
+  MessageCircle,
+  Send,
+  Link2,
+  Facebook,
+  Twitter,
 } from "lucide-react";
 import { useAppState, initialsFrom, type Profile, type Sex } from "@/lib/store";
 import { useT } from "@/lib/i18n";
