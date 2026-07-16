@@ -167,7 +167,7 @@ function ProgramPage() {
 
                     <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
                       <Tag icon={<Target className="h-3 w-3" />} value={ex.sets} />
-                      <Tag icon={<Timer className="h-3 w-3" />} value={`descanso ${ex.rest}`} />
+                      <Tag icon={<Timer className="h-3 w-3" />} value={`${t("program.rest")} ${ex.rest}`} />
                     </div>
                   </div>
                 </div>
