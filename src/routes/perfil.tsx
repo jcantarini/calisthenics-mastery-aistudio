@@ -439,3 +439,143 @@ function Field({
     </label>
   );
 }
+
+function ShareSheet({ onClose }: { onClose: () => void }) {
+  const { t } = useT();
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  const url = typeof window !== "undefined" ? window.location.origin : "";
+  const title = t("share.title");
+  const text = t("share.text");
+  const message = `${text} ${url}`.trim();
+  const enc = encodeURIComponent;
+
+  const openExternal = (href: string) => {
+    if (typeof window === "undefined") return;
+    window.open(href, "_blank", "noopener,noreferrer");
+    onClose();
+  };
+
+  const copy = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        toast.success(t("share.copied"));
+      } else if (typeof window !== "undefined") {
+        window.prompt(title, url);
+      }
+    } catch {
+      if (typeof window !== "undefined") window.prompt(title, url);
+    }
+    onClose();
+  };
+
+  const options: Array<{
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    className: string;
+    onClick: () => void;
+  }> = [
+    {
+      key: "whatsapp",
+      label: "WhatsApp",
+      icon: <MessageCircle className="h-5 w-5" />,
+      className: "bg-[#25D366]/15 text-[#25D366]",
+      onClick: () => openExternal(`https://wa.me/?text=${enc(message)}`),
+    },
+    {
+      key: "telegram",
+      label: "Telegram",
+      icon: <Send className="h-5 w-5" />,
+      className: "bg-[#229ED9]/15 text-[#229ED9]",
+      onClick: () =>
+        openExternal(`https://t.me/share/url?url=${enc(url)}&text=${enc(text)}`),
+    },
+    {
+      key: "email",
+      label: t("share.email"),
+      icon: <Mail className="h-5 w-5" />,
+      className: "bg-primary/15 text-primary",
+      onClick: () => {
+        if (typeof window !== "undefined") {
+          window.location.href = `mailto:?subject=${enc(title)}&body=${enc(message)}`;
+        }
+        onClose();
+      },
+    },
+    {
+      key: "twitter",
+      label: "X / Twitter",
+      icon: <Twitter className="h-5 w-5" />,
+      className: "bg-foreground/10 text-foreground",
+      onClick: () =>
+        openExternal(`https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(url)}`),
+    },
+    {
+      key: "facebook",
+      label: "Facebook",
+      icon: <Facebook className="h-5 w-5" />,
+      className: "bg-[#1877F2]/15 text-[#1877F2]",
+      onClick: () => openExternal(`https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`),
+    },
+    {
+      key: "copy",
+      label: t("share.copyLink"),
+      icon: <Link2 className="h-5 w-5" />,
+      className: "bg-muted text-muted-foreground",
+      onClick: copy,
+    },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("share.sheetTitle")}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-t-3xl border-t border-border/60 bg-surface-elevated p-5 pb-8"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
+      >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+        <div className="flex items-center justify-between">
+          <h2 className="text-display text-2xl">{t("share.sheetTitle")}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-background"
+            aria-label={t("common.close")}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-3 gap-3">
+          {options.map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={o.onClick}
+              className="flex flex-col items-center gap-2 rounded-2xl border border-border/60 bg-background p-3 text-center transition-transform active:scale-95"
+            >
+              <span className={`grid h-11 w-11 place-items-center rounded-full ${o.className}`}>
+                {o.icon}
+              </span>
+              <span className="text-[11px] font-semibold leading-tight">{o.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
