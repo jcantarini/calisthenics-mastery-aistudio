@@ -21,7 +21,7 @@ export const Route = createFileRoute("/treinos/")({
 });
 
 function TreinosPage() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const [level, setLevel] = useState<Level | "todos">("todos");
   const [category, setCategory] = useState<Category | "todas">("todas");
 
