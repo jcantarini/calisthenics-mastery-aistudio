@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const KEY = "barra:state:v1";
+const KEY = "barra:state:v2";
 
 export type Sex = "masculino" | "feminino";
 export type ActivityLevel = "sedentario" | "leve" | "moderado" | "intenso" | "atleta";
