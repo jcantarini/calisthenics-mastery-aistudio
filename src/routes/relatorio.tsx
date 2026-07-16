@@ -118,21 +118,21 @@ function RelatorioPage() {
         <Link
           to="/progresso"
           className="grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-background/60 backdrop-blur"
-          aria-label="Voltar"
+          aria-label={t("common.back")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-          últimos 7 dias
+          {t("common.last7")}
         </span>
       </div>
 
       <header className="mt-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Relatório
+          {t("report.eyebrow")}
         </p>
         <h1 className="mt-1 text-display text-4xl">
-          Sua <span className="text-primary">semana</span>
+          {t("report.title1")} <span className="text-primary">{t("report.title2")}</span>
         </h1>
       </header>
 
@@ -141,29 +141,29 @@ function RelatorioPage() {
         <KpiCard
           icon={<Dumbbell className="h-4 w-4" />}
           value={totalWorkouts}
-          label="treinos"
-          sub={`${trainDays}/7 dias`}
+          label={t("report.kpi.workouts")}
+          sub={`${trainDays}${t("report.kpi.days")}`}
           color="var(--lime)"
         />
         <KpiCard
           icon={<Clock className="h-4 w-4" />}
           value={totalMin}
-          label="min ativos"
-          sub={`meta ${state.weeklyGoal}× / sem`}
+          label={t("report.kpi.minActive")}
+          sub={`${t("report.kpi.goal")} ${state.weeklyGoal}× / ${t("home.weeks")}`}
           color="oklch(0.75 0.14 220)"
         />
         <KpiCard
           icon={<Flame className="h-4 w-4" />}
           value={totalKcalOut}
-          label="kcal queimadas"
-          sub={`média ${Math.round(totalKcalOut / 7)}/dia`}
+          label={t("report.kpi.kcalBurned")}
+          sub={`${t("report.kpi.avg")} ${Math.round(totalKcalOut / 7)}${t("report.kpi.perDay")}`}
           color="var(--ember)"
         />
         <KpiCard
           icon={<Utensils className="h-4 w-4" />}
           value={`${mealAdherence}%`}
-          label="adesão"
-          sub={`${totalDoneMeals}/${totalPlanned} refeições`}
+          label={t("report.kpi.adhesion")}
+          sub={`${totalDoneMeals}/${totalPlanned} ${t("report.kpi.meals")}`}
           color="var(--lime)"
         />
       </section>
