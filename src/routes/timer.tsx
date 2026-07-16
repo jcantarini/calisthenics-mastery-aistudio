@@ -474,12 +474,12 @@ function TimerPage() {
       <div className="mt-8 px-5">
         <div className="flex items-center gap-2 text-muted-foreground">
           <TimerIcon className="h-4 w-4" />
-          <p className="text-[11px] font-semibold uppercase tracking-widest">Configuração</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest">{t("timer.config")}</p>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
           <Stepper
-            label="Preparação"
+            label={t("timer.field.prep")}
             value={config.prep}
             suffix="s"
             step={5}
@@ -490,7 +490,7 @@ function TimerPage() {
             }}
           />
           <Stepper
-            label="Execução"
+            label={t("timer.field.work")}
             value={config.work}
             suffix="s"
             step={5}
@@ -498,7 +498,7 @@ function TimerPage() {
             onChange={(v) => setConfig((c) => ({ ...c, work: v }))}
           />
           <Stepper
-            label="Descanso"
+            label={t("timer.field.rest")}
             value={config.rest}
             suffix="s"
             step={5}
@@ -506,21 +506,21 @@ function TimerPage() {
             onChange={(v) => setConfig((c) => ({ ...c, rest: v }))}
           />
           <Stepper
-            label="Rounds"
+            label={t("timer.field.rounds")}
             value={config.rounds}
             step={1}
             min={1}
             onChange={(v) => setConfig((c) => ({ ...c, rounds: v }))}
           />
           <Stepper
-            label="Séries"
+            label={t("timer.field.sets")}
             value={config.sets}
             step={1}
             min={1}
             onChange={(v) => setConfig((c) => ({ ...c, sets: v }))}
           />
           <Stepper
-            label="Desc. série"
+            label={t("timer.field.setRest")}
             value={config.setRest}
             suffix="s"
             step={15}
@@ -530,9 +530,9 @@ function TimerPage() {
         </div>
 
         <p className="mt-4 text-center font-mono text-xs text-muted-foreground">
-          Tempo total estimado ·{" "}
+          {t("timer.total")}{" "}
           <span className="text-foreground">
-            {Math.floor(totalSeconds / 60)}min {totalSeconds % 60}s
+            {Math.floor(totalSeconds / 60)}{t("common.min")} {totalSeconds % 60}s
           </span>
         </p>
       </div>
