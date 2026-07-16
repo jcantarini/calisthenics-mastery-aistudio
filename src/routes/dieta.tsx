@@ -52,6 +52,10 @@ export const Route = createFileRoute("/dieta")({
 
 function DietaPage() {
   const [state, setState] = useAppState();
+  const { t, locale } = useT();
+  const localeMap: Record<string, string> = {
+    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+  };
   const { profile } = state;
 
   const bmiValue = bmi(profile);
