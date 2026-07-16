@@ -410,21 +410,21 @@ function TimerPage() {
               {String(Math.max(0, remaining)).padStart(2, "0")}
             </div>
             <p className="mt-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-              {phase === "done" ? "treino finalizado" : "segundos restantes"}
+              {phase === "done" ? t("timer.done") : t("timer.remaining")}
             </p>
             {phase === "done" && lastLogged && (
               <div className="mt-4 w-full rounded-2xl border border-primary/40 bg-primary/10 p-3 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                  Sessão registrada no diário
+                  {t("timer.logged")}
                 </p>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  {Math.round(lastLogged.durationSec / 60)} min · {lastLogged.kcal} kcal queimadas
+                  {Math.round(lastLogged.durationSec / 60)} {t("common.min")} · {lastLogged.kcal} {t("timer.kcalBurned")}
                 </p>
                 <Link
                   to="/relatorio"
                   className="mt-2 inline-block text-[11px] font-semibold uppercase tracking-widest text-primary"
                 >
-                  Ver relatório →
+                  {t("timer.seeReport")}
                 </Link>
               </div>
             )}
