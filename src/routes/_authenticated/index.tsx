@@ -5,7 +5,7 @@ import { useAppState } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 import { tLevel, tProgram } from "@/lib/content-i18n";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   component: HomePage,
 });
 
