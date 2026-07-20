@@ -204,6 +204,7 @@ function RootComponent() {
       <ThemeBootstrap>
         <I18nBootstrap>
           <ThemeColorSync />
+          <AuthStateSync />
           <SplashScreen />
           <OfflineBanner />
           <div
