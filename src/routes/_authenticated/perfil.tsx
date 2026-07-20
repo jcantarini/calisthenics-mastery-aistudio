@@ -229,7 +229,12 @@ function PerfilPage() {
           onClick={() => setSharing(true)}
         />
         <SettingRow icon={<Settings className="h-4 w-4" />} label={t("profile.settings")} to="/preferencias" />
-        <SettingRow icon={<LogOut className="h-4 w-4" />} label={t("profile.logout")} danger />
+        <SettingRow
+          icon={<LogOut className="h-4 w-4" />}
+          label={signingOut ? t("auth.signingOut") : t("profile.logout")}
+          danger
+          onClick={handleLogout}
+        />
       </section>
 
       <p className="mt-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
