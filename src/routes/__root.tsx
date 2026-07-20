@@ -18,6 +18,7 @@ import { useAppState } from "@/lib/store";
 import { useReminderEngine } from "@/lib/reminders";
 import { I18nBootstrap, useT } from "@/lib/i18n";
 import { ThemeBootstrap } from "@/lib/theme";
+import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
 
 function NotFoundComponent() {
   const { t } = useT();
@@ -99,8 +100,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/icon-512.png", type: "image/png", sizes: "512x512" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/icon-192.png" },
+      { rel: "apple-touch-icon", href: "/icon-512.png", sizes: "512x512" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -185,7 +188,13 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeBootstrap>
         <I18nBootstrap>
-          <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
+          <ThemeColorSync />
+          <SplashScreen />
+          <OfflineBanner />
+          <div
+            className="relative mx-auto min-h-screen max-w-md bg-background bg-grain"
+            style={{ paddingTop: "env(safe-area-inset-top)" }}
+          >
             <main className="pb-28">
               <Outlet />
             </main>
