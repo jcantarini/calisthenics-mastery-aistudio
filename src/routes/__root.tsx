@@ -19,6 +19,7 @@ import { useReminderEngine } from "@/lib/reminders";
 import { I18nBootstrap, useT } from "@/lib/i18n";
 import { ThemeBootstrap } from "@/lib/theme";
 import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   const { t } = useT();
