@@ -110,11 +110,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap",
       },
     ],
-    scripts: [
-      {
-        children: `try{var t=localStorage.getItem('barra:theme');if(t==='light'){document.documentElement.classList.add('light')}else{document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}`,
-      },
-    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
