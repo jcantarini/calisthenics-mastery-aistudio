@@ -6,7 +6,7 @@ import { useT } from "@/lib/i18n";
 import { tLevel, tCategory, tProgram } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/treinos/")({
+export const Route = createFileRoute("/_authenticated/treinos/")({
   head: () => ({
     meta: [
       { title: "Programas de treino — Barra" },

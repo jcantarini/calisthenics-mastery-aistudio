@@ -19,6 +19,7 @@ import { useReminderEngine } from "@/lib/reminders";
 import { I18nBootstrap, useT } from "@/lib/i18n";
 import { ThemeBootstrap } from "@/lib/theme";
 import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   const { t } = useT();
@@ -143,6 +144,8 @@ const navItems = [
 function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useT();
+  // Hide chrome on the public auth screen.
+  if (pathname.startsWith("/auth")) return null;
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
@@ -179,6 +182,18 @@ function BottomNav() {
   );
 }
 
+function AuthStateSync() {
+  const router = useRouter();
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      router.invalidate();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router]);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [state, setState] = useAppState();
@@ -189,6 +204,7 @@ function RootComponent() {
       <ThemeBootstrap>
         <I18nBootstrap>
           <ThemeColorSync />
+          <AuthStateSync />
           <SplashScreen />
           <OfflineBanner />
           <div

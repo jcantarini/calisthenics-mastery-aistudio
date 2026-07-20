@@ -5,7 +5,7 @@ import { useAppState } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/progresso")({
+export const Route = createFileRoute("/_authenticated/progresso")({
   head: () => ({
     meta: [
       { title: "Progresso e metas — Barra" },
