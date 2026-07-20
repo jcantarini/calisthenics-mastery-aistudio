@@ -188,7 +188,13 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeBootstrap>
         <I18nBootstrap>
-          <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
+          <ThemeColorSync />
+          <SplashScreen />
+          <OfflineBanner />
+          <div
+            className="relative mx-auto min-h-screen max-w-md bg-background bg-grain"
+            style={{ paddingTop: "env(safe-area-inset-top)" }}
+          >
             <main className="pb-28">
               <Outlet />
             </main>
