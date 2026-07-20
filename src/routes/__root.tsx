@@ -143,6 +143,8 @@ const navItems = [
 function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useT();
+  // Hide chrome on the public auth screen.
+  if (pathname.startsWith("/auth")) return null;
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
@@ -177,6 +179,18 @@ function BottomNav() {
       </ul>
     </nav>
   );
+}
+
+function AuthStateSync() {
+  const router = useRouter();
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      router.invalidate();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router]);
+  return null;
 }
 
 function RootComponent() {
