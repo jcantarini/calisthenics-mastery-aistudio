@@ -26,7 +26,7 @@ function AuthPage() {
   const { redirect } = useSearch({ from: "/auth" });
   const { t } = useT();
   const [loading, setLoading] = useState(true);
-  const [signingIn, setSigningIn] = useState(false);
+  const [signingIn, setSigningIn] = useState<"google" | "apple" | null>(null);
 
   // If already signed in, bounce straight to the intended destination.
   useEffect(() => {
@@ -50,15 +50,15 @@ function AuthPage() {
     };
   }, [navigate, redirect]);
 
-  const signInWithGoogle = async () => {
-    setSigningIn(true);
+  const signInWith = async (provider: "google" | "apple") => {
+    setSigningIn(provider);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
         toast.error(t("auth.error"), { description: result.error.message });
-        setSigningIn(false);
+        setSigningIn(null);
         return;
       }
       // Redirect flow: browser navigates away; popup flow: onAuthStateChange takes over.
@@ -66,7 +66,7 @@ function AuthPage() {
       toast.error(t("auth.error"), {
         description: err instanceof Error ? err.message : String(err),
       });
-      setSigningIn(false);
+      setSigningIn(null);
     }
   };
 
@@ -104,20 +104,32 @@ function AuthPage() {
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <button
-          onClick={signInWithGoogle}
-          disabled={signingIn}
+          onClick={() => signInWith("google")}
+          disabled={signingIn !== null}
           className="flex w-full items-center justify-center gap-3 rounded-full bg-primary px-5 py-4 text-sm font-bold uppercase tracking-widest text-primary-foreground shadow-glow transition-transform active:scale-[0.98] disabled:opacity-70"
         >
-          {signingIn ? (
+          {signingIn === "google" ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             <GoogleIcon className="h-5 w-5" />
           )}
           {t("auth.continueGoogle")}
         </button>
-        <p className="text-center text-[10px] uppercase tracking-widest text-muted-foreground">
+        <button
+          onClick={() => signInWith("apple")}
+          disabled={signingIn !== null}
+          className="flex w-full items-center justify-center gap-3 rounded-full bg-foreground px-5 py-4 text-sm font-bold uppercase tracking-widest text-background transition-transform active:scale-[0.98] disabled:opacity-70"
+        >
+          {signingIn === "apple" ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <AppleIcon className="h-5 w-5" />
+          )}
+          {t("auth.continueApple")}
+        </button>
+        <p className="pt-1 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
           {t("auth.terms")}
         </p>
       </div>
@@ -151,6 +163,14 @@ function GoogleIcon({ className }: { className?: string }) {
         fill="#34A853"
         d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
       />
+    </svg>
+  );
+}
+
+function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+      <path d="M16.365 1.43c0 1.14-.42 2.21-1.26 3.08-.9.93-2.02 1.47-3.07 1.38-.13-1.11.42-2.28 1.23-3.09.83-.86 2.02-1.44 3.1-1.5v.13zM20.5 17.4c-.55 1.24-.82 1.79-1.53 2.88-.99 1.52-2.39 3.42-4.11 3.44-1.53.01-1.93-.99-4.02-.98-2.09.01-2.52 1-4.05.98-1.72-.02-3.05-1.75-4.04-3.27C.14 16.24-.14 11.2 2.03 8.35c1.55-2.02 3.98-3.2 6.27-3.2 2.33 0 3.8 1.28 5.72 1.28 1.87 0 3-1.28 5.7-1.28 2.04 0 4.2 1.11 5.74 3.02-5.04 2.76-4.22 9.97 1.04 12.23-.44 1.2-.65 1.74-2 3z"/>
     </svg>
   );
 }
