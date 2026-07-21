@@ -749,6 +749,7 @@ const it: Dict = {
   "offline.banner": "Sei offline. Alcune funzionalità potrebbero non funzionare.",
   "auth.subtitle": "Allenamenti di calisthenics dal principiante all'avanzato, con obiettivi, dieta e monitoraggio.",
   "auth.continueGoogle": "Continua con Google",
+  "auth.continueApple": "Continua con Apple",
   "auth.terms": "Continuando accetti i termini di servizio",
   "auth.error": "Errore di accesso",
   "auth.signedOut": "Disconnesso con successo",
