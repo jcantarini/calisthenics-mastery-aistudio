@@ -14,8 +14,9 @@ import { Home, Dumbbell, Apple, Target, User } from "lucide-react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { cn } from "@/lib/utils";
-import { useAppState } from "@/lib/store";
+import { useAppState, type AppState } from "@/lib/store";
 import { useReminderEngine } from "@/lib/reminders";
+import { useWorkoutReminders, useWorkoutReminderEngine } from "@/lib/workout-reminders";
 import { I18nBootstrap, useT } from "@/lib/i18n";
 import { ThemeBootstrap } from "@/lib/theme";
 import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
@@ -194,6 +195,13 @@ function AuthStateSync() {
   return null;
 }
 
+function WorkoutReminderHost({ state }: { state: AppState }) {
+  const { settings, update } = useWorkoutReminders();
+  const { t } = useT();
+  useWorkoutReminderEngine(state, settings, update, t);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [state, setState] = useAppState();
@@ -205,6 +213,7 @@ function RootComponent() {
         <I18nBootstrap>
           <ThemeColorSync />
           <AuthStateSync />
+          <WorkoutReminderHost state={state} />
           <SplashScreen />
           <OfflineBanner />
           <div
