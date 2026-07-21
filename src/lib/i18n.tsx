@@ -99,6 +99,7 @@ const pt: Dict = {
   "offline.banner": "Você está offline. Alguns recursos podem não funcionar.",
   "auth.subtitle": "Treinos de calistenia do zero ao avançado, com metas, dieta e acompanhamento.",
   "auth.continueGoogle": "Continuar com Google",
+  "auth.continueApple": "Continuar com Apple",
   "auth.terms": "Ao continuar você aceita os termos de uso",
   "auth.error": "Erro ao entrar",
   "auth.signedOut": "Você saiu com sucesso",
