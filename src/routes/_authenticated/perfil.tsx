@@ -228,6 +228,7 @@ function PerfilPage() {
           label={t("profile.share")}
           onClick={() => setSharing(true)}
         />
+        <SettingRow icon={<Bell className="h-4 w-4" />} label={t("profile.reminders")} to="/lembretes" />
         <SettingRow icon={<Settings className="h-4 w-4" />} label={t("profile.settings")} to="/preferencias" />
         <SettingRow
           icon={<LogOut className="h-4 w-4" />}
