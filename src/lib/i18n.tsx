@@ -430,6 +430,7 @@ const en: Dict = {
   "offline.banner": "You are offline. Some features may not work.",
   "auth.subtitle": "Calisthenics workouts from beginner to advanced, with goals, diet and tracking.",
   "auth.continueGoogle": "Continue with Google",
+  "auth.continueApple": "Continue with Apple",
   "auth.terms": "By continuing you agree to the terms of service",
   "auth.error": "Sign-in error",
   "auth.signedOut": "Signed out successfully",
