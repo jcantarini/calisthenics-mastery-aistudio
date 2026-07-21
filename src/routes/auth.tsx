@@ -104,20 +104,32 @@ function AuthPage() {
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <button
-          onClick={signInWithGoogle}
-          disabled={signingIn}
+          onClick={() => signInWith("google")}
+          disabled={signingIn !== null}
           className="flex w-full items-center justify-center gap-3 rounded-full bg-primary px-5 py-4 text-sm font-bold uppercase tracking-widest text-primary-foreground shadow-glow transition-transform active:scale-[0.98] disabled:opacity-70"
         >
-          {signingIn ? (
+          {signingIn === "google" ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             <GoogleIcon className="h-5 w-5" />
           )}
           {t("auth.continueGoogle")}
         </button>
-        <p className="text-center text-[10px] uppercase tracking-widest text-muted-foreground">
+        <button
+          onClick={() => signInWith("apple")}
+          disabled={signingIn !== null}
+          className="flex w-full items-center justify-center gap-3 rounded-full bg-foreground px-5 py-4 text-sm font-bold uppercase tracking-widest text-background transition-transform active:scale-[0.98] disabled:opacity-70"
+        >
+          {signingIn === "apple" ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <AppleIcon className="h-5 w-5" />
+          )}
+          {t("auth.continueApple")}
+        </button>
+        <p className="pt-1 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
           {t("auth.terms")}
         </p>
       </div>
