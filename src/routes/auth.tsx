@@ -50,15 +50,15 @@ function AuthPage() {
     };
   }, [navigate, redirect]);
 
-  const signInWithGoogle = async () => {
-    setSigningIn(true);
+  const signInWith = async (provider: "google" | "apple") => {
+    setSigningIn(provider);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
         toast.error(t("auth.error"), { description: result.error.message });
-        setSigningIn(false);
+        setSigningIn(null);
         return;
       }
       // Redirect flow: browser navigates away; popup flow: onAuthStateChange takes over.
@@ -66,7 +66,7 @@ function AuthPage() {
       toast.error(t("auth.error"), {
         description: err instanceof Error ? err.message : String(err),
       });
-      setSigningIn(false);
+      setSigningIn(null);
     }
   };
 
