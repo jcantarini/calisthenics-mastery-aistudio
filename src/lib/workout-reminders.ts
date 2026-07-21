@@ -75,7 +75,9 @@ async function capSchedule(items: CapNotif[]) {
       Capacitor?: { isNativePlatform?: () => boolean };
     };
     if (!w.Capacitor?.isNativePlatform?.()) return false;
-    const mod = await import(/* @vite-ignore */ "@capacitor/local-notifications").catch(() => null as unknown);
+    const specifier = "@capacitor/local-notifications";
+    const dyn = new Function("s", "return import(s)") as (s: string) => Promise<unknown>;
+    const mod = await dyn(specifier).catch(() => null as unknown);
     if (!mod || typeof mod !== "object") return false;
     const LN = (mod as { LocalNotifications?: { schedule: (o: unknown) => Promise<unknown> } }).LocalNotifications;
     if (!LN) return false;
