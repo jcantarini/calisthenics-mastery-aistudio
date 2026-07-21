@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { estimateKcal, logWorkoutSession, useAppState } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 
-export const Route = createFileRoute("/timer")({
+export const Route = createFileRoute("/_authenticated/timer")({
   head: () => ({
     meta: [
       { title: "Timer de intervalos — Barra" },

@@ -14,10 +14,13 @@ import { Home, Dumbbell, Apple, Target, User } from "lucide-react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { cn } from "@/lib/utils";
-import { useAppState } from "@/lib/store";
+import { useAppState, type AppState } from "@/lib/store";
 import { useReminderEngine } from "@/lib/reminders";
+import { useWorkoutReminders, useWorkoutReminderEngine } from "@/lib/workout-reminders";
 import { I18nBootstrap, useT } from "@/lib/i18n";
 import { ThemeBootstrap } from "@/lib/theme";
+import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   const { t } = useT();
@@ -99,8 +102,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/icon-512.png", type: "image/png", sizes: "512x512" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/icon-192.png" },
+      { rel: "apple-touch-icon", href: "/icon-512.png", sizes: "512x512" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -140,6 +145,8 @@ const navItems = [
 function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useT();
+  // Hide chrome on the public auth screen.
+  if (pathname.startsWith("/auth")) return null;
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
@@ -176,6 +183,25 @@ function BottomNav() {
   );
 }
 
+function AuthStateSync() {
+  const router = useRouter();
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      router.invalidate();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router]);
+  return null;
+}
+
+function WorkoutReminderHost({ state }: { state: AppState }) {
+  const { settings, update } = useWorkoutReminders();
+  const { t } = useT();
+  useWorkoutReminderEngine(state, settings, update, t);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [state, setState] = useAppState();
@@ -185,7 +211,15 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeBootstrap>
         <I18nBootstrap>
-          <div className="relative mx-auto min-h-screen max-w-md bg-background bg-grain">
+          <ThemeColorSync />
+          <AuthStateSync />
+          <WorkoutReminderHost state={state} />
+          <SplashScreen />
+          <OfflineBanner />
+          <div
+            className="relative mx-auto min-h-screen max-w-md bg-background bg-grain"
+            style={{ paddingTop: "env(safe-area-inset-top)" }}
+          >
             <main className="pb-28">
               <Outlet />
             </main>

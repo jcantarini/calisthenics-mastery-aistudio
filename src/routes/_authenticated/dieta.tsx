@@ -37,7 +37,7 @@ import {
 } from "@/lib/nutrition";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/dieta")({
+export const Route = createFileRoute("/_authenticated/dieta")({
   head: () => ({
     meta: [
       { title: "Dieta e calorias — Barra" },

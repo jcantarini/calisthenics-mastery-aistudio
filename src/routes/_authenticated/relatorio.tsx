@@ -21,7 +21,7 @@ import {
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/relatorio")({
+export const Route = createFileRoute("/_authenticated/relatorio")({
   head: () => ({
     meta: [
       { title: "Relatório semanal — Barra" },

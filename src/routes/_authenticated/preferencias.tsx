@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { useT, LOCALES, type Locale } from "@/lib/i18n";
 
-export const Route = createFileRoute("/preferencias")({
+export const Route = createFileRoute("/_authenticated/preferencias")({
   head: () => ({
     meta: [
       { title: "Preferências — Barra" },

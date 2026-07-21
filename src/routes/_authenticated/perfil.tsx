@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import {
@@ -23,10 +23,12 @@ import {
 import { useAppState, initialsFrom, type Profile, type Sex } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
+import { useAuthSession, profileFromUser } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
-export const Route = createFileRoute("/perfil")({
+export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
     meta: [
       { title: "Perfil — Barra" },
@@ -61,11 +63,35 @@ function PerfilPage() {
   const [state, setState] = useAppState();
   const [editing, setEditing] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const { t } = useT();
   const { theme, toggle: toggleTheme } = useTheme();
+  const { user } = useAuthSession();
+  const authProfile = profileFromUser(user);
+  const navigate = useNavigate();
   const { profile } = state;
   const bmi = profile.weightKg / Math.pow(profile.heightCm / 100, 2);
   const age = new Date().getFullYear() - profile.birthYear;
+
+  const displayName = authProfile?.full_name || profile.name;
+  const displayInitials = initialsFrom(displayName) || profile.initials || "?";
+  const displayEmail = authProfile?.email;
+  const displayAvatar = authProfile?.avatar_url;
+
+  const handleLogout = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+      toast.success(t("auth.signedOut"));
+      navigate({ to: "/auth", replace: true });
+    } catch (err) {
+      toast.error(t("auth.error"), {
+        description: err instanceof Error ? err.message : String(err),
+      });
+      setSigningOut(false);
+    }
+  };
 
   return (
     <div className="px-5 pt-12">
@@ -90,15 +116,29 @@ function PerfilPage() {
           {t("profile.edit")}
         </button>
         <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground">
-            {profile.initials}
-          </div>
+          {displayAvatar ? (
+            <img
+              src={displayAvatar}
+              alt={displayName}
+              referrerPolicy="no-referrer"
+              className="h-16 w-16 shrink-0 rounded-2xl object-cover ring-2 ring-primary/40"
+              width={64}
+              height={64}
+            />
+          ) : (
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground">
+              {displayInitials}
+            </div>
+          )}
           <div className="min-w-0 flex-1 pr-16">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               {t("profile.athlete")} {state.streak > 10 ? "III" : "II"}
             </p>
-            <p className="truncate text-lg font-bold">{profile.name}</p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate text-lg font-bold">{displayName}</p>
+            {displayEmail && (
+              <p className="truncate text-xs text-muted-foreground">{displayEmail}</p>
+            )}
+            <p className="truncate text-[11px] text-muted-foreground">
               {t("profile.since")} {profile.memberSince} · {state.completedSessions.length} {t("profile.sessions")}
             </p>
           </div>
@@ -188,8 +228,14 @@ function PerfilPage() {
           label={t("profile.share")}
           onClick={() => setSharing(true)}
         />
+        <SettingRow icon={<Bell className="h-4 w-4" />} label={t("profile.reminders")} to="/lembretes" />
         <SettingRow icon={<Settings className="h-4 w-4" />} label={t("profile.settings")} to="/preferencias" />
-        <SettingRow icon={<LogOut className="h-4 w-4" />} label={t("profile.logout")} danger />
+        <SettingRow
+          icon={<LogOut className="h-4 w-4" />}
+          label={signingOut ? t("auth.signingOut") : t("profile.logout")}
+          danger
+          onClick={handleLogout}
+        />
       </section>
 
       <p className="mt-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
