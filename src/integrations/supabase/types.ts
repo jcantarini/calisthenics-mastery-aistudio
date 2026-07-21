@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_reminder_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          reminders: Json
+          sound: boolean
+          updated_at: string
+          user_id: string
+          vibration: boolean
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          reminders?: Json
+          sound?: boolean
+          updated_at?: string
+          user_id: string
+          vibration?: boolean
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          reminders?: Json
+          sound?: boolean
+          updated_at?: string
+          user_id?: string
+          vibration?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
