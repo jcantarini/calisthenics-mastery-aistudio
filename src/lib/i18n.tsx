@@ -1068,6 +1068,7 @@ const es: Dict = {
   "offline.banner": "Estás sin conexión. Algunas funciones pueden no funcionar.",
   "auth.subtitle": "Entrenamientos de calistenia de principiante a avanzado, con metas, dieta y seguimiento.",
   "auth.continueGoogle": "Continuar con Google",
+  "auth.continueApple": "Continuar con Apple",
   "auth.terms": "Al continuar aceptas los términos del servicio",
   "auth.error": "Error al iniciar sesión",
   "auth.signedOut": "Sesión cerrada",
