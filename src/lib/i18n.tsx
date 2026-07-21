@@ -1387,6 +1387,7 @@ const fr: Dict = {
   "offline.banner": "Vous êtes hors ligne. Certaines fonctions peuvent ne pas fonctionner.",
   "auth.subtitle": "Entraînements de callisthénie du débutant à l'avancé, avec objectifs, régime et suivi.",
   "auth.continueGoogle": "Continuer avec Google",
+  "auth.continueApple": "Continuer avec Apple",
   "auth.terms": "En continuant vous acceptez les conditions d'utilisation",
   "auth.error": "Erreur de connexion",
   "auth.signedOut": "Déconnecté avec succès",
