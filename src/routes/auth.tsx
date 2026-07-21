@@ -26,7 +26,7 @@ function AuthPage() {
   const { redirect } = useSearch({ from: "/auth" });
   const { t } = useT();
   const [loading, setLoading] = useState(true);
-  const [signingIn, setSigningIn] = useState(false);
+  const [signingIn, setSigningIn] = useState<"google" | "apple" | null>(null);
 
   // If already signed in, bounce straight to the intended destination.
   useEffect(() => {
