@@ -124,7 +124,7 @@ export async function upsertOnboarding(
     injuries: data.injuries ?? null,
     motivation: data.motivation ?? null,
     skill_goal: data.skill_goal ?? null,
-    current_performance: data.current_performance ?? {},
+    current_performance: (data.current_performance ?? {}) as unknown as import("@/integrations/supabase/types").Json,
     onboarding_completed: completed,
     completed_at: completed ? new Date().toISOString() : null,
   };
