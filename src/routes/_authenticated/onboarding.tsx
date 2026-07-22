@@ -9,7 +9,6 @@ import { tOb } from "@/lib/onboarding-i18n";
 import { useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import {
-  EMPTY_ONBOARDING,
   TOTAL_STEPS,
   clearDraft,
   fetchOnboarding,
