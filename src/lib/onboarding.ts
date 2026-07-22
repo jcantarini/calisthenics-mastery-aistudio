@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { PROGRAMS } from "@/lib/programs";
 import type { AppState, ActivityLevel, Sex } from "@/lib/store";
 import { initialsFrom } from "@/lib/store";
@@ -124,7 +125,7 @@ export async function upsertOnboarding(
     injuries: data.injuries ?? null,
     motivation: data.motivation ?? null,
     skill_goal: data.skill_goal ?? null,
-    current_performance: (data.current_performance ?? {}) as unknown as import("@/integrations/supabase/types").Json,
+    current_performance: (data.current_performance ?? {}) as unknown as Json,
     onboarding_completed: completed,
     completed_at: completed ? new Date().toISOString() : null,
   };
