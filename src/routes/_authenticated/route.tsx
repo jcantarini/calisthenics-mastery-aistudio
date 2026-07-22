@@ -11,6 +11,17 @@ export const Route = createFileRoute("/_authenticated")({
         search: { redirect: location.href },
       });
     }
+    // Gate: force onboarding for new users
+    if (location.pathname !== "/onboarding") {
+      const { data: ob } = await supabase
+        .from("user_onboarding")
+        .select("onboarding_completed")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      if (!ob?.onboarding_completed) {
+        throw redirect({ to: "/onboarding" });
+      }
+    }
     return { user: data.user };
   },
   component: () => <Outlet />,
