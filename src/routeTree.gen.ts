@@ -18,6 +18,7 @@ import { Route as AuthenticatedRelatorioRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProgressoRouteImport } from './routes/_authenticated/progresso'
 import { Route as AuthenticatedPreferenciasRouteImport } from './routes/_authenticated/preferencias'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedLembretesRouteImport } from './routes/_authenticated/lembretes'
 import { Route as AuthenticatedDietaRouteImport } from './routes/_authenticated/dieta'
 import { Route as AuthenticatedTreinosIndexRouteImport } from './routes/_authenticated/treinos.index'
@@ -68,6 +69,11 @@ const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLembretesRoute = AuthenticatedLembretesRouteImport.update({
   id: '/lembretes',
   path: '/lembretes',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/preferencias': typeof AuthenticatedPreferenciasRoute
   '/progresso': typeof AuthenticatedProgressoRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/preferencias': typeof AuthenticatedPreferenciasRoute
   '/progresso': typeof AuthenticatedProgressoRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dieta': typeof AuthenticatedDietaRoute
   '/_authenticated/lembretes': typeof AuthenticatedLembretesRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/preferencias': typeof AuthenticatedPreferenciasRoute
   '/_authenticated/progresso': typeof AuthenticatedProgressoRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dieta'
     | '/lembretes'
+    | '/onboarding'
     | '/perfil'
     | '/preferencias'
     | '/progresso'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dieta'
     | '/lembretes'
+    | '/onboarding'
     | '/perfil'
     | '/preferencias'
     | '/progresso'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dieta'
     | '/_authenticated/lembretes'
+    | '/_authenticated/onboarding'
     | '/_authenticated/perfil'
     | '/_authenticated/preferencias'
     | '/_authenticated/progresso'
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lembretes': {
       id: '/_authenticated/lembretes'
       path: '/lembretes'
@@ -296,6 +315,7 @@ const AuthenticatedTreinosRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDietaRoute: typeof AuthenticatedDietaRoute
   AuthenticatedLembretesRoute: typeof AuthenticatedLembretesRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPreferenciasRoute: typeof AuthenticatedPreferenciasRoute
   AuthenticatedProgressoRoute: typeof AuthenticatedProgressoRoute
@@ -308,6 +328,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDietaRoute: AuthenticatedDietaRoute,
   AuthenticatedLembretesRoute: AuthenticatedLembretesRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPreferenciasRoute: AuthenticatedPreferenciasRoute,
   AuthenticatedProgressoRoute: AuthenticatedProgressoRoute,
