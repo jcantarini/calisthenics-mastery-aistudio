@@ -41,6 +41,81 @@ export type Database = {
         }
         Relationships: []
       }
+      user_onboarding: {
+        Row: {
+          age: number | null
+          completed_at: string | null
+          country: string | null
+          created_at: string
+          current_performance: Json
+          days_per_week: number | null
+          equipment: Json
+          fitness_level: string | null
+          gender: string | null
+          has_experience: boolean | null
+          height_cm: number | null
+          injuries: string | null
+          language: string | null
+          motivation: string | null
+          onboarding_completed: boolean
+          primary_goal: string | null
+          skill_goal: string | null
+          target_areas: Json
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+          workout_duration_min: number | null
+        }
+        Insert: {
+          age?: number | null
+          completed_at?: string | null
+          country?: string | null
+          created_at?: string
+          current_performance?: Json
+          days_per_week?: number | null
+          equipment?: Json
+          fitness_level?: string | null
+          gender?: string | null
+          has_experience?: boolean | null
+          height_cm?: number | null
+          injuries?: string | null
+          language?: string | null
+          motivation?: string | null
+          onboarding_completed?: boolean
+          primary_goal?: string | null
+          skill_goal?: string | null
+          target_areas?: Json
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+          workout_duration_min?: number | null
+        }
+        Update: {
+          age?: number | null
+          completed_at?: string | null
+          country?: string | null
+          created_at?: string
+          current_performance?: Json
+          days_per_week?: number | null
+          equipment?: Json
+          fitness_level?: string | null
+          gender?: string | null
+          has_experience?: boolean | null
+          height_cm?: number | null
+          injuries?: string | null
+          language?: string | null
+          motivation?: string | null
+          onboarding_completed?: boolean
+          primary_goal?: string | null
+          skill_goal?: string | null
+          target_areas?: Json
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+          workout_duration_min?: number | null
+        }
+        Relationships: []
+      }
       workout_reminder_settings: {
         Row: {
           created_at: string
