@@ -9,7 +9,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Home, Dumbbell, Apple, Target, User } from "lucide-react";
+import { Home, Dumbbell, Apple, Target, User, AlertOctahedron } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -21,6 +21,9 @@ import { I18nBootstrap, useT } from "@/lib/i18n";
 import { ThemeBootstrap } from "@/lib/theme";
 import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
 import { supabase } from "@/integrations/supabase/client";
+import { Toaster } from "@/components/ui/sonner";
+import { PageTransition } from "@/components/ui/page-transition";
+
 
 function NotFoundComponent() {
   const { t } = useT();
