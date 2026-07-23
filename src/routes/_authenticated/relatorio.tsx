@@ -20,6 +20,7 @@ import {
 } from "@/lib/nutrition";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const Route = createFileRoute("/_authenticated/relatorio")({
   head: () => ({
@@ -289,9 +290,19 @@ function RelatorioPage() {
       <section className="mt-8">
         <h2 className="text-display text-2xl">{t("report.sessions")}</h2>
         {allSessions.length === 0 ? (
-          <div className="mt-3 rounded-2xl border border-dashed border-border/60 bg-surface p-6 text-center text-sm text-muted-foreground">
-            {t("report.empty")}
-          </div>
+          <EmptyState
+            className="mt-3"
+            icon={<Activity className="h-5 w-5" />}
+            title={t("report.empty")}
+            action={
+              <Link
+                to="/timer"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-transform active:scale-95"
+              >
+                {t("treinos.timer")}
+              </Link>
+            }
+          />
         ) : (
           <ul className="mt-3 space-y-2">
             {allSessions.map((s) => {
