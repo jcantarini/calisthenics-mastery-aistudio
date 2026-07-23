@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useT } from "@/lib/i18n";
@@ -83,7 +82,6 @@ function AuthPage() {
       className="relative mx-auto flex min-h-screen max-w-md flex-col justify-between bg-background bg-grain px-6 pb-10 pt-16"
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 4rem)" }}
     >
-      <Toaster position="top-center" richColors />
 
       <div className="flex flex-col items-center text-center">
         <div className="relative">
