@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Check, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useT, LOCALES, type Locale } from "@/lib/i18n";
 import { tOb } from "@/lib/onboarding-i18n";
@@ -161,7 +160,6 @@ function OnboardingPage() {
 
   return (
     <div className="min-h-screen px-5 pb-32 pt-12">
-      <Toaster position="top-center" richColors />
       {/* Header */}
       <header className="flex items-center gap-3">
         {step > 1 ? (

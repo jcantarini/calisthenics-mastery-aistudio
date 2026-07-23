@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Check, Languages } from "lucide-react";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { useT, LOCALES, type Locale } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/preferencias")({
@@ -24,7 +23,6 @@ function PreferenciasPage() {
 
   return (
     <div className="px-5 pt-12">
-      <Toaster position="top-center" richColors />
       <header className="flex items-center gap-3">
         <Link
           to="/perfil"
