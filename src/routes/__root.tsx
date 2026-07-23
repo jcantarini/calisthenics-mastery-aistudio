@@ -9,7 +9,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Home, Dumbbell, Apple, Target, User } from "lucide-react";
+import { Home, Dumbbell, Apple, Target, User, AlertOctagon } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -21,6 +21,9 @@ import { I18nBootstrap, useT } from "@/lib/i18n";
 import { ThemeBootstrap } from "@/lib/theme";
 import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
 import { supabase } from "@/integrations/supabase/client";
+import { Toaster } from "@/components/ui/sonner";
+import { PageTransition } from "@/components/ui/page-transition";
+
 
 function NotFoundComponent() {
   const { t } = useT();
@@ -53,8 +56,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold">{t("error.title")}</h1>
+      <div className="w-full max-w-md text-center animate-fade-in">
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-destructive/15 text-destructive">
+          <AlertOctagon className="h-6 w-6" />
+        </div>
+        <h1 className="mt-4 text-xl font-semibold">{t("error.title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{t("error.desc")}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -62,13 +68,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {t("common.retry")}
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-medium"
+            className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {t("common.start")}
           </a>
@@ -216,12 +222,15 @@ function RootComponent() {
           <WorkoutReminderHost state={state} />
           <SplashScreen />
           <OfflineBanner />
+          <Toaster position="top-center" richColors closeButton />
           <div
             className="relative mx-auto min-h-screen max-w-md bg-background bg-grain"
             style={{ paddingTop: "env(safe-area-inset-top)" }}
           >
             <main className="pb-28">
-              <Outlet />
+              <PageTransition>
+                <Outlet />
+              </PageTransition>
             </main>
             <BottomNav />
           </div>

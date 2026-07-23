@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronLeft, Bell, BellOff, Plus, Trash2, Volume2, VolumeX, Vibrate, Clock, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { useT } from "@/lib/i18n";
 import { useAppState } from "@/lib/store";
 import {
@@ -111,7 +110,6 @@ function LembretesPage() {
 
   return (
     <div className="px-5 pt-12">
-      <Toaster position="top-center" richColors />
       <header className="flex items-center gap-3">
         <Link
           to="/perfil"

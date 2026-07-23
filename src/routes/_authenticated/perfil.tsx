@@ -26,7 +26,6 @@ import { useTheme } from "@/lib/theme";
 import { useAuthSession, profileFromUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
@@ -95,7 +94,6 @@ function PerfilPage() {
 
   return (
     <div className="px-5 pt-12">
-      <Toaster position="top-center" richColors />
       <header className="flex items-center justify-between">
         <h1 className="text-display text-4xl">{t("profile.title")}</h1>
         <button

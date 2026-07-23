@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronRight, Clock, Calendar, Target, Dumbbell, Heart, Shield, Timer } from "lucide-react";
+import { ChevronRight, Clock, Calendar, Target, Dumbbell, Heart, Shield, Timer, SearchX } from "lucide-react";
 import { PROGRAMS, LEVEL_META, type Level, type Category } from "@/lib/programs";
 import { useT } from "@/lib/i18n";
 import { tLevel, tCategory, tProgram } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const Route = createFileRoute("/_authenticated/treinos/")({
   head: () => ({
@@ -114,9 +115,23 @@ function TreinosPage() {
       </div>
 
       {list.length === 0 && (
-        <p className="mt-8 rounded-2xl border border-border/60 bg-surface p-6 text-center text-sm text-muted-foreground">
-          {t("treinos.empty")}
-        </p>
+        <EmptyState
+          className="mt-8"
+          icon={<SearchX className="h-6 w-6" />}
+          title={t("treinos.empty")}
+          action={
+            <button
+              type="button"
+              onClick={() => {
+                setLevel("todos");
+                setCategory("todas");
+              }}
+              className="inline-flex items-center justify-center rounded-full border border-border/60 bg-surface px-5 py-2 text-xs font-semibold uppercase tracking-widest text-foreground transition-transform active:scale-95"
+            >
+              {t("common.reset")}
+            </button>
+          }
+        />
       )}
 
       <ul className="mt-6 space-y-4">
