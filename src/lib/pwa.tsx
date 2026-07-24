@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { WifiOff } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
+import { HomeSkeleton } from "@/components/ui/skeleton-blocks";
 
 /** Sync <meta name="theme-color"> with the current theme so the Android status bar matches. */
 export function ThemeColorSync() {
@@ -75,15 +76,9 @@ export function SplashScreen() {
   );
 }
 
-/** Full-screen loader used during route transitions. */
+/** Layout-matched loader used during route transitions to avoid CLS. */
 export function RouteLoader() {
-  return (
-    <div className="grid min-h-[50vh] place-items-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-      </div>
-    </div>
-  );
+  return <HomeSkeleton />;
 }
 
 /** Banner that appears when the browser reports the device is offline. */

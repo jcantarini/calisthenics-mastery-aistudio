@@ -150,3 +150,35 @@
     radial-gradient(circle at 20% 10%, oklch(0.88 0.24 130 / 0.08), transparent 40%),
     radial-gradient(circle at 80% 90%, oklch(0.72 0.19 45 / 0.08), transparent 45%);
 }
+
+/* Minimum touch target — WCAG 2.5.5 (AAA) but a good default. */
+@utility tap {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+@keyframes celebrate {
+  0% { transform: scale(0.6); opacity: 0; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@utility animate-celebrate {
+  animation: celebrate 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@utility animate-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--primary) 20%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
