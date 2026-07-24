@@ -28,15 +28,15 @@ import { PageTransition } from "@/components/ui/page-transition";
 function NotFoundComponent() {
   const { t } = useT();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center animate-fade-in">
         <h1 className="text-display text-7xl text-primary">404</h1>
         <h2 className="mt-4 text-xl font-semibold">{t("404.title")}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{t("404.desc")}</p>
         <div className="mt-6">
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {t("404.back")}
           </Link>
@@ -55,7 +55,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="w-full max-w-md text-center animate-fade-in">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-destructive/15 text-destructive">
           <AlertOctagon className="h-6 w-6" />
@@ -166,8 +166,10 @@ function BottomNav() {
             <li key={to}>
               <Link
                 to={to}
+                aria-current={active ? "page" : undefined}
+                aria-label={t(key)}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-3 text-[10px] font-semibold uppercase tracking-widest transition-colors",
+                  "flex min-h-14 flex-col items-center gap-1 py-3 text-[10px] font-semibold uppercase tracking-widest transition-colors active:scale-[0.94]",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
@@ -177,7 +179,7 @@ function BottomNav() {
                     active && "bg-primary/15 shadow-glow",
                   )}
                 >
-                  <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.5 : 2} />
+                  <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.5 : 2} aria-hidden />
                 </span>
                 {t(key)}
               </Link>
@@ -224,7 +226,7 @@ function RootComponent() {
           <OfflineBanner />
           <Toaster position="top-center" richColors closeButton />
           <div
-            className="relative mx-auto min-h-screen max-w-md bg-background bg-grain"
+            className="relative mx-auto min-h-dvh max-w-md bg-background bg-grain"
             style={{ paddingTop: "env(safe-area-inset-top)" }}
           >
             <main className="pb-28">

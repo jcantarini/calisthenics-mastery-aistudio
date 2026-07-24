@@ -71,15 +71,27 @@ function AuthPage() {
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div
+        className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-between bg-background bg-grain px-6 pb-10"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 4rem)" }}
+        aria-busy
+      >
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="h-20 w-20 animate-pulse rounded-3xl bg-primary/20" />
+          <div className="mt-2 h-8 w-32 animate-pulse rounded-md bg-primary/10" />
+          <div className="h-3 w-48 animate-pulse rounded bg-primary/10" />
+        </div>
+        <div className="space-y-3">
+          <div className="h-14 w-full animate-pulse rounded-full bg-primary/15" />
+          <div className="h-14 w-full animate-pulse rounded-full bg-foreground/10" />
+        </div>
       </div>
     );
   }
 
   return (
     <div
-      className="relative mx-auto flex min-h-screen max-w-md flex-col justify-between bg-background bg-grain px-6 pb-10 pt-16"
+      className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-between bg-background bg-grain px-6 pb-10 pt-16"
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 4rem)" }}
     >
 
