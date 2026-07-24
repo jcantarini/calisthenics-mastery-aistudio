@@ -150,13 +150,13 @@ function HomePage() {
             {t("home.seeAll")}
           </Link>
         </div>
-        <ul className="mt-3 space-y-3">
+        <StaggerList className="mt-3 space-y-3">
           {PROGRAMS.map((p) => (
-            <li key={p.id}>
+            <StaggerItem key={p.id}>
               <Link
                 to="/treinos/$slug"
                 params={{ slug: p.slug }}
-                className="flex items-center gap-4 rounded-2xl border border-border/60 bg-surface p-4 transition-colors active:bg-surface-elevated"
+                className="flex min-h-14 items-center gap-4 rounded-2xl border border-border/60 bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 active:scale-[0.98] active:bg-surface-elevated"
               >
                 <div
                   className="grid h-12 w-12 shrink-0 place-items-center rounded-xl font-mono text-sm font-bold"
@@ -164,6 +164,7 @@ function HomePage() {
                     background: `color-mix(in oklab, ${p.color} 18%, transparent)`,
                     color: p.color,
                   }}
+                  aria-hidden
                 >
                   {LEVEL_META[p.level].badge}
                 </div>
@@ -176,11 +177,11 @@ function HomePage() {
                     {p.weeks} {t("home.weeks")} · {p.daysPerWeek}{t("home.perWeek")} · {tProgram(locale, p.id).duration}
                   </p>
                 </div>
-                <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
               </Link>
-            </li>
+            </StaggerItem>
           ))}
-        </ul>
+        </StaggerList>
       </section>
 
       {/* Daily tip */}
