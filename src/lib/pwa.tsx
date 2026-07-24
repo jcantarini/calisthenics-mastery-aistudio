@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { WifiOff } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
+import { HomeSkeleton } from "@/components/ui/skeleton-blocks";
 
 /** Sync <meta name="theme-color"> with the current theme so the Android status bar matches. */
 export function ThemeColorSync() {
