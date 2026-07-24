@@ -4,6 +4,7 @@ import { PROGRAMS, LEVEL_META } from "@/lib/programs";
 import { useAppState } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 import { tLevel, tProgram } from "@/lib/content-i18n";
+import { FadeIn, StaggerList, StaggerItem } from "@/components/ui/motion";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: HomePage,
@@ -42,38 +43,47 @@ function HomePage() {
       </header>
 
       {/* Streak card */}
-      <section className="mt-6 overflow-hidden rounded-3xl border border-border/60 bg-surface-elevated p-5 shadow-card">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-accent/15 text-accent">
-              <Flame className="h-5 w-5" strokeWidth={2.5} />
+      <FadeIn delay={0.05}>
+        <section className="mt-6 overflow-hidden rounded-3xl border border-border/60 bg-surface-elevated p-5 shadow-card">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-accent/15 text-accent">
+                <Flame className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  {t("home.streak")}
+                </p>
+                <p className="text-2xl font-bold leading-none">
+                  {state.streak} <span className="text-sm font-normal text-muted-foreground">{t("common.days")}</span>
+                </p>
+              </div>
             </div>
-            <div>
+            <div className="text-right">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                {t("home.streak")}
+                {t("common.week")}
               </p>
               <p className="text-2xl font-bold leading-none">
-                {state.streak} <span className="text-sm font-normal text-muted-foreground">{t("common.days")}</span>
+                {doneThisWeek}
+                <span className="text-sm font-normal text-muted-foreground">/{state.weeklyGoal}</span>
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              {t("common.week")}
-            </p>
-            <p className="text-2xl font-bold leading-none">
-              {doneThisWeek}
-              <span className="text-sm font-normal text-muted-foreground">/{state.weeklyGoal}</span>
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-background/60">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-      </section>
+            className="mt-4 h-2 overflow-hidden rounded-full bg-background/60"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={state.weeklyGoal}
+            aria-valuenow={doneThisWeek}
+            aria-label={t("home.streak")}
+          >
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-[width] duration-700 ease-out"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </section>
+      </FadeIn>
 
       {/* Today's workout hero */}
       <section className="mt-6">
