@@ -417,65 +417,86 @@ function EditProfileSheet({
 
         <div className="mt-5 space-y-4">
           <Field label={t("profile.name")} error={errors.name}>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={60}
-              autoComplete="name"
-              className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              placeholder={t("profile.name")}
-            />
+            {(p) => (
+              <input
+                {...p}
+                ref={firstFieldRef}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={60}
+                autoComplete="name"
+                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder={t("profile.name")}
+              />
+            )}
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("profile.weight")} error={errors.weightKg}>
-              <input
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                inputMode="decimal"
-                maxLength={5}
-                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-                placeholder="72"
-              />
+              {(p) => (
+                <input
+                  {...p}
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  inputMode="decimal"
+                  maxLength={5}
+                  className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="72"
+                />
+              )}
             </Field>
             <Field label={t("profile.height")} error={errors.heightCm}>
-              <input
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-                inputMode="numeric"
-                maxLength={3}
-                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-                placeholder="178"
-              />
+              {(p) => (
+                <input
+                  {...p}
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={3}
+                  className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="178"
+                />
+              )}
             </Field>
           </div>
           <Field label={t("profile.birthYear")} error={errors.birthYear}>
-            <input
-              value={birthYear}
-              onChange={(e) => setBirthYear(e.target.value)}
-              inputMode="numeric"
-              maxLength={4}
-              className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="1995"
-            />
+            {(p) => (
+              <input
+                {...p}
+                value={birthYear}
+                onChange={(e) => setBirthYear(e.target.value)}
+                inputMode="numeric"
+                maxLength={4}
+                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="1995"
+              />
+            )}
           </Field>
-          <Field label={t("profile.sex")}>
-            <div className="grid grid-cols-2 gap-2">
-              {(["masculino", "feminino"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setSex(s)}
-                  className={
-                    sex === s
-                      ? "rounded-2xl border border-primary bg-primary/10 px-4 py-3 text-sm font-bold capitalize text-primary"
-                      : "rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm font-medium capitalize text-muted-foreground"
-                  }
-                >
-                  {s === "masculino" ? t("profile.male") : t("profile.female")}
-                </button>
-              ))}
+          <fieldset>
+            <legend className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {t("profile.sex")}
+            </legend>
+            <div role="radiogroup" aria-label={t("profile.sex")} className="grid grid-cols-2 gap-2">
+              {(["masculino", "feminino"] as const).map((s) => {
+                const selected = sex === s;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setSex(s)}
+                    className={
+                      selected
+                        ? "rounded-2xl border border-primary bg-primary/10 px-4 py-3 text-sm font-bold capitalize text-primary"
+                        : "rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm font-medium capitalize text-muted-foreground"
+                    }
+                  >
+                    {s === "masculino" ? t("profile.male") : t("profile.female")}
+                  </button>
+                );
+              })}
             </div>
-          </Field>
+          </fieldset>
         </div>
 
         <button
