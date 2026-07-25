@@ -334,14 +334,24 @@ function EditProfileSheet({
   const [birthYear, setBirthYear] = useState(String(initial.birthYear));
   const [sex, setSex] = useState<Sex>(initial.sex);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const prev = document.body.style.overflow;
+    const prevActive = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
+    firstFieldRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      prevActive?.focus?.();
     };
-  }, []);
+  }, [onClose]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
