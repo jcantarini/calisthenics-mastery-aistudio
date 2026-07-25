@@ -387,26 +387,33 @@ function EditProfileSheet({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={t("profile.editTitle")}
+      aria-labelledby={titleId}
     >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
+        noValidate
+        aria-describedby={Object.keys(errors).length ? `${titleId}-err` : undefined}
         className="w-full max-w-md rounded-t-3xl border-t border-border/60 bg-surface-elevated p-5 pb-8"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
         <div className="flex items-center justify-between">
-          <h2 className="text-display text-2xl">{t("profile.editTitle")}</h2>
+          <h2 id={titleId} className="text-display text-2xl">{t("profile.editTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-background"
+            className="grid h-9 w-9 min-h-11 min-w-11 place-items-center rounded-full border border-border/60 bg-background"
             aria-label={t("common.close")}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
+        {Object.keys(errors).length > 0 && (
+          <p id={`${titleId}-err`} className="sr-only" role="alert">
+            {Object.values(errors).join(". ")}
+          </p>
+        )}
 
         <div className="mt-5 space-y-4">
           <Field label={t("profile.name")} error={errors.name}>
