@@ -510,6 +510,12 @@ function EditProfileSheet({
   );
 }
 
+type FieldRenderProps = {
+  id: string;
+  "aria-invalid": boolean;
+  "aria-describedby": string | undefined;
+};
+
 function Field({
   label,
   error,
@@ -517,16 +523,35 @@ function Field({
 }: {
   label: string;
   error?: string;
-  children: React.ReactNode;
+  children:
+    | React.ReactNode
+    | ((props: FieldRenderProps) => React.ReactNode);
 }) {
+  const inputId = useId();
+  const errorId = `${inputId}-err`;
+  const rendered =
+    typeof children === "function"
+      ? children({
+          id: inputId,
+          "aria-invalid": Boolean(error),
+          "aria-describedby": error ? errorId : undefined,
+        })
+      : children;
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+    <div className="block">
+      <label
+        htmlFor={inputId}
+        className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground"
+      >
         {label}
-      </span>
-      {children}
-      {error && <span className="mt-1 block text-xs text-destructive">{error}</span>}
-    </label>
+      </label>
+      {rendered}
+      {error && (
+        <span id={errorId} className="mt-1 block text-xs text-destructive">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }
 
