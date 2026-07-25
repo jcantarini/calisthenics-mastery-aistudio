@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { z } from "zod";
 import {
   Bell,
@@ -334,14 +334,24 @@ function EditProfileSheet({
   const [birthYear, setBirthYear] = useState(String(initial.birthYear));
   const [sex, setSex] = useState<Sex>(initial.sex);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const prev = document.body.style.overflow;
+    const prevActive = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
+    firstFieldRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      prevActive?.focus?.();
     };
-  }, []);
+  }, [onClose]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -377,88 +387,116 @@ function EditProfileSheet({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={t("profile.editTitle")}
+      aria-labelledby={titleId}
     >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
+        noValidate
+        aria-describedby={Object.keys(errors).length ? `${titleId}-err` : undefined}
         className="w-full max-w-md rounded-t-3xl border-t border-border/60 bg-surface-elevated p-5 pb-8"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
         <div className="flex items-center justify-between">
-          <h2 className="text-display text-2xl">{t("profile.editTitle")}</h2>
+          <h2 id={titleId} className="text-display text-2xl">{t("profile.editTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-background"
+            className="grid h-9 w-9 min-h-11 min-w-11 place-items-center rounded-full border border-border/60 bg-background"
             aria-label={t("common.close")}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
+        {Object.keys(errors).length > 0 && (
+          <p id={`${titleId}-err`} className="sr-only" role="alert">
+            {Object.values(errors).join(". ")}
+          </p>
+        )}
 
         <div className="mt-5 space-y-4">
           <Field label={t("profile.name")} error={errors.name}>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={60}
-              autoComplete="name"
-              className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              placeholder={t("profile.name")}
-            />
+            {(p) => (
+              <input
+                {...p}
+                ref={firstFieldRef}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={60}
+                autoComplete="name"
+                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder={t("profile.name")}
+              />
+            )}
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("profile.weight")} error={errors.weightKg}>
-              <input
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                inputMode="decimal"
-                maxLength={5}
-                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-                placeholder="72"
-              />
+              {(p) => (
+                <input
+                  {...p}
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  inputMode="decimal"
+                  maxLength={5}
+                  className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="72"
+                />
+              )}
             </Field>
             <Field label={t("profile.height")} error={errors.heightCm}>
-              <input
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-                inputMode="numeric"
-                maxLength={3}
-                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-                placeholder="178"
-              />
+              {(p) => (
+                <input
+                  {...p}
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={3}
+                  className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="178"
+                />
+              )}
             </Field>
           </div>
           <Field label={t("profile.birthYear")} error={errors.birthYear}>
-            <input
-              value={birthYear}
-              onChange={(e) => setBirthYear(e.target.value)}
-              inputMode="numeric"
-              maxLength={4}
-              className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="1995"
-            />
+            {(p) => (
+              <input
+                {...p}
+                value={birthYear}
+                onChange={(e) => setBirthYear(e.target.value)}
+                inputMode="numeric"
+                maxLength={4}
+                className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="1995"
+              />
+            )}
           </Field>
-          <Field label={t("profile.sex")}>
-            <div className="grid grid-cols-2 gap-2">
-              {(["masculino", "feminino"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setSex(s)}
-                  className={
-                    sex === s
-                      ? "rounded-2xl border border-primary bg-primary/10 px-4 py-3 text-sm font-bold capitalize text-primary"
-                      : "rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm font-medium capitalize text-muted-foreground"
-                  }
-                >
-                  {s === "masculino" ? t("profile.male") : t("profile.female")}
-                </button>
-              ))}
+          <fieldset>
+            <legend className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {t("profile.sex")}
+            </legend>
+            <div role="radiogroup" aria-label={t("profile.sex")} className="grid grid-cols-2 gap-2">
+              {(["masculino", "feminino"] as const).map((s) => {
+                const selected = sex === s;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setSex(s)}
+                    className={
+                      selected
+                        ? "rounded-2xl border border-primary bg-primary/10 px-4 py-3 text-sm font-bold capitalize text-primary"
+                        : "rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm font-medium capitalize text-muted-foreground"
+                    }
+                  >
+                    {s === "masculino" ? t("profile.male") : t("profile.female")}
+                  </button>
+                );
+              })}
             </div>
-          </Field>
+          </fieldset>
         </div>
 
         <button
@@ -472,6 +510,12 @@ function EditProfileSheet({
   );
 }
 
+type FieldRenderProps = {
+  id: string;
+  "aria-invalid": boolean;
+  "aria-describedby": string | undefined;
+};
+
 function Field({
   label,
   error,
@@ -479,16 +523,35 @@ function Field({
 }: {
   label: string;
   error?: string;
-  children: React.ReactNode;
+  children:
+    | React.ReactNode
+    | ((props: FieldRenderProps) => React.ReactNode);
 }) {
+  const inputId = useId();
+  const errorId = `${inputId}-err`;
+  const rendered =
+    typeof children === "function"
+      ? children({
+          id: inputId,
+          "aria-invalid": Boolean(error),
+          "aria-describedby": error ? errorId : undefined,
+        })
+      : children;
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+    <div className="block">
+      <label
+        htmlFor={inputId}
+        className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground"
+      >
         {label}
-      </span>
-      {children}
-      {error && <span className="mt-1 block text-xs text-destructive">{error}</span>}
-    </label>
+      </label>
+      {rendered}
+      {error && (
+        <span id={errorId} className="mt-1 block text-xs text-destructive">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -496,11 +559,18 @@ function ShareSheet({ onClose }: { onClose: () => void }) {
   const { t } = useT();
   useEffect(() => {
     const prev = document.body.style.overflow;
+    const prevActive = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      prevActive?.focus?.();
     };
-  }, []);
+  }, [onClose]);
 
   const url = typeof window !== "undefined" ? window.location.origin : "";
   const title = t("share.title");

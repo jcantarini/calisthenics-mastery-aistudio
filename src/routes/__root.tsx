@@ -229,7 +229,13 @@ function RootComponent() {
             className="relative mx-auto min-h-dvh max-w-md bg-background bg-grain"
             style={{ paddingTop: "env(safe-area-inset-top)" }}
           >
-            <main className="pb-28">
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-primary-foreground focus:shadow-glow"
+            >
+              Pular para o conteúdo
+            </a>
+            <main id="main-content" className="pb-28">
               <PageTransition>
                 <Outlet />
               </PageTransition>

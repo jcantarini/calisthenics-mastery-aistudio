@@ -857,6 +857,10 @@ function ReminderToggle({
 }) {
   return (
     <button
+      type="button"
+      role="switch"
+      aria-checked={value}
+      aria-label={label}
       onClick={() => onChange(!value)}
       className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-background/60 p-3 text-left active:scale-[0.99]"
     >
@@ -865,6 +869,7 @@ function ReminderToggle({
         <p className="text-[11px] text-muted-foreground">{hint}</p>
       </div>
       <span
+        aria-hidden
         className={cn(
           "relative h-6 w-11 rounded-full transition-colors",
           value ? "bg-primary" : "bg-border",
