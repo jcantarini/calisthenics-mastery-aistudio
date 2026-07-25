@@ -559,11 +559,18 @@ function ShareSheet({ onClose }: { onClose: () => void }) {
   const { t } = useT();
   useEffect(() => {
     const prev = document.body.style.overflow;
+    const prevActive = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      prevActive?.focus?.();
     };
-  }, []);
+  }, [onClose]);
 
   const url = typeof window !== "undefined" ? window.location.origin : "";
   const title = t("share.title");
