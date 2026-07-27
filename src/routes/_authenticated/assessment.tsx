@@ -662,7 +662,7 @@ function Summary({ data, ob, locale }: { data: AssessmentData; ob: OnboardingDat
         <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           {s(locale, "recommended")}
         </p>
-        <p className="mt-1 text-lg font-bold">{program.name}</p>
+        <p className="mt-1 text-lg font-bold">{program.title}</p>
       </div>
 
       <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-surface">
