@@ -21,6 +21,7 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedLembretesRouteImport } from './routes/_authenticated/lembretes'
 import { Route as AuthenticatedDietaRouteImport } from './routes/_authenticated/dieta'
+import { Route as AuthenticatedAssessmentRouteImport } from './routes/_authenticated/assessment'
 import { Route as AuthenticatedTreinosIndexRouteImport } from './routes/_authenticated/treinos.index'
 import { Route as AuthenticatedTreinosSlugRouteImport } from './routes/_authenticated/treinos.$slug'
 
@@ -84,6 +85,11 @@ const AuthenticatedDietaRoute = AuthenticatedDietaRouteImport.update({
   path: '/dieta',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAssessmentRoute = AuthenticatedAssessmentRouteImport.update({
+  id: '/assessment',
+  path: '/assessment',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTreinosIndexRoute =
   AuthenticatedTreinosIndexRouteImport.update({
     id: '/',
@@ -100,6 +106,7 @@ const AuthenticatedTreinosSlugRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/assessment': typeof AuthenticatedAssessmentRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/assessment': typeof AuthenticatedAssessmentRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/assessment': typeof AuthenticatedAssessmentRoute
   '/_authenticated/dieta': typeof AuthenticatedDietaRoute
   '/_authenticated/lembretes': typeof AuthenticatedLembretesRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/assessment'
     | '/dieta'
     | '/lembretes'
     | '/onboarding'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/assessment'
     | '/dieta'
     | '/lembretes'
     | '/onboarding'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/assessment'
     | '/_authenticated/dieta'
     | '/_authenticated/lembretes'
     | '/_authenticated/onboarding'
@@ -282,6 +294,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDietaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assessment': {
+      id: '/_authenticated/assessment'
+      path: '/assessment'
+      fullPath: '/assessment'
+      preLoaderRoute: typeof AuthenticatedAssessmentRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/treinos/': {
       id: '/_authenticated/treinos/'
       path: '/'
@@ -313,6 +332,7 @@ const AuthenticatedTreinosRouteWithChildren =
   AuthenticatedTreinosRoute._addFileChildren(AuthenticatedTreinosRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAssessmentRoute: typeof AuthenticatedAssessmentRoute
   AuthenticatedDietaRoute: typeof AuthenticatedDietaRoute
   AuthenticatedLembretesRoute: typeof AuthenticatedLembretesRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -326,6 +346,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAssessmentRoute: AuthenticatedAssessmentRoute,
   AuthenticatedDietaRoute: AuthenticatedDietaRoute,
   AuthenticatedLembretesRoute: AuthenticatedLembretesRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,

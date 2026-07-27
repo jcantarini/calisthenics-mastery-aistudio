@@ -11,15 +11,25 @@ export const Route = createFileRoute("/_authenticated")({
         search: { redirect: location.href },
       });
     }
-    // Gate: force onboarding for new users
-    if (location.pathname !== "/onboarding") {
-      const { data: ob } = await supabase
-        .from("user_onboarding")
-        .select("onboarding_completed")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
+    // Gate: force onboarding, then assessment, for new users
+    if (location.pathname !== "/onboarding" && location.pathname !== "/assessment") {
+      const [{ data: ob }, { data: as }] = await Promise.all([
+        supabase
+          .from("user_onboarding")
+          .select("onboarding_completed")
+          .eq("user_id", data.user.id)
+          .maybeSingle(),
+        supabase
+          .from("fitness_assessment")
+          .select("completed")
+          .eq("user_id", data.user.id)
+          .maybeSingle(),
+      ]);
       if (!ob?.onboarding_completed) {
         throw redirect({ to: "/onboarding" });
+      }
+      if (!as?.completed) {
+        throw redirect({ to: "/assessment" });
       }
     }
     return { user: data.user };
