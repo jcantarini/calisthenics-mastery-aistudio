@@ -148,7 +148,7 @@ function OnboardingPage() {
       setAppState((prev) => generatePlan(prev, data, displayName));
       clearDraft();
       toast.success(tOb(locale, "ob.planReady"));
-      navigate({ to: "/" });
+      navigate({ to: "/assessment" });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
