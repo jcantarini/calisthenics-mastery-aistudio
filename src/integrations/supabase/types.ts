@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      fitness_assessment: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          dips: string | null
+          mobility: string | null
+          plank: string | null
+          pullups: string | null
+          pushups: string | null
+          score: number | null
+          skills: Json
+          skipped: Json
+          squats: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          dips?: string | null
+          mobility?: string | null
+          plank?: string | null
+          pullups?: string | null
+          pushups?: string | null
+          score?: number | null
+          skills?: Json
+          skipped?: Json
+          squats?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          dips?: string | null
+          mobility?: string | null
+          plank?: string | null
+          pullups?: string | null
+          pushups?: string | null
+          score?: number | null
+          skills?: Json
+          skipped?: Json
+          squats?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
