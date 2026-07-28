@@ -152,7 +152,7 @@ function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useT();
   // Hide chrome on the public auth screen and during onboarding/assessment.
-  if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname.startsWith("/assessment")) return null;
+  if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname.startsWith("/assessment") || pathname.startsWith("/first-workout")) return null;
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
