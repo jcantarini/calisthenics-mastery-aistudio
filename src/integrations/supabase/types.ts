@@ -65,6 +65,71 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_workouts: {
+        Row: {
+          cooldown: Json
+          created_at: string
+          description: string | null
+          difficulty: string
+          estimated_calories: number
+          estimated_duration_min: number
+          exercises: Json
+          id: string
+          is_first: boolean
+          name: string
+          notes: string | null
+          plan_id: string | null
+          program_slug: string
+          updated_at: string
+          user_id: string
+          warmup: Json
+        }
+        Insert: {
+          cooldown?: Json
+          created_at?: string
+          description?: string | null
+          difficulty: string
+          estimated_calories?: number
+          estimated_duration_min?: number
+          exercises?: Json
+          id?: string
+          is_first?: boolean
+          name: string
+          notes?: string | null
+          plan_id?: string | null
+          program_slug: string
+          updated_at?: string
+          user_id: string
+          warmup?: Json
+        }
+        Update: {
+          cooldown?: Json
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          estimated_calories?: number
+          estimated_duration_min?: number
+          exercises?: Json
+          id?: string
+          is_first?: boolean
+          name?: string
+          notes?: string | null
+          plan_id?: string | null
+          program_slug?: string
+          updated_at?: string
+          user_id?: string
+          warmup?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_workouts_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -89,6 +154,39 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      training_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          program_slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          program_slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          program_slug?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

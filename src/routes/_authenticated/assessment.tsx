@@ -333,7 +333,7 @@ function AssessmentPage() {
       await upsertAssessment(userId, data, true);
       setAppState((prev) => generatePlanFromAssessment(prev, ob, data, displayName));
       toast.success(s(locale, "planReady"));
-      navigate({ to: "/" });
+      navigate({ to: "/first-workout" });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
