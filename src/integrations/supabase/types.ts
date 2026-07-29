@@ -130,6 +130,83 @@ export type Database = {
           },
         ]
       }
+      planned_workouts: {
+        Row: {
+          completed_at: string | null
+          cooldown: Json
+          created_at: string
+          day_number: number
+          description: string | null
+          difficulty: string
+          estimated_calories: number
+          estimated_duration_min: number
+          exercises: Json
+          id: string
+          is_completed: boolean
+          name: string
+          notes: string | null
+          plan_id: string
+          program_slug: string
+          progression_data: Json
+          updated_at: string
+          user_id: string
+          warmup: Json
+          week_number: number
+        }
+        Insert: {
+          completed_at?: string | null
+          cooldown?: Json
+          created_at?: string
+          day_number: number
+          description?: string | null
+          difficulty: string
+          estimated_calories?: number
+          estimated_duration_min?: number
+          exercises?: Json
+          id?: string
+          is_completed?: boolean
+          name: string
+          notes?: string | null
+          plan_id: string
+          program_slug: string
+          progression_data?: Json
+          updated_at?: string
+          user_id: string
+          warmup?: Json
+          week_number: number
+        }
+        Update: {
+          completed_at?: string | null
+          cooldown?: Json
+          created_at?: string
+          day_number?: number
+          description?: string | null
+          difficulty?: string
+          estimated_calories?: number
+          estimated_duration_min?: number
+          exercises?: Json
+          id?: string
+          is_completed?: boolean
+          name?: string
+          notes?: string | null
+          plan_id?: string
+          program_slug?: string
+          progression_data?: Json
+          updated_at?: string
+          user_id?: string
+          warmup?: Json
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planned_workouts_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -157,38 +234,194 @@ export type Database = {
         }
         Relationships: []
       }
+      training_days: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          day_number: number
+          day_type: string
+          id: string
+          notes: string | null
+          plan_id: string
+          planned_workout_id: string | null
+          updated_at: string
+          user_id: string
+          week_id: string
+          week_number: number
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          day_number: number
+          day_type: string
+          id?: string
+          notes?: string | null
+          plan_id: string
+          planned_workout_id?: string | null
+          updated_at?: string
+          user_id: string
+          week_id: string
+          week_number: number
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          day_number?: number
+          day_type?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string
+          planned_workout_id?: string | null
+          updated_at?: string
+          user_id?: string
+          week_id?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_days_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_days_planned_workout_id_fkey"
+            columns: ["planned_workout_id"]
+            isOneToOne: false
+            referencedRelation: "planned_workouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_days_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "training_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_plans: {
         Row: {
           created_at: string
+          current_day: number
+          current_week: number
+          days_per_week: number | null
           description: string | null
+          difficulty: string | null
+          fitness_level: string | null
           id: string
           is_active: boolean
           name: string
+          primary_goal: string | null
           program_slug: string
+          started_at: string | null
+          status: string
+          target_skill: string | null
+          total_weeks: number
           updated_at: string
           user_id: string
+          workout_duration_min: number | null
         }
         Insert: {
           created_at?: string
+          current_day?: number
+          current_week?: number
+          days_per_week?: number | null
           description?: string | null
+          difficulty?: string | null
+          fitness_level?: string | null
           id?: string
           is_active?: boolean
           name: string
+          primary_goal?: string | null
           program_slug: string
+          started_at?: string | null
+          status?: string
+          target_skill?: string | null
+          total_weeks?: number
           updated_at?: string
           user_id: string
+          workout_duration_min?: number | null
         }
         Update: {
           created_at?: string
+          current_day?: number
+          current_week?: number
+          days_per_week?: number | null
           description?: string | null
+          difficulty?: string | null
+          fitness_level?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          primary_goal?: string | null
           program_slug?: string
+          started_at?: string | null
+          status?: string
+          target_skill?: string | null
+          total_weeks?: number
           updated_at?: string
           user_id?: string
+          workout_duration_min?: number | null
         }
         Relationships: []
+      }
+      training_weeks: {
+        Row: {
+          created_at: string
+          difficulty: string
+          estimated_duration_min: number
+          id: string
+          is_deload: boolean
+          objective: string
+          plan_id: string
+          recovery_days_count: number
+          updated_at: string
+          user_id: string
+          week_number: number
+          workout_days_count: number
+        }
+        Insert: {
+          created_at?: string
+          difficulty: string
+          estimated_duration_min?: number
+          id?: string
+          is_deload?: boolean
+          objective: string
+          plan_id: string
+          recovery_days_count?: number
+          updated_at?: string
+          user_id: string
+          week_number: number
+          workout_days_count?: number
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string
+          estimated_duration_min?: number
+          id?: string
+          is_deload?: boolean
+          objective?: string
+          plan_id?: string
+          recovery_days_count?: number
+          updated_at?: string
+          user_id?: string
+          week_number?: number
+          workout_days_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_weeks_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_onboarding: {
         Row: {
