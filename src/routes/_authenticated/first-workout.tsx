@@ -396,13 +396,13 @@ function ResultView({ workout, locale }: { workout: GeneratedWorkout; locale: Lo
 
       <div className="space-y-2 pt-2">
         <Link
-          to="/timer"
+          to="/training-plan"
           className={cn(
             "tap flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-4 text-sm font-bold text-primary-foreground shadow-glow",
           )}
         >
           <Play className="h-4 w-4" />
-          {s(locale, "start")}
+          Gerar plano de 4 semanas
         </Link>
         <Link
           to="/treinos/$slug"

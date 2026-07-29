@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
+import { Route as AuthenticatedTrainingPlanRouteImport } from './routes/_authenticated/training-plan'
 import { Route as AuthenticatedTimerRouteImport } from './routes/_authenticated/timer'
 import { Route as AuthenticatedRelatorioRouteImport } from './routes/_authenticated/relatorio'
 import { Route as AuthenticatedProgressoRouteImport } from './routes/_authenticated/progresso'
@@ -45,6 +46,12 @@ const AuthenticatedTreinosRoute = AuthenticatedTreinosRouteImport.update({
   path: '/treinos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTrainingPlanRoute =
+  AuthenticatedTrainingPlanRouteImport.update({
+    id: '/training-plan',
+    path: '/training-plan',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTimerRoute = AuthenticatedTimerRouteImport.update({
   id: '/timer',
   path: '/timer',
@@ -123,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/progresso': typeof AuthenticatedProgressoRoute
   '/relatorio': typeof AuthenticatedRelatorioRoute
   '/timer': typeof AuthenticatedTimerRoute
+  '/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/treinos': typeof AuthenticatedTreinosRouteWithChildren
   '/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
   '/treinos/': typeof AuthenticatedTreinosIndexRoute
@@ -139,6 +147,7 @@ export interface FileRoutesByTo {
   '/progresso': typeof AuthenticatedProgressoRoute
   '/relatorio': typeof AuthenticatedRelatorioRoute
   '/timer': typeof AuthenticatedTimerRoute
+  '/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/': typeof AuthenticatedIndexRoute
   '/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
   '/treinos': typeof AuthenticatedTreinosIndexRoute
@@ -157,6 +166,7 @@ export interface FileRoutesById {
   '/_authenticated/progresso': typeof AuthenticatedProgressoRoute
   '/_authenticated/relatorio': typeof AuthenticatedRelatorioRoute
   '/_authenticated/timer': typeof AuthenticatedTimerRoute
+  '/_authenticated/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/_authenticated/treinos': typeof AuthenticatedTreinosRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/progresso'
     | '/relatorio'
     | '/timer'
+    | '/training-plan'
     | '/treinos'
     | '/treinos/$slug'
     | '/treinos/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/progresso'
     | '/relatorio'
     | '/timer'
+    | '/training-plan'
     | '/'
     | '/treinos/$slug'
     | '/treinos'
@@ -210,6 +222,7 @@ export interface FileRouteTypes {
     | '/_authenticated/progresso'
     | '/_authenticated/relatorio'
     | '/_authenticated/timer'
+    | '/_authenticated/training-plan'
     | '/_authenticated/treinos'
     | '/_authenticated/'
     | '/_authenticated/treinos/$slug'
@@ -249,6 +262,13 @@ declare module '@tanstack/react-router' {
       path: '/treinos'
       fullPath: '/treinos'
       preLoaderRoute: typeof AuthenticatedTreinosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/training-plan': {
+      id: '/_authenticated/training-plan'
+      path: '/training-plan'
+      fullPath: '/training-plan'
+      preLoaderRoute: typeof AuthenticatedTrainingPlanRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/timer': {
@@ -362,6 +382,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProgressoRoute: typeof AuthenticatedProgressoRoute
   AuthenticatedRelatorioRoute: typeof AuthenticatedRelatorioRoute
   AuthenticatedTimerRoute: typeof AuthenticatedTimerRoute
+  AuthenticatedTrainingPlanRoute: typeof AuthenticatedTrainingPlanRoute
   AuthenticatedTreinosRoute: typeof AuthenticatedTreinosRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
@@ -377,6 +398,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProgressoRoute: AuthenticatedProgressoRoute,
   AuthenticatedRelatorioRoute: AuthenticatedRelatorioRoute,
   AuthenticatedTimerRoute: AuthenticatedTimerRoute,
+  AuthenticatedTrainingPlanRoute: AuthenticatedTrainingPlanRoute,
   AuthenticatedTreinosRoute: AuthenticatedTreinosRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
