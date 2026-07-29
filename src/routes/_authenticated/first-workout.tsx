@@ -4,12 +4,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Play, Home, ListChecks, Flame, Clock, Dumbbell, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchOnboarding, EMPTY_ONBOARDING, type OnboardingData } from "@/lib/onboarding";
-import { fetchAssessment, EMPTY_ASSESSMENT, type AssessmentData } from "@/lib/assessment";
-import {
-  generateAndPersistFirstWorkout,
-  type GeneratedWorkout,
-} from "@/lib/first-workout";
+import { fetchOnboarding } from "@/lib/onboarding";
+import { WorkoutGeneratorService } from "@/services/workout-generator/WorkoutGeneratorService";
+import type { GeneratedWorkout } from "@/services/workout-generator/workoutTypes";
 import { useT, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -204,15 +201,10 @@ function FirstWorkoutPage() {
           navigate({ to: "/auth" });
           return;
         }
-        const [ob, ass] = await Promise.all([
-          fetchOnboarding(u.user.id),
-          fetchAssessment(u.user.id),
-        ]);
-        const onboarding: OnboardingData = ob ?? EMPTY_ONBOARDING;
-        const assessment: AssessmentData = ass ?? EMPTY_ASSESSMENT;
+        const ob = await fetchOnboarding(u.user.id);
         const started = Date.now();
-        const w = await generateAndPersistFirstWorkout(u.user.id, onboarding, assessment, {
-          weightKg: onboarding.weight_kg,
+        const w = await WorkoutGeneratorService.generateFirstWorkout(u.user.id, {
+          weightKg: ob?.weight_kg,
         });
         // Ensure loading shows for at least 2.4s for a premium feel
         const elapsed = Date.now() - started;
