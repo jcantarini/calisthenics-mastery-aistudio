@@ -148,6 +148,9 @@ export type Database = {
           plan_id: string
           program_slug: string
           progression_data: Json
+          scheduled_date: string | null
+          started_at: string | null
+          status: string
           updated_at: string
           user_id: string
           warmup: Json
@@ -170,6 +173,9 @@ export type Database = {
           plan_id: string
           program_slug: string
           progression_data?: Json
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: string
           updated_at?: string
           user_id: string
           warmup?: Json
@@ -192,6 +198,9 @@ export type Database = {
           plan_id?: string
           program_slug?: string
           progression_data?: Json
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: string
           updated_at?: string
           user_id?: string
           warmup?: Json
@@ -245,6 +254,7 @@ export type Database = {
           notes: string | null
           plan_id: string
           planned_workout_id: string | null
+          scheduled_date: string | null
           updated_at: string
           user_id: string
           week_id: string
@@ -260,6 +270,7 @@ export type Database = {
           notes?: string | null
           plan_id: string
           planned_workout_id?: string | null
+          scheduled_date?: string | null
           updated_at?: string
           user_id: string
           week_id: string
@@ -275,6 +286,7 @@ export type Database = {
           notes?: string | null
           plan_id?: string
           planned_workout_id?: string | null
+          scheduled_date?: string | null
           updated_at?: string
           user_id?: string
           week_id?: string
@@ -306,6 +318,8 @@ export type Database = {
       }
       training_plans: {
         Row: {
+          completed_weeks: number
+          completed_workouts: number
           created_at: string
           current_day: number
           current_week: number
@@ -315,9 +329,13 @@ export type Database = {
           fitness_level: string | null
           id: string
           is_active: boolean
+          last_workout_date: string | null
           name: string
+          next_workout_date: string | null
           primary_goal: string | null
           program_slug: string
+          progress_percentage: number
+          start_date: string | null
           started_at: string | null
           status: string
           target_skill: string | null
@@ -327,6 +345,8 @@ export type Database = {
           workout_duration_min: number | null
         }
         Insert: {
+          completed_weeks?: number
+          completed_workouts?: number
           created_at?: string
           current_day?: number
           current_week?: number
@@ -336,9 +356,13 @@ export type Database = {
           fitness_level?: string | null
           id?: string
           is_active?: boolean
+          last_workout_date?: string | null
           name: string
+          next_workout_date?: string | null
           primary_goal?: string | null
           program_slug: string
+          progress_percentage?: number
+          start_date?: string | null
           started_at?: string | null
           status?: string
           target_skill?: string | null
@@ -348,6 +372,8 @@ export type Database = {
           workout_duration_min?: number | null
         }
         Update: {
+          completed_weeks?: number
+          completed_workouts?: number
           created_at?: string
           current_day?: number
           current_week?: number
@@ -357,9 +383,13 @@ export type Database = {
           fitness_level?: string | null
           id?: string
           is_active?: boolean
+          last_workout_date?: string | null
           name?: string
+          next_workout_date?: string | null
           primary_goal?: string | null
           program_slug?: string
+          progress_percentage?: number
+          start_date?: string | null
           started_at?: string | null
           status?: string
           target_skill?: string | null

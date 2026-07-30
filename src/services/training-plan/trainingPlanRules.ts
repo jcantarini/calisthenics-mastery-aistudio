@@ -55,6 +55,7 @@ export function buildFourWeekPlan(
       weekNumber: w,
       dayNumber: day,
       isCompleted: false,
+      status: "locked",
       progressionData: progression,
     }));
 
