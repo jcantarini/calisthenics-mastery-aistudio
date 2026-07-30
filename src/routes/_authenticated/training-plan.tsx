@@ -48,11 +48,9 @@ function TrainingPlanPage() {
 
     (async () => {
       try {
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user) return navigate({ to: "/auth" });
         const t0 = Date.now();
-        await TrainingPlanService.generateTrainingPlan(u.user.id);
-        const sum = await TrainingPlanService.getSummary(u.user.id);
+        await TrainingPlanService.generateTrainingPlan();
+        const sum = await TrainingPlanService.getSummary();
         const min = 2600;
         const elapsed = Date.now() - t0;
         if (elapsed < min) await new Promise((r) => setTimeout(r, min - elapsed));
