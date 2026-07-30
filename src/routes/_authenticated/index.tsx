@@ -86,6 +86,9 @@ function HomePage() {
         </section>
       </FadeIn>
 
+      {/* Program runtime (TrainingPlanService) */}
+      <CurrentProgramCard />
+
       {/* Today's workout hero */}
       <section className="mt-6">
         <div className="flex items-baseline justify-between">
