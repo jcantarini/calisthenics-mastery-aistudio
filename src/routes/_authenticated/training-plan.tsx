@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Play, Home, ListChecks, ChevronRight, Calendar, Target, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { TrainingPlanService } from "@/services/training-plan/TrainingPlanService";
 import type { TrainingPlanSummary } from "@/services/training-plan/trainingPlanTypes";
 import { cn } from "@/lib/utils";
@@ -48,11 +47,9 @@ function TrainingPlanPage() {
 
     (async () => {
       try {
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user) return navigate({ to: "/auth" });
         const t0 = Date.now();
-        await TrainingPlanService.generateTrainingPlan(u.user.id);
-        const sum = await TrainingPlanService.getSummary(u.user.id);
+        await TrainingPlanService.generateTrainingPlan();
+        const sum = await TrainingPlanService.getSummary();
         const min = 2600;
         const elapsed = Date.now() - t0;
         if (elapsed < min) await new Promise((r) => setTimeout(r, min - elapsed));
