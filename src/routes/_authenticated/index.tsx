@@ -5,6 +5,7 @@ import { useAppState } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 import { tLevel, tProgram } from "@/lib/content-i18n";
 import { FadeIn, StaggerList, StaggerItem } from "@/components/ui/motion";
+import { CurrentProgramCard } from "@/components/program/CurrentProgramCard";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: HomePage,
