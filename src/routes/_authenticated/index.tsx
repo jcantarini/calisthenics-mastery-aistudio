@@ -75,7 +75,7 @@ function DashboardPage() {
     actions.restartProgram.isPending;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 pt-12 sm:px-6">
+    <div className="mx-auto w-full max-w-5xl px-4 pt-12 sm:px-6">
       <div className="space-y-4">
         <GreetingCard
           name={app.profile.name}
