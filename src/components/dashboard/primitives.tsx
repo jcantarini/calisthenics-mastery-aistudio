@@ -10,7 +10,7 @@ export function DashCard({
 }: {
   children: ReactNode;
   className?: string;
-  as?: "section" | "div";
+  as?: "section" | "div" | "header" | "article";
 } & React.HTMLAttributes<HTMLElement>) {
   return (
     <Comp
