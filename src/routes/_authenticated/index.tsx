@@ -1,224 +1,160 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Flame, Play, TrendingUp, Trophy, ChevronRight, Zap } from "lucide-react";
-import { PROGRAMS, LEVEL_META } from "@/lib/programs";
+import { useMemo } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useAppState } from "@/lib/store";
-import { useT } from "@/lib/i18n";
-import { tLevel, tProgram } from "@/lib/content-i18n";
-import { FadeIn, StaggerList, StaggerItem } from "@/components/ui/motion";
-import { CurrentProgramCard } from "@/components/program/CurrentProgramCard";
+import { useCurrentProgram, useProgramActions } from "@/hooks/useTrainingProgram";
+import { FadeIn } from "@/components/ui/motion";
+import { GreetingCard } from "@/components/dashboard/GreetingCard";
+import { TodayWorkoutCard } from "@/components/dashboard/TodayWorkoutCard";
+import { ProgramOverviewCard, WeeklyProgressCard } from "@/components/dashboard/ProgramCards";
+import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
+import { UpcomingWorkoutCard } from "@/components/dashboard/UpcomingWorkoutCard";
+import { StatisticsCard, MotivationCard } from "@/components/dashboard/StatisticsCard";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import {
+  DashboardEmptyState,
+  ProgramCompletedState,
+} from "@/components/dashboard/DashboardEmptyState";
 
 export const Route = createFileRoute("/_authenticated/")({
-  component: HomePage,
+  head: () => ({
+    meta: [
+      { title: "Painel — Seu treino de hoje | Barra" },
+      {
+        name: "description",
+        content:
+          "Painel inteligente de calistenia: treino do dia, progresso semanal, estatísticas e próximos treinos do seu programa personalizado.",
+      },
+      { property: "og:title", content: "Painel — Seu treino de hoje | Barra" },
+      {
+        property: "og:description",
+        content:
+          "Acompanhe seu programa de calistenia: treino do dia, progresso, sequência e próximos passos.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: DashboardPage,
 });
 
-function HomePage() {
-  const [state] = useAppState();
-  const { t, locale } = useT();
-  const active = PROGRAMS.find((p) => p.slug === state.activeProgram) ?? PROGRAMS[0];
-  const doneThisWeek = state.completedSessions.filter(
-    (d) => Date.now() - new Date(d).getTime() < 7 * 86400000,
-  ).length;
-  const progressPct = Math.min(100, (doneThisWeek / state.weeklyGoal) * 100);
-  const localeMap: Record<string, string> = {
-    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+function DashboardPage() {
+  const { data: state, isLoading } = useCurrentProgram();
+  const actions = useProgramActions();
+  const [app] = useAppState();
+  const navigate = useNavigate();
+
+  // Presentation-only aggregation of locally logged sessions.
+  const { trainingMinutes, caloriesBurned } = useMemo(() => {
+    let sec = 0;
+    let kcal = 0;
+    for (const list of Object.values(app.workoutLog)) {
+      for (const s of list) {
+        sec += s.durationSec;
+        kcal += s.kcalBurned;
+      }
+    }
+    return { trainingMinutes: Math.round(sec / 60), caloriesBurned: kcal };
+  }, [app.workoutLog]);
+
+  const run = async (p: Promise<unknown>, msg: string) => {
+    try {
+      await p;
+      toast.success(msg);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
-  const weekday = new Date().toLocaleDateString(localeMap[locale], { weekday: "long" });
-  const avatarInitials = state.profile.initials || "?";
+
+  const busy =
+    actions.completeWorkout.isPending ||
+    actions.skipWorkout.isPending ||
+    actions.advanceDay.isPending ||
+    actions.pauseProgram.isPending ||
+    actions.resumeProgram.isPending ||
+    actions.restartProgram.isPending;
 
   return (
-    <div className="px-5 pt-12">
-      {/* Header */}
-      <header className="flex items-center justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            {weekday}
-          </p>
-          <h1 className="mt-1 text-display text-4xl">
-            {t("home.greeting")}<br />
-            <span className="text-primary">{t("home.athlete")}</span>
-          </h1>
-        </div>
-        <div className="grid h-12 w-12 place-items-center rounded-full border border-border/60 bg-surface-elevated">
-          <span className="text-sm font-bold">{avatarInitials}</span>
-        </div>
-      </header>
-
-      {/* Streak card */}
-      <FadeIn delay={0.05}>
-        <section className="mt-6 overflow-hidden rounded-3xl border border-border/60 bg-surface-elevated p-5 shadow-card">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-accent/15 text-accent">
-                <Flame className="h-5 w-5" strokeWidth={2.5} aria-hidden />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                  {t("home.streak")}
-                </p>
-                <p className="text-2xl font-bold leading-none">
-                  {state.streak} <span className="text-sm font-normal text-muted-foreground">{t("common.days")}</span>
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                {t("common.week")}
-              </p>
-              <p className="text-2xl font-bold leading-none">
-                {doneThisWeek}
-                <span className="text-sm font-normal text-muted-foreground">/{state.weeklyGoal}</span>
-              </p>
-            </div>
-          </div>
-          <div
-            className="mt-4 h-2 overflow-hidden rounded-full bg-background/60"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={state.weeklyGoal}
-            aria-valuenow={doneThisWeek}
-            aria-label={t("home.streak")}
-          >
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-[width] duration-700 ease-out"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-        </section>
-      </FadeIn>
-
-      {/* Program runtime (TrainingPlanService) */}
-      <CurrentProgramCard />
-
-      {/* Today's workout hero */}
-      <section className="mt-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">{t("home.todayWorkout")}</h2>
-          <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            {LEVEL_META[active.level].badge} · {tLevel(locale, active.level)}
-          </span>
-        </div>
-
-        <Link
-          to="/treinos/$slug"
-          params={{ slug: active.slug }}
-          className="mt-3 block overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-surface-elevated via-surface to-background p-5 shadow-card transition-transform active:scale-[0.98]"
-        >
-          <div className="flex items-start justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-                {t("home.activeProgram")}
-              </p>
-              <h3 className="mt-1 text-display text-3xl leading-none">{tProgram(locale, active.id).title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{tProgram(locale, active.id).tagline}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-[11px] font-medium">
-                  {tProgram(locale, active.id).duration}
-                </span>
-                <span className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-[11px] font-medium">
-                  {active.exercises.length} {t("home.exercises")}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-glow"
-              aria-label={t("home.startWorkout")}
-            >
-              <Play className="h-6 w-6 fill-current" strokeWidth={0} />
-            </button>
-          </div>
-        </Link>
-      </section>
-
-      {/* Stats row */}
-      <section className="mt-6 grid grid-cols-2 gap-3">
-        <StatCard
-          icon={<TrendingUp className="h-4 w-4" />}
-          label={t("home.volume")}
-          value="1.240"
-          unit={t("home.volumeUnit")}
+    <div className="mx-auto w-full max-w-5xl px-4 pt-12 sm:px-6">
+      <div className="space-y-4">
+        <GreetingCard
+          name={app.profile.name}
+          initials={app.profile.initials}
+          level={state?.plan.fitnessLevel}
+          programTitle={state?.plan.programTitle}
+          goal={state?.plan.primaryGoal}
         />
-        <StatCard
-          icon={<Trophy className="h-4 w-4" />}
-          label={t("home.goals")}
-          value={`${state.goals.filter((g) => g.done).length}/${state.goals.length}`}
-          unit={t("home.goalsUnit")}
-        />
-      </section>
 
-      {/* Quick programs */}
-      <section className="mt-8">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-display text-2xl">{t("home.programs")}</h2>
-          <Link to="/treinos" className="text-xs font-semibold uppercase tracking-widest text-primary">
-            {t("home.seeAll")}
-          </Link>
-        </div>
-        <StaggerList className="mt-3 space-y-3">
-          {PROGRAMS.map((p) => (
-            <StaggerItem key={p.id}>
-              <Link
-                to="/treinos/$slug"
-                params={{ slug: p.slug }}
-                className="flex min-h-14 items-center gap-4 rounded-2xl border border-border/60 bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 active:scale-[0.98] active:bg-surface-elevated"
-              >
-                <div
-                  className="grid h-12 w-12 shrink-0 place-items-center rounded-xl font-mono text-sm font-bold"
-                  style={{
-                    background: `color-mix(in oklab, ${p.color} 18%, transparent)`,
-                    color: p.color,
-                  }}
-                  aria-hidden
-                >
-                  {LEVEL_META[p.level].badge}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {tLevel(locale, p.level)}
-                  </p>
-                  <p className="truncate font-bold">{tProgram(locale, p.id).title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {p.weeks} {t("home.weeks")} · {p.daysPerWeek}{t("home.perWeek")} · {tProgram(locale, p.id).duration}
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
-              </Link>
-            </StaggerItem>
-          ))}
-        </StaggerList>
-      </section>
+        {isLoading ? (
+          <DashboardSkeleton />
+        ) : !state ? (
+          <DashboardEmptyState
+            onGenerate={() => navigate({ to: "/training-plan" })}
+            generating={false}
+          />
+        ) : (
+          <>
+            {state.status === "completed" ? (
+              <ProgramCompletedState
+                onRegenerate={() =>
+                  run(actions.regenerateProgram.mutateAsync(), "Novo programa gerado!")
+                }
+                generating={actions.regenerateProgram.isPending}
+              />
+            ) : (
+              <FadeIn delay={0.03}>
+                <TodayWorkoutCard
+                  workout={state.todayWorkout}
+                  nextWorkout={state.nextWorkout}
+                  busy={busy}
+                  onStart={(id) => actions.startWorkout.mutate(id)}
+                  onComplete={(id) =>
+                    run(actions.completeWorkout.mutateAsync(id), "Treino concluído!")
+                  }
+                  onSkip={(id) => run(actions.skipWorkout.mutateAsync(id), "Treino pulado")}
+                  onAdvanceDay={() =>
+                    run(actions.advanceDay.mutateAsync(), "Avançou para o próximo dia")
+                  }
+                />
+              </FadeIn>
+            )}
 
-      {/* Daily tip */}
-      <section className="mt-8 rounded-3xl border border-accent/30 bg-accent/5 p-5">
-        <div className="flex items-center gap-2 text-accent">
-          <Zap className="h-4 w-4" />
-          <p className="text-[11px] font-semibold uppercase tracking-widest">{t("home.tip")}</p>
-        </div>
-        <p className="mt-2 text-sm leading-relaxed">{t("home.tipText")}</p>
-      </section>
-    </div>
-  );
-}
+            <FadeIn delay={0.06}>
+              <ProgramOverviewCard
+                state={state}
+                busy={busy}
+                onPause={() => run(actions.pauseProgram.mutateAsync(), "Programa pausado")}
+                onResume={() => run(actions.resumeProgram.mutateAsync(), "Programa retomado")}
+                onRestart={() => run(actions.restartProgram.mutateAsync(), "Programa reiniciado")}
+              />
+            </FadeIn>
 
-function StatCard({
-  icon,
-  label,
-  value,
-  unit,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  unit: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-surface p-4">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <p className="text-[11px] font-semibold uppercase tracking-widest">{label}</p>
+            <FadeIn delay={0.09}>
+              <WeeklyProgressCard state={state} />
+            </FadeIn>
+
+            <FadeIn delay={0.12}>
+              <QuickActionsCard />
+            </FadeIn>
+
+            <FadeIn delay={0.15}>
+              <UpcomingWorkoutCard workout={state.nextWorkout} />
+            </FadeIn>
+
+            <FadeIn delay={0.18}>
+              <StatisticsCard
+                overall={state.overall}
+                trainingMinutes={trainingMinutes}
+                caloriesBurned={caloriesBurned}
+              />
+            </FadeIn>
+
+            <FadeIn delay={0.21}>
+              <MotivationCard />
+            </FadeIn>
+          </>
+        )}
       </div>
-      <p className="mt-2 text-display text-2xl">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{unit}</p>
     </div>
   );
 }
