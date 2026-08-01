@@ -493,10 +493,13 @@ export const TrainingPlanService = {
     const uid = await resolveUserId(userId);
     const nowIso = new Date().toISOString();
 
-    const before = await loadPlan(uid);
-    const hadCompletedBefore = before
-      ? before.weeks.some((w) => w.workouts.some((x) => x.status === "completed"))
-      : false;
+    const { count: completedBefore } = await supabase
+      .from("planned_workouts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", uid)
+      .eq("status", "completed");
+    const hadCompletedBefore = (completedBefore ?? 0) > 0;
+
 
     await supabase
       .from("planned_workouts")
