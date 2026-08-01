@@ -104,7 +104,7 @@ function DashboardPage() {
   );
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 pt-10 pb-24 sm:px-6 sm:pt-12">
+    <div className="mx-auto w-full max-w-5xl px-4 pt-10 sm:px-6 sm:pt-12">
       <div className="space-y-4">
         <FadeIn>
           <GreetingCard
@@ -186,6 +186,6 @@ function DashboardPage() {
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }
