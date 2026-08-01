@@ -57,14 +57,14 @@ function DashboardPage() {
     return { trainingMinutes: Math.round(sec / 60), caloriesBurned: kcal };
   }, [app.workoutLog]);
 
-  const run = async (p: Promise<unknown>, msg: string) => {
+  const run = useCallback(async (p: Promise<unknown>, msg: string) => {
     try {
       await p;
       toast.success(msg);
     } catch (e) {
       toast.error((e as Error).message);
     }
-  };
+  }, []);
 
   const busy =
     actions.completeWorkout.isPending ||
@@ -74,47 +74,78 @@ function DashboardPage() {
     actions.resumeProgram.isPending ||
     actions.restartProgram.isPending;
 
+  const onStart = useCallback(
+    (id: string) => actions.startWorkout.mutate(id),
+    [actions.startWorkout],
+  );
+  const onComplete = useCallback(
+    (id: string) => run(actions.completeWorkout.mutateAsync(id), "Treino concluído!"),
+    [actions.completeWorkout, run],
+  );
+  const onSkip = useCallback(
+    (id: string) => run(actions.skipWorkout.mutateAsync(id), "Treino pulado"),
+    [actions.skipWorkout, run],
+  );
+  const onAdvanceDay = useCallback(
+    () => run(actions.advanceDay.mutateAsync(), "Avançou para o próximo dia"),
+    [actions.advanceDay, run],
+  );
+  const onPause = useCallback(
+    () => run(actions.pauseProgram.mutateAsync(), "Programa pausado"),
+    [actions.pauseProgram, run],
+  );
+  const onResume = useCallback(
+    () => run(actions.resumeProgram.mutateAsync(), "Programa retomado"),
+    [actions.resumeProgram, run],
+  );
+  const onRestart = useCallback(
+    () => run(actions.restartProgram.mutateAsync(), "Programa reiniciado"),
+    [actions.restartProgram, run],
+  );
+
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 pt-12 sm:px-6">
+    <main className="mx-auto w-full max-w-5xl px-4 pt-10 pb-24 sm:px-6 sm:pt-12">
       <div className="space-y-4">
-        <GreetingCard
-          name={app.profile.name}
-          initials={app.profile.initials}
-          level={state?.plan.fitnessLevel}
-          programTitle={state?.plan.programTitle}
-          goal={state?.plan.primaryGoal}
-        />
+        <FadeIn>
+          <GreetingCard
+            name={app.profile.name}
+            initials={app.profile.initials}
+            level={state?.plan.fitnessLevel}
+            programTitle={state?.plan.programTitle}
+            goal={state?.plan.primaryGoal}
+          />
+        </FadeIn>
 
         {isLoading ? (
           <DashboardSkeleton />
         ) : !state ? (
-          <DashboardEmptyState
-            onGenerate={() => navigate({ to: "/training-plan" })}
-            generating={false}
-          />
+          <FadeIn delay={0.03}>
+            <DashboardEmptyState
+              onGenerate={() => navigate({ to: "/training-plan" })}
+              generating={false}
+            />
+          </FadeIn>
         ) : (
           <>
             {state.status === "completed" ? (
-              <ProgramCompletedState
-                onRegenerate={() =>
-                  run(actions.regenerateProgram.mutateAsync(), "Novo programa gerado!")
-                }
-                generating={actions.regenerateProgram.isPending}
-              />
+              <FadeIn delay={0.03}>
+                <ProgramCompletedState
+                  onRegenerate={() =>
+                    run(actions.regenerateProgram.mutateAsync(), "Novo programa gerado!")
+                  }
+                  generating={actions.regenerateProgram.isPending}
+                />
+              </FadeIn>
             ) : (
               <FadeIn delay={0.03}>
                 <TodayWorkoutCard
                   workout={state.todayWorkout}
                   nextWorkout={state.nextWorkout}
                   busy={busy}
-                  onStart={(id) => actions.startWorkout.mutate(id)}
-                  onComplete={(id) =>
-                    run(actions.completeWorkout.mutateAsync(id), "Treino concluído!")
-                  }
-                  onSkip={(id) => run(actions.skipWorkout.mutateAsync(id), "Treino pulado")}
-                  onAdvanceDay={() =>
-                    run(actions.advanceDay.mutateAsync(), "Avançou para o próximo dia")
-                  }
+                  onStart={onStart}
+                  onComplete={onComplete}
+                  onSkip={onSkip}
+                  onAdvanceDay={onAdvanceDay}
                 />
               </FadeIn>
             )}
@@ -123,9 +154,9 @@ function DashboardPage() {
               <ProgramOverviewCard
                 state={state}
                 busy={busy}
-                onPause={() => run(actions.pauseProgram.mutateAsync(), "Programa pausado")}
-                onResume={() => run(actions.resumeProgram.mutateAsync(), "Programa retomado")}
-                onRestart={() => run(actions.restartProgram.mutateAsync(), "Programa reiniciado")}
+                onPause={onPause}
+                onResume={onResume}
+                onRestart={onRestart}
               />
             </FadeIn>
 
@@ -155,6 +186,6 @@ function DashboardPage() {
           </>
         )}
       </div>
-    </div>
+    </main>
   );
 }
