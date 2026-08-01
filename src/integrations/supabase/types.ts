@@ -528,6 +528,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stats: {
+        Row: {
+          created_at: string
+          current_xp: number
+          last_activity_at: string | null
+          level: number
+          lifetime_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_xp?: number
+          last_activity_at?: string | null
+          level?: number
+          lifetime_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_xp?: number
+          last_activity_at?: string | null
+          level?: number
+          lifetime_xp?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       workout_reminder_settings: {
         Row: {
           created_at: string
@@ -555,6 +585,42 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vibration?: boolean
+        }
+        Relationships: []
+      }
+      xp_history: {
+        Row: {
+          amount: number
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          reason: string
+          running_total: number
+          source_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          reason: string
+          running_total?: number
+          source_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          reason?: string
+          running_total?: number
+          source_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
