@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Sparkles } from "lucide-react";
 import type { FitnessLevel, PrimaryGoal } from "@/lib/onboarding";
 import { DashCard, Pill } from "./primitives";
@@ -18,7 +19,7 @@ const GOAL_LABEL: Record<PrimaryGoal, string> = {
   fitness: "Condicionamento",
 };
 
-export function GreetingCard({
+export const GreetingCard = memo(function GreetingCard({
   name,
   initials,
   level,
@@ -31,16 +32,18 @@ export function GreetingCard({
   programTitle?: string | null;
   goal?: PrimaryGoal | null;
 }) {
+  const hasTags = Boolean(level || programTitle || goal);
   return (
-    <DashCard as="header" className="bg-gradient-to-br from-surface-elevated via-surface to-background">
+    <DashCard
+      as="header"
+      className="bg-gradient-to-br from-surface-elevated via-surface to-background"
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             {greetingFor()}
           </p>
-          <h1 className="mt-1 truncate text-display text-3xl sm:text-4xl">
-            {name || "Atleta"}
-          </h1>
+          <h1 className="mt-1.5 truncate text-display text-3xl sm:text-4xl">{name || "Atleta"}</h1>
         </div>
         <div
           className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-border/60 bg-background/50"
@@ -50,17 +53,17 @@ export function GreetingCard({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {level ? <Pill>{LEVEL_LABEL[level]}</Pill> : null}
-        {programTitle ? (
-          <Pill className="border-primary/40 text-primary">{programTitle}</Pill>
-        ) : null}
-        {goal ? (
-          <Pill className="inline-flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3" aria-hidden /> {GOAL_LABEL[goal]}
-          </Pill>
-        ) : null}
-      </div>
+      {hasTags ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {level ? <Pill>{LEVEL_LABEL[level]}</Pill> : null}
+          {programTitle ? <Pill tone="primary">{programTitle}</Pill> : null}
+          {goal ? (
+            <Pill>
+              <Sparkles className="h-3 w-3" aria-hidden /> {GOAL_LABEL[goal]}
+            </Pill>
+          ) : null}
+        </div>
+      ) : null}
     </DashCard>
   );
-}
+});
