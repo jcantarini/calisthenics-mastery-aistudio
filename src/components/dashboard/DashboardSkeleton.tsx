@@ -7,7 +7,7 @@ import { DashCard } from "./primitives";
  */
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-4 animate-fade-in" aria-busy="true" aria-live="polite">
+    <div className="space-y-4" aria-busy="true" aria-live="polite">
       <span className="sr-only">Carregando painel…</span>
 
       <DashCard>
