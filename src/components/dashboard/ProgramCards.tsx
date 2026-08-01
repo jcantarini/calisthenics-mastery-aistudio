@@ -1,11 +1,20 @@
+import { memo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import type { CurrentProgramState } from "@/services/training-plan/trainingPlanTypes";
-import { cn } from "@/lib/utils";
-import { DashCard, Pill, ProgressBar, SectionTitle } from "./primitives";
+import {
+  ActionButton,
+  DashCard,
+  Pill,
+  ProgressBar,
+  SectionTitle,
+  StatTile,
+  StatusBadge,
+  actionClasses,
+} from "./primitives";
 import { PLAN_STATUS_LABEL, weekPhase } from "./dashboardFormat";
 
-export function ProgramOverviewCard({
+export const ProgramOverviewCard = memo(function ProgramOverviewCard({
   state,
   busy,
   onPause,
@@ -26,108 +35,73 @@ export function ProgramOverviewCard({
     <DashCard aria-labelledby="program-title">
       <SectionTitle
         action={
-          <span
-            className={cn(
-              "rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-widest",
-              finished
-                ? "bg-accent/15 text-accent"
-                : paused
-                  ? "bg-muted text-muted-foreground"
-                  : "bg-primary/15 text-primary",
-            )}
-          >
+          <StatusBadge tone={finished ? "accent" : paused ? "muted" : "primary"}>
             {PLAN_STATUS_LABEL[status]}
-          </span>
+          </StatusBadge>
         }
       >
         Seu programa
       </SectionTitle>
 
-      <h2 id="program-title" className="mt-2 truncate text-xl font-bold">
+      <h2 id="program-title" className="mt-3 truncate text-xl font-bold leading-tight">
         {plan.programTitle}
       </h2>
-      <p className="mt-1 text-xs text-muted-foreground">
+      <p className="mt-1.5 text-xs text-muted-foreground">
         Semana {plan.currentWeek} de {plan.totalWeeks} · Dia {plan.currentDay} ·{" "}
         {weekPhase(currentWeek)}
       </p>
 
-      <div className="mt-4">
+      <div className="mt-5">
         <ProgressBar value={overall.percentage} label="Progresso do programa" />
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-xs tabular-nums text-muted-foreground">
           {overall.completedWorkouts} de {overall.totalWorkouts} treinos ({overall.percentage}%)
         </p>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap gap-2">
         {paused ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onResume}
-            className="tap inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-4 text-[11px] font-semibold disabled:opacity-50"
-          >
+          <ActionButton disabled={busy} onClick={onResume}>
             <Play className="h-3.5 w-3.5" aria-hidden /> Retomar
-          </button>
+          </ActionButton>
         ) : (
-          <button
-            type="button"
-            disabled={busy || finished}
-            onClick={onPause}
-            className="tap inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-4 text-[11px] font-semibold disabled:opacity-50"
-          >
+          <ActionButton disabled={busy || finished} onClick={onPause}>
             <Pause className="h-3.5 w-3.5" aria-hidden /> Pausar
-          </button>
+          </ActionButton>
         )}
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onRestart}
-          className="tap inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-4 text-[11px] font-semibold disabled:opacity-50"
-        >
+        <ActionButton disabled={busy} onClick={onRestart}>
           <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Reiniciar
-        </button>
-        <Link
-          to="/training-plan"
-          className="tap inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-4 text-[11px] font-semibold"
-        >
+        </ActionButton>
+        <Link to="/training-plan" className={actionClasses("outline")}>
           Ver plano
         </Link>
       </div>
     </DashCard>
   );
-}
+});
 
-export function WeeklyProgressCard({ state }: { state: CurrentProgramState }) {
+export const WeeklyProgressCard = memo(function WeeklyProgressCard({
+  state,
+}: {
+  state: CurrentProgramState;
+}) {
   const { weekly, currentWeek } = state;
   if (!weekly) return null;
   return (
-    <DashCard aria-labelledby="weekly-title">
-      <SectionTitle
-        action={<Pill>{weekPhase(currentWeek)}</Pill>}
-      >
+    <DashCard aria-label="Progresso semanal">
+      <SectionTitle action={<Pill>{weekPhase(currentWeek)}</Pill>}>
         Semana {weekly.weekNumber}
       </SectionTitle>
-      <p id="weekly-title" className="sr-only">
-        Progresso semanal
-      </p>
-      <div className="mt-3">
+
+      <div className="mt-4">
         <ProgressBar value={weekly.percentage} label="Progresso da semana" />
       </div>
-      <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Concluídos" value={weekly.completedWorkouts} />
-        <Stat label="Restantes" value={weekly.remainingWorkouts} />
-        <Stat label="Recuperação" value={weekly.recoveryDays} />
-        <Stat label="Conclusão" value={`${weekly.percentage}%`} />
+
+      <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <StatTile as="dl" label="Concluídos" value={weekly.completedWorkouts} />
+        <StatTile as="dl" label="Restantes" value={weekly.remainingWorkouts} />
+        <StatTile as="dl" label="Recuperação" value={weekly.recoveryDays} />
+        <StatTile as="dl" label="Conclusão" value={`${weekly.percentage}%`} />
       </dl>
     </DashCard>
   );
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-background/40 p-3">
-      <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-display text-xl leading-none">{value}</dd>
-    </div>
-  );
-}
+});
