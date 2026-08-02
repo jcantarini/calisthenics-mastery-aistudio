@@ -155,5 +155,7 @@ export async function upsertAssessment(userId: string, a: AssessmentData, comple
       userId,
       metadata: { score },
     });
+    const { emitAchievementEvent } = await import("@/services/achievements");
+    await emitAchievementEvent({ type: "AssessmentCompleted", sourceId: userId, userId });
   }
 }
