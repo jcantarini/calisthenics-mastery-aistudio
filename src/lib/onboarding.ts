@@ -137,6 +137,8 @@ export async function upsertOnboarding(
   if (completed) {
     const { emitXPEvent } = await import("@/services/xp");
     await emitXPEvent({ type: "profile_completed", sourceId: userId, userId });
+    const { emitAchievementEvent } = await import("@/services/achievements");
+    await emitAchievementEvent({ type: "ProfileCompleted", sourceId: userId, userId });
   }
 }
 

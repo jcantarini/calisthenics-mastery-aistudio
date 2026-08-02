@@ -14,6 +14,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { emitXPEvent } from "@/services/xp";
+import { emitAchievementEvent } from "@/services/achievements";
 import type { Json } from "@/integrations/supabase/types";
 import {
   fetchOnboarding,
@@ -556,6 +557,28 @@ export const TrainingPlanService = {
         sourceId: plan.id,
         userId: uid,
         metadata: { planId: plan.id },
+      });
+    }
+
+    // Achievements are a secondary concern: emitAchievementEvent never throws,
+    // so a failure here can never block workout completion.
+    await emitAchievementEvent({
+      type: "WorkoutCompleted",
+      sourceId: plannedWorkoutId,
+      userId: uid,
+    });
+    if (week && isWeekComplete(week)) {
+      await emitAchievementEvent({
+        type: "TrainingWeekCompleted",
+        sourceId: `${plan.id}:${week.weekNumber}`,
+        userId: uid,
+      });
+    }
+    if (done) {
+      await emitAchievementEvent({
+        type: "TrainingProgramCompleted",
+        sourceId: plan.id,
+        userId: uid,
       });
     }
 
