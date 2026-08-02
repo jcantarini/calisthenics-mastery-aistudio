@@ -10,6 +10,7 @@ import { useT } from "@/lib/i18n";
 const searchSchema = z.object({ redirect: z.string().optional() });
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   validateSearch: searchSchema,
   head: () => ({
     meta: [
