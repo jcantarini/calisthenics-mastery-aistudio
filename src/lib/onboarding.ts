@@ -133,6 +133,13 @@ export async function upsertOnboarding(
     .from("user_onboarding")
     .upsert(payload, { onConflict: "user_id" });
   if (error) throw error;
+
+  if (completed) {
+    const { emitXPEvent } = await import("@/services/xp");
+    await emitXPEvent({ type: "profile_completed", sourceId: userId, userId });
+    const { emitAchievementEvent } = await import("@/services/achievements");
+    await emitAchievementEvent({ type: "ProfileCompleted", sourceId: userId, userId });
+  }
 }
 
 /** Map onboarding answers to a program slug and update AppState (personalized plan). */

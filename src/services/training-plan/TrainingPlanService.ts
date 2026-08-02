@@ -13,6 +13,8 @@
 // Pure runtime math lives in trainingPlanRuntime.
 
 import { supabase } from "@/integrations/supabase/client";
+import { emitXPEvent } from "@/services/xp";
+import { emitAchievementEvent } from "@/services/achievements";
 import type { Json } from "@/integrations/supabase/types";
 import {
   fetchOnboarding,
@@ -493,6 +495,14 @@ export const TrainingPlanService = {
     const uid = await resolveUserId(userId);
     const nowIso = new Date().toISOString();
 
+    const { count: completedBefore } = await supabase
+      .from("planned_workouts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", uid)
+      .eq("status", "completed");
+    const hadCompletedBefore = (completedBefore ?? 0) > 0;
+
+
     await supabase
       .from("planned_workouts")
       .update({ status: "completed", is_completed: true, completed_at: nowIso })
@@ -511,8 +521,70 @@ export const TrainingPlanService = {
     if (done && plan.status === "active") plan = await setPlanStatus(plan, "completed");
 
     plan = await syncPlanProgress(plan);
+
+    // XP is event-driven: the engine decides amounts and idempotency.
+    const finished = plan.weeks
+      .flatMap((w) => w.workouts)
+      .find((w) => w.id === plannedWorkoutId);
+
+    if (!hadCompletedBefore) {
+      await emitXPEvent({
+        type: "first_workout",
+        sourceId: plannedWorkoutId,
+        userId: uid,
+        metadata: { planId: plan.id },
+      });
+    }
+    await emitXPEvent({
+      type: "workout_completed",
+      sourceId: plannedWorkoutId,
+      userId: uid,
+      metadata: { planId: plan.id, weekNumber: finished?.weekNumber, dayNumber: finished?.dayNumber },
+    });
+
+    const week = plan.weeks.find((w) => w.weekNumber === finished?.weekNumber);
+    if (week && isWeekComplete(week)) {
+      await emitXPEvent({
+        type: "week_completed",
+        sourceId: `${plan.id}:${week.weekNumber}`,
+        userId: uid,
+        metadata: { planId: plan.id, weekNumber: week.weekNumber },
+      });
+    }
+    if (done) {
+      await emitXPEvent({
+        type: "program_completed",
+        sourceId: plan.id,
+        userId: uid,
+        metadata: { planId: plan.id },
+      });
+    }
+
+    // Achievements are a secondary concern: emitAchievementEvent never throws,
+    // so a failure here can never block workout completion.
+    await emitAchievementEvent({
+      type: "WorkoutCompleted",
+      sourceId: plannedWorkoutId,
+      userId: uid,
+    });
+    if (week && isWeekComplete(week)) {
+      await emitAchievementEvent({
+        type: "TrainingWeekCompleted",
+        sourceId: `${plan.id}:${week.weekNumber}`,
+        userId: uid,
+      });
+    }
+    if (done) {
+      await emitAchievementEvent({
+        type: "TrainingProgramCompleted",
+        sourceId: plan.id,
+        userId: uid,
+      });
+    }
+
     return buildProgramState(plan);
   },
+
 
   /** @deprecated use completeWorkout */
   async markWorkoutCompleted(userId: string, plannedWorkoutId: string) {

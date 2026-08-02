@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_hidden: boolean
+          rarity: string
+          target_value: number
+          xp_reward: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id: string
+          is_hidden?: boolean
+          rarity?: string
+          target_value?: number
+          xp_reward?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_hidden?: boolean
+          rarity?: string
+          target_value?: number
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       fitness_assessment: {
         Row: {
           completed: boolean
@@ -453,6 +483,85 @@ export type Database = {
           },
         ]
       }
+      user_achievement_progress: {
+        Row: {
+          achievement_id: string
+          created_at: string
+          current_value: number
+          id: string
+          progress_percentage: number
+          target_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          progress_percentage?: number
+          target_value?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          progress_percentage?: number
+          target_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievement_progress_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          created_at: string
+          id: string
+          source_event_id: string | null
+          unlocked_at: string
+          user_id: string
+          xp_awarded: number
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string
+          id?: string
+          source_event_id?: string | null
+          unlocked_at?: string
+          user_id: string
+          xp_awarded?: number
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string
+          id?: string
+          source_event_id?: string | null
+          unlocked_at?: string
+          user_id?: string
+          xp_awarded?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_onboarding: {
         Row: {
           age: number | null
@@ -528,6 +637,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stats: {
+        Row: {
+          created_at: string
+          current_xp: number
+          last_activity_at: string | null
+          level: number
+          lifetime_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_xp?: number
+          last_activity_at?: string | null
+          level?: number
+          lifetime_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_xp?: number
+          last_activity_at?: string | null
+          level?: number
+          lifetime_xp?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       workout_reminder_settings: {
         Row: {
           created_at: string
@@ -555,6 +694,42 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vibration?: boolean
+        }
+        Relationships: []
+      }
+      xp_history: {
+        Row: {
+          amount: number
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          reason: string
+          running_total: number
+          source_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          reason: string
+          running_total?: number
+          source_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          reason?: string
+          running_total?: number
+          source_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }

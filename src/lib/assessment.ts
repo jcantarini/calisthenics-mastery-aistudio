@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { emitXPEvent } from "@/services/xp";
 import type { Json } from "@/integrations/supabase/types";
 import type { AppState } from "@/lib/store";
 import { PROGRAMS } from "@/lib/programs";
@@ -146,4 +147,15 @@ export async function upsertAssessment(userId: string, a: AssessmentData, comple
     .from("fitness_assessment")
     .upsert(payload, { onConflict: "user_id" });
   if (error) throw error;
+
+  if (completed) {
+    await emitXPEvent({
+      type: "assessment_completed",
+      sourceId: userId,
+      userId,
+      metadata: { score },
+    });
+    const { emitAchievementEvent } = await import("@/services/achievements");
+    await emitAchievementEvent({ type: "AssessmentCompleted", sourceId: userId, userId });
+  }
 }
