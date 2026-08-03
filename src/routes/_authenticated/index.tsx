@@ -10,6 +10,8 @@ import { ProgramOverviewCard, WeeklyProgressCard } from "@/components/dashboard/
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingWorkoutCard } from "@/components/dashboard/UpcomingWorkoutCard";
 import { StatisticsCard, MotivationCard } from "@/components/dashboard/StatisticsCard";
+import { PlayerLevelCard } from "@/components/dashboard/PlayerLevelCard";
+
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import {
   DashboardEmptyState,
