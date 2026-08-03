@@ -4,7 +4,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { isIdempotent, levelForXP, resolveAmount, resolveReason } from "./xpRules";
-import { onXPEvent } from "./xpEvents";
+import { notifyXPApplied, onXPEvent } from "./xpEvents";
+
 import type { XPAwardResult, XPEntry, XPEvent, XPEventType, UserXPStats } from "./xpTypes";
 
 /* ---------------- Identity ---------------- */
@@ -145,7 +146,16 @@ async function applyDelta(userId: string, delta: number, event: XPEvent): Promis
     lastActivityAt: nowIso,
   });
 
+  await notifyXPApplied({
+    userId,
+    amount: delta,
+    eventType: event.type,
+    currentXP: nextStats.currentXP,
+    lifetimeXP: nextStats.lifetimeXP,
+  });
+
   return { awarded: true, amount: delta, entry: toEntry(data as HistoryRow), stats: nextStats };
+
 }
 
 /* ---------------- Public API ---------------- */

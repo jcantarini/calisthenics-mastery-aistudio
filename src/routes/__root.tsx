@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Home, Dumbbell, Apple, Target, User, AlertOctagon } from "lucide-react";
 
 import appCss from "../styles.css?url";
@@ -151,8 +151,13 @@ const navItems = [
 function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useT();
+  // Nav visibility depends on the resolved client route: render after hydration.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   // Hide chrome on the public auth screen and during onboarding/assessment.
+  if (!hydrated) return null;
   if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname.startsWith("/assessment") || pathname.startsWith("/first-workout") || pathname.startsWith("/training-plan")) return null;
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
