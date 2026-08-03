@@ -160,6 +160,42 @@ export type Database = {
           },
         ]
       }
+      level_history: {
+        Row: {
+          created_at: string
+          id: string
+          levels_gained: number
+          lifetime_xp: number
+          metadata: Json
+          new_level: number
+          previous_level: number
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          levels_gained?: number
+          lifetime_xp?: number
+          metadata?: Json
+          new_level: number
+          previous_level: number
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          levels_gained?: number
+          lifetime_xp?: number
+          metadata?: Json
+          new_level?: number
+          previous_level?: number
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       planned_workouts: {
         Row: {
           completed_at: string | null
@@ -634,6 +670,48 @@ export type Database = {
           user_id?: string
           weight_kg?: number | null
           workout_duration_min?: number | null
+        }
+        Relationships: []
+      }
+      user_progression: {
+        Row: {
+          created_at: string
+          current_level: number
+          current_xp: number
+          highest_level: number
+          last_level_up_at: string | null
+          lifetime_xp: number
+          prestige: number
+          progress_percentage: number
+          updated_at: string
+          user_id: string
+          xp_to_next_level: number
+        }
+        Insert: {
+          created_at?: string
+          current_level?: number
+          current_xp?: number
+          highest_level?: number
+          last_level_up_at?: string | null
+          lifetime_xp?: number
+          prestige?: number
+          progress_percentage?: number
+          updated_at?: string
+          user_id: string
+          xp_to_next_level?: number
+        }
+        Update: {
+          created_at?: string
+          current_level?: number
+          current_xp?: number
+          highest_level?: number
+          last_level_up_at?: string | null
+          lifetime_xp?: number
+          prestige?: number
+          progress_percentage?: number
+          updated_at?: string
+          user_id?: string
+          xp_to_next_level?: number
         }
         Relationships: []
       }
