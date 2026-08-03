@@ -35,4 +35,37 @@ export function emitXPEventAsync(event: XPEvent): void {
 
 export function clearXPListeners(): void {
   listeners.clear();
+  appliedListeners.clear();
 }
+
+/* ---------------- XP applied notifications ---------------- */
+
+/** Emitted after XP is actually persisted — consumed by the Progression Engine. */
+export interface XPAppliedPayload {
+  userId: string;
+  amount: number;
+  eventType: XPEvent["type"];
+  currentXP: number;
+  lifetimeXP: number;
+}
+
+export type XPAppliedListener = (payload: XPAppliedPayload) => void | Promise<void>;
+
+const appliedListeners = new Set<XPAppliedListener>();
+
+export function onXPApplied(listener: XPAppliedListener): () => void {
+  appliedListeners.add(listener);
+  return () => appliedListeners.delete(listener);
+}
+
+/** Never throws: downstream systems must not break XP persistence. */
+export async function notifyXPApplied(payload: XPAppliedPayload): Promise<void> {
+  for (const listener of Array.from(appliedListeners)) {
+    try {
+      await listener(payload);
+    } catch (error) {
+      console.error("[xp] applied listener failed", error);
+    }
+  }
+}
+

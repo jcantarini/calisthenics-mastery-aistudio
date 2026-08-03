@@ -10,6 +10,8 @@ import { ProgramOverviewCard, WeeklyProgressCard } from "@/components/dashboard/
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingWorkoutCard } from "@/components/dashboard/UpcomingWorkoutCard";
 import { StatisticsCard, MotivationCard } from "@/components/dashboard/StatisticsCard";
+import { PlayerLevelCard } from "@/components/dashboard/PlayerLevelCard";
+
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import {
   DashboardEmptyState,
@@ -173,6 +175,10 @@ function DashboardPage() {
             </FadeIn>
 
             <FadeIn delay={0.18}>
+              <PlayerLevelCard />
+            </FadeIn>
+
+            <FadeIn delay={0.21}>
               <StatisticsCard
                 overall={state.overall}
                 trainingMinutes={trainingMinutes}
@@ -180,7 +186,8 @@ function DashboardPage() {
               />
             </FadeIn>
 
-            <FadeIn delay={0.21}>
+            <FadeIn delay={0.24}>
+
               <MotivationCard />
             </FadeIn>
           </>
