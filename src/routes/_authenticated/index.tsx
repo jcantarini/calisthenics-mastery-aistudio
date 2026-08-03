@@ -175,6 +175,10 @@ function DashboardPage() {
             </FadeIn>
 
             <FadeIn delay={0.18}>
+              <PlayerLevelCard />
+            </FadeIn>
+
+            <FadeIn delay={0.21}>
               <StatisticsCard
                 overall={state.overall}
                 trainingMinutes={trainingMinutes}
@@ -182,7 +186,8 @@ function DashboardPage() {
               />
             </FadeIn>
 
-            <FadeIn delay={0.21}>
+            <FadeIn delay={0.24}>
+
               <MotivationCard />
             </FadeIn>
           </>
