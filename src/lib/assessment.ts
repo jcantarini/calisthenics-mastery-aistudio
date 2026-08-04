@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { emitXPEvent } from "@/services/xp";
 import type { Json } from "@/integrations/supabase/types";
 import type { AppState } from "@/lib/store";
 import { PROGRAMS } from "@/lib/programs";
@@ -149,13 +148,12 @@ export async function upsertAssessment(userId: string, a: AssessmentData, comple
   if (error) throw error;
 
   if (completed) {
-    await emitXPEvent({
-      type: "assessment_completed",
-      sourceId: userId,
+    // Single gamification entry point: the Orchestrator coordinates the engines.
+    const { GamificationOrchestrator } = await import("@/services/gamification");
+    await GamificationOrchestrator.processAssessmentCompleted({
+      assessmentId: userId,
       userId,
       metadata: { score },
     });
-    const { emitAchievementEvent } = await import("@/services/achievements");
-    await emitAchievementEvent({ type: "AssessmentCompleted", sourceId: userId, userId });
   }
 }

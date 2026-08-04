@@ -135,10 +135,8 @@ export async function upsertOnboarding(
   if (error) throw error;
 
   if (completed) {
-    const { emitXPEvent } = await import("@/services/xp");
-    await emitXPEvent({ type: "profile_completed", sourceId: userId, userId });
-    const { emitAchievementEvent } = await import("@/services/achievements");
-    await emitAchievementEvent({ type: "ProfileCompleted", sourceId: userId, userId });
+    const { GamificationOrchestrator } = await import("@/services/gamification");
+    await GamificationOrchestrator.processProfileCompleted({ userId });
   }
 }
 
