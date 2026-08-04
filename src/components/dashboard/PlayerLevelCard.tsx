@@ -1,17 +1,17 @@
 import { memo } from "react";
 import { Sparkles, TrendingUp } from "lucide-react";
-import { usePlayerLevel, usePlayerProgress } from "@/hooks/usePlayerProgression";
+import { useLevelProgress } from "@/hooks/useGamification";
 import { DashCard, ProgressBar, SectionTitle, StatTile } from "./primitives";
 
 /**
- * Reusable Dashboard widget. All level math comes from ProgressionService
- * through hooks — this component only renders.
+ * Reusable Dashboard widget. Consumes only the consolidated gamification
+ * result exposed by the Orchestrator — never XP/Progression/Achievement
+ * services directly. This component only renders.
  */
 export const PlayerLevelCard = memo(function PlayerLevelCard() {
-  const { data: progression, loading } = usePlayerLevel();
-  const { data: snapshot } = usePlayerProgress();
+  const { data: progress, loading } = useLevelProgress();
 
-  if (loading || !progression || !snapshot) return null;
+  if (loading || !progress) return null;
 
   return (
     <DashCard aria-label="Nível do jogador">
@@ -19,20 +19,20 @@ export const PlayerLevelCard = memo(function PlayerLevelCard() {
         <SectionTitle>Nível</SectionTitle>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
-          Nível {progression.currentLevel}
+          Nível {progress.level}
         </span>
       </div>
 
       <div className="mt-4 space-y-2">
         <div className="flex items-baseline justify-between text-sm">
-          <span className="font-semibold">{snapshot.xpIntoLevel} XP</span>
+          <span className="font-semibold">{progress.currentXP} XP</span>
           <span className="text-muted-foreground">
-            {snapshot.isMaxLevel ? "Nível máximo" : `${snapshot.levelSpan} XP`}
+            {progress.isMaxLevel ? "Nível máximo" : `${progress.nextLevelXP} XP`}
           </span>
         </div>
         <ProgressBar
-          value={snapshot.progressPercentage}
-          label={`Progresso para o nível ${snapshot.level + 1}`}
+          value={progress.progressPercentage}
+          label={`Progresso para o nível ${progress.level + 1}`}
         />
       </div>
 
@@ -41,19 +41,19 @@ export const PlayerLevelCard = memo(function PlayerLevelCard() {
           as="dl"
           icon={<TrendingUp className="h-3.5 w-3.5" aria-hidden />}
           label="XP total"
-          value={`${progression.lifetimeXP}`}
+          value={`${progress.lifetimeXP}`}
         />
         <StatTile
           as="dl"
           icon={<Sparkles className="h-3.5 w-3.5" aria-hidden />}
           label="Faltam"
-          value={snapshot.isMaxLevel ? "—" : `${snapshot.xpRemaining} XP`}
+          value={progress.isMaxLevel ? "—" : `${progress.xpToNextLevel} XP`}
         />
         <StatTile
           as="dl"
           icon={<TrendingUp className="h-3.5 w-3.5" aria-hidden />}
           label="Próximo nível"
-          value={snapshot.isMaxLevel ? "MAX" : `${snapshot.level + 1}`}
+          value={progress.isMaxLevel ? "MAX" : `${progress.level + 1}`}
         />
       </dl>
     </DashCard>

@@ -13,19 +13,9 @@
 // Pure runtime math lives in trainingPlanRuntime.
 
 import { supabase } from "@/integrations/supabase/client";
-import { emitXPEvent } from "@/services/xp";
-import { emitAchievementEvent } from "@/services/achievements";
 import type { Json } from "@/integrations/supabase/types";
-import {
-  fetchOnboarding,
-  EMPTY_ONBOARDING,
-  type OnboardingData,
-} from "@/lib/onboarding";
-import {
-  fetchAssessment,
-  EMPTY_ASSESSMENT,
-  type AssessmentData,
-} from "@/lib/assessment";
+import { fetchOnboarding, EMPTY_ONBOARDING, type OnboardingData } from "@/lib/onboarding";
+import { fetchAssessment, EMPTY_ASSESSMENT, type AssessmentData } from "@/lib/assessment";
 import { WorkoutGeneratorService } from "@/services/workout-generator/WorkoutGeneratorService";
 import type { GeneratedWorkout } from "@/services/workout-generator/workoutTypes";
 import { buildFourWeekPlan, programBySlug } from "./trainingPlanRules";
@@ -209,7 +199,12 @@ async function loadPlan(userId: string, planId: string): Promise<TrainingPlan | 
       .eq("plan_id", planId)
       .order("week_number")
       .order("day_number"),
-    supabase.from("training_days").select("*").eq("plan_id", planId).order("week_number").order("day_number"),
+    supabase
+      .from("training_days")
+      .select("*")
+      .eq("plan_id", planId)
+      .order("week_number")
+      .order("day_number"),
   ]);
 
   const program = programBySlug(plan.program_slug);
@@ -237,7 +232,8 @@ async function loadPlan(userId: string, planId: string): Promise<TrainingPlan | 
       startedAt: w.started_at,
       scheduledDate: w.scheduled_date,
       status: (w.status as WorkoutStatus) ?? "locked",
-      progressionData: (w.progression_data as unknown as PlannedWorkout["progressionData"]) ?? undefined,
+      progressionData:
+        (w.progression_data as unknown as PlannedWorkout["progressionData"]) ?? undefined,
     });
     workoutsByWeek.set(w.week_number, arr);
   });
@@ -394,7 +390,13 @@ export const TrainingPlanService = {
     const built = buildFourWeekPlan(onboarding, assessment, baseWorkout);
     const startDate = toDateKey(new Date());
 
-    const planId = await upsertActivePlanShell(uid, baseWorkout, onboarding, built.daysPerWeek, startDate);
+    const planId = await upsertActivePlanShell(
+      uid,
+      baseWorkout,
+      onboarding,
+      built.daysPerWeek,
+      startDate,
+    );
     await persistWeeks(uid, planId, built.weeks, startDate);
 
     const loaded = await loadPlan(uid, planId);
@@ -477,7 +479,10 @@ export const TrainingPlanService = {
 
   /* ----- Workout status ----- */
 
-  async startWorkout(plannedWorkoutId: string, userId?: string): Promise<CurrentProgramState | null> {
+  async startWorkout(
+    plannedWorkoutId: string,
+    userId?: string,
+  ): Promise<CurrentProgramState | null> {
     const uid = await resolveUserId(userId);
     await supabase
       .from("planned_workouts")
@@ -502,7 +507,6 @@ export const TrainingPlanService = {
       .eq("status", "completed");
     const hadCompletedBefore = (completedBefore ?? 0) > 0;
 
-
     await supabase
       .from("planned_workouts")
       .update({ status: "completed", is_completed: true, completed_at: nowIso })
@@ -522,69 +526,44 @@ export const TrainingPlanService = {
 
     plan = await syncPlanProgress(plan);
 
-    // XP is event-driven: the engine decides amounts and idempotency.
-    const finished = plan.weeks
-      .flatMap((w) => w.workouts)
-      .find((w) => w.id === plannedWorkoutId);
-
-    if (!hadCompletedBefore) {
-      await emitXPEvent({
-        type: "first_workout",
-        sourceId: plannedWorkoutId,
-        userId: uid,
-        metadata: { planId: plan.id },
-      });
-    }
-    await emitXPEvent({
-      type: "workout_completed",
-      sourceId: plannedWorkoutId,
-      userId: uid,
-      metadata: { planId: plan.id, weekNumber: finished?.weekNumber, dayNumber: finished?.dayNumber },
-    });
-
+    // Gamification is coordinated by a single entry point: the Orchestrator.
+    // It fans out to XP, Progression, Achievements (and future engines) and
+    // never blocks workout completion when an engine fails.
+    const finished = plan.weeks.flatMap((w) => w.workouts).find((w) => w.id === plannedWorkoutId);
     const week = plan.weeks.find((w) => w.weekNumber === finished?.weekNumber);
-    if (week && isWeekComplete(week)) {
-      await emitXPEvent({
-        type: "week_completed",
-        sourceId: `${plan.id}:${week.weekNumber}`,
-        userId: uid,
-        metadata: { planId: plan.id, weekNumber: week.weekNumber },
-      });
-    }
-    if (done) {
-      await emitXPEvent({
-        type: "program_completed",
-        sourceId: plan.id,
-        userId: uid,
-        metadata: { planId: plan.id },
-      });
-    }
 
-    // Achievements are a secondary concern: emitAchievementEvent never throws,
-    // so a failure here can never block workout completion.
-    await emitAchievementEvent({
-      type: "WorkoutCompleted",
-      sourceId: plannedWorkoutId,
-      userId: uid,
-    });
-    if (week && isWeekComplete(week)) {
-      await emitAchievementEvent({
-        type: "TrainingWeekCompleted",
-        sourceId: `${plan.id}:${week.weekNumber}`,
+    try {
+      // Imported lazily to keep the service dependency graph acyclic.
+      const { GamificationOrchestrator } = await import("@/services/gamification");
+      await GamificationOrchestrator.processWorkoutCompleted({
+        plannedWorkoutId,
         userId: uid,
+        isFirstWorkout: !hadCompletedBefore,
+        metadata: {
+          planId: plan.id,
+          weekNumber: finished?.weekNumber,
+          dayNumber: finished?.dayNumber,
+        },
       });
-    }
-    if (done) {
-      await emitAchievementEvent({
-        type: "TrainingProgramCompleted",
-        sourceId: plan.id,
-        userId: uid,
-      });
+      if (week && isWeekComplete(week)) {
+        await GamificationOrchestrator.processWeekCompleted({
+          planId: plan.id,
+          weekNumber: week.weekNumber,
+          userId: uid,
+        });
+      }
+      if (done) {
+        await GamificationOrchestrator.processProgramCompleted({
+          planId: plan.id,
+          userId: uid,
+        });
+      }
+    } catch (error) {
+      console.error("[training-plan] gamification pipeline failed", error);
     }
 
     return buildProgramState(plan);
   },
-
 
   /** @deprecated use completeWorkout */
   async markWorkoutCompleted(userId: string, plannedWorkoutId: string) {
