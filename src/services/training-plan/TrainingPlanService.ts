@@ -13,8 +13,6 @@
 // Pure runtime math lives in trainingPlanRuntime.
 
 import { supabase } from "@/integrations/supabase/client";
-import { emitXPEvent } from "@/services/xp";
-import { emitAchievementEvent } from "@/services/achievements";
 import type { Json } from "@/integrations/supabase/types";
 import {
   fetchOnboarding,
