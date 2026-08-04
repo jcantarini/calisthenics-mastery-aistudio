@@ -522,65 +522,44 @@ export const TrainingPlanService = {
 
     plan = await syncPlanProgress(plan);
 
-    // XP is event-driven: the engine decides amounts and idempotency.
+    // Gamification is coordinated by a single entry point: the Orchestrator.
+    // It fans out to XP, Progression, Achievements (and future engines) and
+    // never blocks workout completion when an engine fails.
     const finished = plan.weeks
       .flatMap((w) => w.workouts)
       .find((w) => w.id === plannedWorkoutId);
-
-    if (!hadCompletedBefore) {
-      await emitXPEvent({
-        type: "first_workout",
-        sourceId: plannedWorkoutId,
-        userId: uid,
-        metadata: { planId: plan.id },
-      });
-    }
-    await emitXPEvent({
-      type: "workout_completed",
-      sourceId: plannedWorkoutId,
-      userId: uid,
-      metadata: { planId: plan.id, weekNumber: finished?.weekNumber, dayNumber: finished?.dayNumber },
-    });
-
     const week = plan.weeks.find((w) => w.weekNumber === finished?.weekNumber);
-    if (week && isWeekComplete(week)) {
-      await emitXPEvent({
-        type: "week_completed",
-        sourceId: `${plan.id}:${week.weekNumber}`,
+
+    try {
+      // Imported lazily to keep the service dependency graph acyclic.
+      const { GamificationOrchestrator } = await import("@/services/gamification");
+      await GamificationOrchestrator.processWorkoutCompleted({
+        plannedWorkoutId,
         userId: uid,
-        metadata: { planId: plan.id, weekNumber: week.weekNumber },
+        isFirstWorkout: !hadCompletedBefore,
+        metadata: {
+          planId: plan.id,
+          weekNumber: finished?.weekNumber,
+          dayNumber: finished?.dayNumber,
+        },
       });
-    }
-    if (done) {
-      await emitXPEvent({
-        type: "program_completed",
-        sourceId: plan.id,
-        userId: uid,
-        metadata: { planId: plan.id },
-      });
+      if (week && isWeekComplete(week)) {
+        await GamificationOrchestrator.processWeekCompleted({
+          planId: plan.id,
+          weekNumber: week.weekNumber,
+          userId: uid,
+        });
+      }
+      if (done) {
+        await GamificationOrchestrator.processProgramCompleted({
+          planId: plan.id,
+          userId: uid,
+        });
+      }
+    } catch (error) {
+      console.error("[training-plan] gamification pipeline failed", error);
     }
 
-    // Achievements are a secondary concern: emitAchievementEvent never throws,
-    // so a failure here can never block workout completion.
-    await emitAchievementEvent({
-      type: "WorkoutCompleted",
-      sourceId: plannedWorkoutId,
-      userId: uid,
-    });
-    if (week && isWeekComplete(week)) {
-      await emitAchievementEvent({
-        type: "TrainingWeekCompleted",
-        sourceId: `${plan.id}:${week.weekNumber}`,
-        userId: uid,
-      });
-    }
-    if (done) {
-      await emitAchievementEvent({
-        type: "TrainingProgramCompleted",
-        sourceId: plan.id,
-        userId: uid,
-      });
-    }
 
     return buildProgramState(plan);
   },
