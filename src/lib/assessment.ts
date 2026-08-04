@@ -12,8 +12,15 @@ export type PlankBand = "lt20" | "20-40" | "40-60" | "60-120" | "120+";
 export type SquatsBand = "0-10" | "11-20" | "21-40" | "41-60" | "60+";
 export type MobilityBand = "poor" | "average" | "good" | "excellent";
 export type SkillKey =
-  | "pullup" | "muscleup" | "handstand" | "frontlever" | "backlever"
-  | "lsit" | "planche" | "humanflag" | "none";
+  | "pullup"
+  | "muscleup"
+  | "handstand"
+  | "frontlever"
+  | "backlever"
+  | "lsit"
+  | "planche"
+  | "humanflag"
+  | "none";
 
 export interface AssessmentData {
   pushups?: PushupsBand;
@@ -35,22 +42,55 @@ export const EMPTY_ASSESSMENT: AssessmentData = {
 };
 
 export const ASSESSMENT_TESTS = [
-  "pushups", "pullups", "dips", "plank", "squats", "mobility", "skills",
+  "pushups",
+  "pullups",
+  "dips",
+  "plank",
+  "squats",
+  "mobility",
+  "skills",
 ] as const;
 export type TestKey = (typeof ASSESSMENT_TESTS)[number];
 
 // Point tables (per-test 0..4)
 const P: Record<string, number> = {
-  "0-5": 0, "6-10": 1, "11-20": 2, "21-40": 3, "40+": 4,
-  "0": 0, "1-3": 1, "4-8": 2, "9-15": 3, "15+": 4,
-  "1-5": 1, "6-10 dips": 2, // placeholder never used
+  "0-5": 0,
+  "6-10": 1,
+  "11-20": 2,
+  "21-40": 3,
+  "40+": 4,
+  "0": 0,
+  "1-3": 1,
+  "4-8": 2,
+  "9-15": 3,
+  "15+": 4,
+  "1-5": 1,
+  "6-10 dips": 2, // placeholder never used
 };
 // Explicit tables to avoid key clashes across tests
-const PUSHUPS_PT: Record<PushupsBand, number> = { "0-5": 0, "6-10": 1, "11-20": 2, "21-40": 3, "40+": 4 };
+const PUSHUPS_PT: Record<PushupsBand, number> = {
+  "0-5": 0,
+  "6-10": 1,
+  "11-20": 2,
+  "21-40": 3,
+  "40+": 4,
+};
 const PULLUPS_PT: Record<PullupsBand, number> = { "0": 0, "1-3": 1, "4-8": 2, "9-15": 3, "15+": 4 };
 const DIPS_PT: Record<DipsBand, number> = { "0": 0, "1-5": 1, "6-10": 2, "11-20": 3, "20+": 4 };
-const PLANK_PT: Record<PlankBand, number> = { lt20: 0, "20-40": 1, "40-60": 2, "60-120": 3, "120+": 4 };
-const SQUATS_PT: Record<SquatsBand, number> = { "0-10": 0, "11-20": 1, "21-40": 2, "41-60": 3, "60+": 4 };
+const PLANK_PT: Record<PlankBand, number> = {
+  lt20: 0,
+  "20-40": 1,
+  "40-60": 2,
+  "60-120": 3,
+  "120+": 4,
+};
+const SQUATS_PT: Record<SquatsBand, number> = {
+  "0-10": 0,
+  "11-20": 1,
+  "21-40": 2,
+  "41-60": 3,
+  "60+": 4,
+};
 const MOB_PT: Record<MobilityBand, number> = { poor: 0, average: 1, good: 2, excellent: 3 };
 
 export function scoreAssessment(a: AssessmentData): number {

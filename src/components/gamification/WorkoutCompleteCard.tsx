@@ -2,7 +2,13 @@ import { memo } from "react";
 import { Flame, Sparkles, Target, Trophy, Zap } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { tAch } from "@/lib/achievements-i18n";
-import { DashCard, CardIcon, ProgressBar, SectionTitle, StatTile } from "@/components/dashboard/primitives";
+import {
+  DashCard,
+  CardIcon,
+  ProgressBar,
+  SectionTitle,
+  StatTile,
+} from "@/components/dashboard/primitives";
 import type { GamificationResult } from "@/services/gamification";
 
 /**

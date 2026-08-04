@@ -2,10 +2,7 @@
 // Components consume these hooks — never the engines, never business rules.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  GamificationOrchestrator,
-  onGamificationResult,
-} from "@/services/gamification";
+import { GamificationOrchestrator, onGamificationResult } from "@/services/gamification";
 import type { GamificationEvent, GamificationResult } from "@/services/gamification";
 
 type State = { data: GamificationResult | null; loading: boolean; error: Error | null };

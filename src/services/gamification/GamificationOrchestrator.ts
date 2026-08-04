@@ -276,6 +276,4 @@ export const GamificationOrchestrator = createGamificationOrchestrator({
   training: TrainingPlanService,
 });
 
-export type GamificationOrchestratorInstance = ReturnType<
-  typeof createGamificationOrchestrator
->;
+export type GamificationOrchestratorInstance = ReturnType<typeof createGamificationOrchestrator>;

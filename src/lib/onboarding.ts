@@ -9,8 +9,16 @@ export type FitnessLevel = "beginner" | "intermediate" | "advanced";
 export type PrimaryGoal = "muscle" | "fat" | "strength" | "endurance" | "skills" | "fitness";
 export type Motivation = "healthy" | "stronger" | "muscle" | "lose" | "skills" | "appearance";
 export type SkillGoal =
-  | "pullup" | "muscleup" | "handstand" | "frontlever" | "backlever"
-  | "planche" | "humanflag" | "pistol" | "lsit" | "none";
+  | "pullup"
+  | "muscleup"
+  | "handstand"
+  | "frontlever"
+  | "backlever"
+  | "planche"
+  | "humanflag"
+  | "pistol"
+  | "lsit"
+  | "none";
 
 export interface CurrentPerformance {
   pushups?: number;
@@ -102,11 +110,7 @@ export async function fetchOnboarding(userId: string): Promise<OnboardingData | 
 }
 
 /** Upsert autosave (partial). */
-export async function upsertOnboarding(
-  userId: string,
-  data: OnboardingData,
-  completed = false,
-) {
+export async function upsertOnboarding(userId: string, data: OnboardingData, completed = false) {
   const payload = {
     user_id: userId,
     age: data.age ?? null,
@@ -141,7 +145,11 @@ export async function upsertOnboarding(
 }
 
 /** Map onboarding answers to a program slug and update AppState (personalized plan). */
-export function generatePlan(state: AppState, data: OnboardingData, displayName?: string): AppState {
+export function generatePlan(
+  state: AppState,
+  data: OnboardingData,
+  displayName?: string,
+): AppState {
   const slugByLevel: Record<FitnessLevel, string> = {
     beginner: "fundacao",
     intermediate: "barra-fixa",
@@ -160,7 +168,11 @@ export function generatePlan(state: AppState, data: OnboardingData, displayName?
 
   const program = PROGRAMS.find((p) => p.slug === slug) ?? PROGRAMS[0];
 
-  const genderToSex: Record<Gender, Sex> = { male: "masculino", female: "feminino", other: "masculino" };
+  const genderToSex: Record<Gender, Sex> = {
+    male: "masculino",
+    female: "feminino",
+    other: "masculino",
+  };
   const daysToActivity = (d?: number): ActivityLevel => {
     if (!d) return "moderado";
     if (d <= 1) return "sedentario";
