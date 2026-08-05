@@ -23,6 +23,7 @@ import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { PageTransition } from "@/components/ui/page-transition";
+import { GamificationHost } from "@/components/gamification/GamificationHost";
 
 
 function NotFoundComponent() {
