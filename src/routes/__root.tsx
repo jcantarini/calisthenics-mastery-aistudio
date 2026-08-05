@@ -230,6 +230,7 @@ function RootComponent() {
           <SplashScreen />
           <OfflineBanner />
           <Toaster position="top-center" richColors closeButton />
+          <GamificationHost />
           <div
             className="relative mx-auto min-h-dvh max-w-md bg-background bg-grain"
             style={{ paddingTop: "env(safe-area-inset-top)" }}
