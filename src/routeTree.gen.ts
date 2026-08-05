@@ -24,6 +24,7 @@ import { Route as AuthenticatedLembretesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedJogadorRouteImport } from './routes/_authenticated/jogador'
 import { Route as AuthenticatedFirstWorkoutRouteImport } from './routes/_authenticated/first-workout'
 import { Route as AuthenticatedDietaRouteImport } from './routes/_authenticated/dieta'
+import { Route as AuthenticatedConquistasRouteImport } from './routes/_authenticated/conquistas'
 import { Route as AuthenticatedAssessmentRouteImport } from './routes/_authenticated/assessment'
 import { Route as AuthenticatedTreinosIndexRouteImport } from './routes/_authenticated/treinos.index'
 import { Route as AuthenticatedTreinosSlugRouteImport } from './routes/_authenticated/treinos.$slug'
@@ -105,6 +106,11 @@ const AuthenticatedDietaRoute = AuthenticatedDietaRouteImport.update({
   path: '/dieta',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedConquistasRoute = AuthenticatedConquistasRouteImport.update({
+  id: '/conquistas',
+  path: '/conquistas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAssessmentRoute = AuthenticatedAssessmentRouteImport.update({
   id: '/assessment',
   path: '/assessment',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/assessment': typeof AuthenticatedAssessmentRoute
+  '/conquistas': typeof AuthenticatedConquistasRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/jogador': typeof AuthenticatedJogadorRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/assessment': typeof AuthenticatedAssessmentRoute
+  '/conquistas': typeof AuthenticatedConquistasRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/jogador': typeof AuthenticatedJogadorRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/assessment': typeof AuthenticatedAssessmentRoute
+  '/_authenticated/conquistas': typeof AuthenticatedConquistasRoute
   '/_authenticated/dieta': typeof AuthenticatedDietaRoute
   '/_authenticated/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/_authenticated/jogador': typeof AuthenticatedJogadorRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/assessment'
+    | '/conquistas'
     | '/dieta'
     | '/first-workout'
     | '/jogador'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/assessment'
+    | '/conquistas'
     | '/dieta'
     | '/first-workout'
     | '/jogador'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/assessment'
+    | '/_authenticated/conquistas'
     | '/_authenticated/dieta'
     | '/_authenticated/first-workout'
     | '/_authenticated/jogador'
@@ -353,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDietaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/conquistas': {
+      id: '/_authenticated/conquistas'
+      path: '/conquistas'
+      fullPath: '/conquistas'
+      preLoaderRoute: typeof AuthenticatedConquistasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/assessment': {
       id: '/_authenticated/assessment'
       path: '/assessment'
@@ -392,6 +411,7 @@ const AuthenticatedTreinosRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssessmentRoute: typeof AuthenticatedAssessmentRoute
+  AuthenticatedConquistasRoute: typeof AuthenticatedConquistasRoute
   AuthenticatedDietaRoute: typeof AuthenticatedDietaRoute
   AuthenticatedFirstWorkoutRoute: typeof AuthenticatedFirstWorkoutRoute
   AuthenticatedJogadorRoute: typeof AuthenticatedJogadorRoute
@@ -409,6 +429,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssessmentRoute: AuthenticatedAssessmentRoute,
+  AuthenticatedConquistasRoute: AuthenticatedConquistasRoute,
   AuthenticatedDietaRoute: AuthenticatedDietaRoute,
   AuthenticatedFirstWorkoutRoute: AuthenticatedFirstWorkoutRoute,
   AuthenticatedJogadorRoute: AuthenticatedJogadorRoute,
