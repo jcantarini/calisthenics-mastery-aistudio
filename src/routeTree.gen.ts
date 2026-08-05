@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedXpRouteImport } from './routes/_authenticated/xp'
 import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
 import { Route as AuthenticatedTrainingPlanRouteImport } from './routes/_authenticated/training-plan'
 import { Route as AuthenticatedTimerRouteImport } from './routes/_authenticated/timer'
@@ -20,9 +21,12 @@ import { Route as AuthenticatedProgressoRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPreferenciasRouteImport } from './routes/_authenticated/preferencias'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedNiveisRouteImport } from './routes/_authenticated/niveis'
 import { Route as AuthenticatedLembretesRouteImport } from './routes/_authenticated/lembretes'
+import { Route as AuthenticatedJogadorRouteImport } from './routes/_authenticated/jogador'
 import { Route as AuthenticatedFirstWorkoutRouteImport } from './routes/_authenticated/first-workout'
 import { Route as AuthenticatedDietaRouteImport } from './routes/_authenticated/dieta'
+import { Route as AuthenticatedConquistasRouteImport } from './routes/_authenticated/conquistas'
 import { Route as AuthenticatedAssessmentRouteImport } from './routes/_authenticated/assessment'
 import { Route as AuthenticatedTreinosIndexRouteImport } from './routes/_authenticated/treinos.index'
 import { Route as AuthenticatedTreinosSlugRouteImport } from './routes/_authenticated/treinos.$slug'
@@ -39,6 +43,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedXpRoute = AuthenticatedXpRouteImport.update({
+  id: '/xp',
+  path: '/xp',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTreinosRoute = AuthenticatedTreinosRouteImport.update({
@@ -83,9 +92,19 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNiveisRoute = AuthenticatedNiveisRouteImport.update({
+  id: '/niveis',
+  path: '/niveis',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLembretesRoute = AuthenticatedLembretesRouteImport.update({
   id: '/lembretes',
   path: '/lembretes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJogadorRoute = AuthenticatedJogadorRouteImport.update({
+  id: '/jogador',
+  path: '/jogador',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFirstWorkoutRoute =
@@ -97,6 +116,11 @@ const AuthenticatedFirstWorkoutRoute =
 const AuthenticatedDietaRoute = AuthenticatedDietaRouteImport.update({
   id: '/dieta',
   path: '/dieta',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedConquistasRoute = AuthenticatedConquistasRouteImport.update({
+  id: '/conquistas',
+  path: '/conquistas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAssessmentRoute = AuthenticatedAssessmentRouteImport.update({
@@ -121,9 +145,12 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/assessment': typeof AuthenticatedAssessmentRoute
+  '/conquistas': typeof AuthenticatedConquistasRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
+  '/jogador': typeof AuthenticatedJogadorRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
+  '/niveis': typeof AuthenticatedNiveisRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/preferencias': typeof AuthenticatedPreferenciasRoute
@@ -132,15 +159,19 @@ export interface FileRoutesByFullPath {
   '/timer': typeof AuthenticatedTimerRoute
   '/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/treinos': typeof AuthenticatedTreinosRouteWithChildren
+  '/xp': typeof AuthenticatedXpRoute
   '/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
   '/treinos/': typeof AuthenticatedTreinosIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/assessment': typeof AuthenticatedAssessmentRoute
+  '/conquistas': typeof AuthenticatedConquistasRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
+  '/jogador': typeof AuthenticatedJogadorRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
+  '/niveis': typeof AuthenticatedNiveisRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/preferencias': typeof AuthenticatedPreferenciasRoute
@@ -148,6 +179,7 @@ export interface FileRoutesByTo {
   '/relatorio': typeof AuthenticatedRelatorioRoute
   '/timer': typeof AuthenticatedTimerRoute
   '/training-plan': typeof AuthenticatedTrainingPlanRoute
+  '/xp': typeof AuthenticatedXpRoute
   '/': typeof AuthenticatedIndexRoute
   '/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
   '/treinos': typeof AuthenticatedTreinosIndexRoute
@@ -157,9 +189,12 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/assessment': typeof AuthenticatedAssessmentRoute
+  '/_authenticated/conquistas': typeof AuthenticatedConquistasRoute
   '/_authenticated/dieta': typeof AuthenticatedDietaRoute
   '/_authenticated/first-workout': typeof AuthenticatedFirstWorkoutRoute
+  '/_authenticated/jogador': typeof AuthenticatedJogadorRoute
   '/_authenticated/lembretes': typeof AuthenticatedLembretesRoute
+  '/_authenticated/niveis': typeof AuthenticatedNiveisRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/preferencias': typeof AuthenticatedPreferenciasRoute
@@ -168,6 +203,7 @@ export interface FileRoutesById {
   '/_authenticated/timer': typeof AuthenticatedTimerRoute
   '/_authenticated/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/_authenticated/treinos': typeof AuthenticatedTreinosRouteWithChildren
+  '/_authenticated/xp': typeof AuthenticatedXpRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
   '/_authenticated/treinos/': typeof AuthenticatedTreinosIndexRoute
@@ -178,9 +214,12 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/assessment'
+    | '/conquistas'
     | '/dieta'
     | '/first-workout'
+    | '/jogador'
     | '/lembretes'
+    | '/niveis'
     | '/onboarding'
     | '/perfil'
     | '/preferencias'
@@ -189,15 +228,19 @@ export interface FileRouteTypes {
     | '/timer'
     | '/training-plan'
     | '/treinos'
+    | '/xp'
     | '/treinos/$slug'
     | '/treinos/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
     | '/assessment'
+    | '/conquistas'
     | '/dieta'
     | '/first-workout'
+    | '/jogador'
     | '/lembretes'
+    | '/niveis'
     | '/onboarding'
     | '/perfil'
     | '/preferencias'
@@ -205,6 +248,7 @@ export interface FileRouteTypes {
     | '/relatorio'
     | '/timer'
     | '/training-plan'
+    | '/xp'
     | '/'
     | '/treinos/$slug'
     | '/treinos'
@@ -213,9 +257,12 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/assessment'
+    | '/_authenticated/conquistas'
     | '/_authenticated/dieta'
     | '/_authenticated/first-workout'
+    | '/_authenticated/jogador'
     | '/_authenticated/lembretes'
+    | '/_authenticated/niveis'
     | '/_authenticated/onboarding'
     | '/_authenticated/perfil'
     | '/_authenticated/preferencias'
@@ -224,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/timer'
     | '/_authenticated/training-plan'
     | '/_authenticated/treinos'
+    | '/_authenticated/xp'
     | '/_authenticated/'
     | '/_authenticated/treinos/$slug'
     | '/_authenticated/treinos/'
@@ -255,6 +303,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/xp': {
+      id: '/_authenticated/xp'
+      path: '/xp'
+      fullPath: '/xp'
+      preLoaderRoute: typeof AuthenticatedXpRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/treinos': {
@@ -313,11 +368,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/niveis': {
+      id: '/_authenticated/niveis'
+      path: '/niveis'
+      fullPath: '/niveis'
+      preLoaderRoute: typeof AuthenticatedNiveisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lembretes': {
       id: '/_authenticated/lembretes'
       path: '/lembretes'
       fullPath: '/lembretes'
       preLoaderRoute: typeof AuthenticatedLembretesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/jogador': {
+      id: '/_authenticated/jogador'
+      path: '/jogador'
+      fullPath: '/jogador'
+      preLoaderRoute: typeof AuthenticatedJogadorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/first-workout': {
@@ -332,6 +401,13 @@ declare module '@tanstack/react-router' {
       path: '/dieta'
       fullPath: '/dieta'
       preLoaderRoute: typeof AuthenticatedDietaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/conquistas': {
+      id: '/_authenticated/conquistas'
+      path: '/conquistas'
+      fullPath: '/conquistas'
+      preLoaderRoute: typeof AuthenticatedConquistasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/assessment': {
@@ -373,9 +449,12 @@ const AuthenticatedTreinosRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssessmentRoute: typeof AuthenticatedAssessmentRoute
+  AuthenticatedConquistasRoute: typeof AuthenticatedConquistasRoute
   AuthenticatedDietaRoute: typeof AuthenticatedDietaRoute
   AuthenticatedFirstWorkoutRoute: typeof AuthenticatedFirstWorkoutRoute
+  AuthenticatedJogadorRoute: typeof AuthenticatedJogadorRoute
   AuthenticatedLembretesRoute: typeof AuthenticatedLembretesRoute
+  AuthenticatedNiveisRoute: typeof AuthenticatedNiveisRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPreferenciasRoute: typeof AuthenticatedPreferenciasRoute
@@ -384,14 +463,18 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTimerRoute: typeof AuthenticatedTimerRoute
   AuthenticatedTrainingPlanRoute: typeof AuthenticatedTrainingPlanRoute
   AuthenticatedTreinosRoute: typeof AuthenticatedTreinosRouteWithChildren
+  AuthenticatedXpRoute: typeof AuthenticatedXpRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssessmentRoute: AuthenticatedAssessmentRoute,
+  AuthenticatedConquistasRoute: AuthenticatedConquistasRoute,
   AuthenticatedDietaRoute: AuthenticatedDietaRoute,
   AuthenticatedFirstWorkoutRoute: AuthenticatedFirstWorkoutRoute,
+  AuthenticatedJogadorRoute: AuthenticatedJogadorRoute,
   AuthenticatedLembretesRoute: AuthenticatedLembretesRoute,
+  AuthenticatedNiveisRoute: AuthenticatedNiveisRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPreferenciasRoute: AuthenticatedPreferenciasRoute,
@@ -400,6 +483,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTimerRoute: AuthenticatedTimerRoute,
   AuthenticatedTrainingPlanRoute: AuthenticatedTrainingPlanRoute,
   AuthenticatedTreinosRoute: AuthenticatedTreinosRouteWithChildren,
+  AuthenticatedXpRoute: AuthenticatedXpRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
