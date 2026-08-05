@@ -31,11 +31,11 @@ function LevelHistoryPage() {
   const { data, loading } = useLevelHistory(100);
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-10 sm:px-6 sm:pt-12">
+    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-10 sm:px-6 sm:pt-12">
       <h1 className="text-display text-2xl">{tG(locale, "g.levelHistory")}</h1>
       <FadeIn>
         <LevelHistoryCard entries={data} loading={loading} />
       </FadeIn>
-    </main>
+    </div>
   );
 }

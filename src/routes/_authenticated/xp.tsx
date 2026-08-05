@@ -31,11 +31,11 @@ function XPHistoryPage() {
   const { data, loading } = useXPHistory(100);
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-10 sm:px-6 sm:pt-12">
+    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-10 sm:px-6 sm:pt-12">
       <h1 className="text-display text-2xl">{tG(locale, "g.xpHistory")}</h1>
       <FadeIn>
         <XPHistoryCard entries={data} loading={loading} />
       </FadeIn>
-    </main>
+    </div>
   );
 }

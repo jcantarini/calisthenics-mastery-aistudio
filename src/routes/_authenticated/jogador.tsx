@@ -55,7 +55,7 @@ function PlayerProfilePage() {
   }, [app.workoutLog]);
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-10 sm:px-6 sm:pt-12">
+    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-10 sm:px-6 sm:pt-12">
       <h1 className="text-display text-2xl">{tG(locale, "g.playerProfile")}</h1>
 
       {loading || !stats ? (
@@ -94,6 +94,6 @@ function PlayerProfilePage() {
           {tG(locale, "g.levelHistory")}
         </Link>
       </nav>
-    </main>
+    </div>
   );
 }

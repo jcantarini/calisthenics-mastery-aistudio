@@ -90,7 +90,7 @@ function AchievementsPage() {
   }, [data, status, category, rarity, query, locale]);
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-4 px-4 pt-10 sm:px-6 sm:pt-12">
+    <div className="mx-auto w-full max-w-5xl space-y-4 px-4 pt-10 sm:px-6 sm:pt-12">
       <h1 className="text-display text-2xl">{tG(locale, "g.achievements")}</h1>
 
       <DashCard>
@@ -174,6 +174,6 @@ function AchievementsPage() {
       ) : (
         <AchievementGrid items={filtered} />
       )}
-    </main>
+    </div>
   );
 }
