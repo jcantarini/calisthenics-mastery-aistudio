@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedXpRouteImport } from './routes/_authenticated/xp'
 import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
 import { Route as AuthenticatedTrainingPlanRouteImport } from './routes/_authenticated/training-plan'
 import { Route as AuthenticatedTimerRouteImport } from './routes/_authenticated/timer'
@@ -41,6 +42,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedXpRoute = AuthenticatedXpRouteImport.update({
+  id: '/xp',
+  path: '/xp',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTreinosRoute = AuthenticatedTreinosRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/timer': typeof AuthenticatedTimerRoute
   '/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/treinos': typeof AuthenticatedTreinosRouteWithChildren
+  '/xp': typeof AuthenticatedXpRoute
   '/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
   '/treinos/': typeof AuthenticatedTreinosIndexRoute
 }
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/relatorio': typeof AuthenticatedRelatorioRoute
   '/timer': typeof AuthenticatedTimerRoute
   '/training-plan': typeof AuthenticatedTrainingPlanRoute
+  '/xp': typeof AuthenticatedXpRoute
   '/': typeof AuthenticatedIndexRoute
   '/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
   '/treinos': typeof AuthenticatedTreinosIndexRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/timer': typeof AuthenticatedTimerRoute
   '/_authenticated/training-plan': typeof AuthenticatedTrainingPlanRoute
   '/_authenticated/treinos': typeof AuthenticatedTreinosRouteWithChildren
+  '/_authenticated/xp': typeof AuthenticatedXpRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/treinos/$slug': typeof AuthenticatedTreinosSlugRoute
   '/_authenticated/treinos/': typeof AuthenticatedTreinosIndexRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/timer'
     | '/training-plan'
     | '/treinos'
+    | '/xp'
     | '/treinos/$slug'
     | '/treinos/'
   fileRoutesByTo: FileRoutesByTo
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/relatorio'
     | '/timer'
     | '/training-plan'
+    | '/xp'
     | '/'
     | '/treinos/$slug'
     | '/treinos'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/_authenticated/timer'
     | '/_authenticated/training-plan'
     | '/_authenticated/treinos'
+    | '/_authenticated/xp'
     | '/_authenticated/'
     | '/_authenticated/treinos/$slug'
     | '/_authenticated/treinos/'
@@ -279,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/xp': {
+      id: '/_authenticated/xp'
+      path: '/xp'
+      fullPath: '/xp'
+      preLoaderRoute: typeof AuthenticatedXpRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/treinos': {
@@ -424,6 +443,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTimerRoute: typeof AuthenticatedTimerRoute
   AuthenticatedTrainingPlanRoute: typeof AuthenticatedTrainingPlanRoute
   AuthenticatedTreinosRoute: typeof AuthenticatedTreinosRouteWithChildren
+  AuthenticatedXpRoute: typeof AuthenticatedXpRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
@@ -442,6 +462,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTimerRoute: AuthenticatedTimerRoute,
   AuthenticatedTrainingPlanRoute: AuthenticatedTrainingPlanRoute,
   AuthenticatedTreinosRoute: AuthenticatedTreinosRouteWithChildren,
+  AuthenticatedXpRoute: AuthenticatedXpRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
