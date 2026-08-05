@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Link } from "@tanstack/react-router";
 import { Sparkles, TrendingUp } from "lucide-react";
 import { useLevelProgress } from "@/hooks/useGamification";
 import { DashCard, ProgressBar, SectionTitle, StatTile } from "./primitives";
