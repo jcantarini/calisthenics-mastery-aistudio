@@ -23,6 +23,7 @@ import { SplashScreen, OfflineBanner, ThemeColorSync } from "@/lib/pwa";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { PageTransition } from "@/components/ui/page-transition";
+import { GamificationHost } from "@/components/gamification/GamificationHost";
 
 
 function NotFoundComponent() {
@@ -230,6 +231,7 @@ function RootComponent() {
           <SplashScreen />
           <OfflineBanner />
           <Toaster position="top-center" richColors closeButton />
+          <GamificationHost />
           <div
             className="relative mx-auto min-h-dvh max-w-md bg-background bg-grain"
             style={{ paddingTop: "env(safe-area-inset-top)" }}
