@@ -21,6 +21,7 @@ import { Route as AuthenticatedProgressoRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPreferenciasRouteImport } from './routes/_authenticated/preferencias'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedNiveisRouteImport } from './routes/_authenticated/niveis'
 import { Route as AuthenticatedLembretesRouteImport } from './routes/_authenticated/lembretes'
 import { Route as AuthenticatedJogadorRouteImport } from './routes/_authenticated/jogador'
 import { Route as AuthenticatedFirstWorkoutRouteImport } from './routes/_authenticated/first-workout'
@@ -91,6 +92,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNiveisRoute = AuthenticatedNiveisRouteImport.update({
+  id: '/niveis',
+  path: '/niveis',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLembretesRoute = AuthenticatedLembretesRouteImport.update({
   id: '/lembretes',
   path: '/lembretes',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/jogador': typeof AuthenticatedJogadorRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
+  '/niveis': typeof AuthenticatedNiveisRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/preferencias': typeof AuthenticatedPreferenciasRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/jogador': typeof AuthenticatedJogadorRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
+  '/niveis': typeof AuthenticatedNiveisRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/preferencias': typeof AuthenticatedPreferenciasRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/_authenticated/jogador': typeof AuthenticatedJogadorRoute
   '/_authenticated/lembretes': typeof AuthenticatedLembretesRoute
+  '/_authenticated/niveis': typeof AuthenticatedNiveisRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/preferencias': typeof AuthenticatedPreferenciasRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/first-workout'
     | '/jogador'
     | '/lembretes'
+    | '/niveis'
     | '/onboarding'
     | '/perfil'
     | '/preferencias'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/first-workout'
     | '/jogador'
     | '/lembretes'
+    | '/niveis'
     | '/onboarding'
     | '/perfil'
     | '/preferencias'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/_authenticated/first-workout'
     | '/_authenticated/jogador'
     | '/_authenticated/lembretes'
+    | '/_authenticated/niveis'
     | '/_authenticated/onboarding'
     | '/_authenticated/perfil'
     | '/_authenticated/preferencias'
@@ -356,6 +368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/niveis': {
+      id: '/_authenticated/niveis'
+      path: '/niveis'
+      fullPath: '/niveis'
+      preLoaderRoute: typeof AuthenticatedNiveisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lembretes': {
       id: '/_authenticated/lembretes'
       path: '/lembretes'
@@ -435,6 +454,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFirstWorkoutRoute: typeof AuthenticatedFirstWorkoutRoute
   AuthenticatedJogadorRoute: typeof AuthenticatedJogadorRoute
   AuthenticatedLembretesRoute: typeof AuthenticatedLembretesRoute
+  AuthenticatedNiveisRoute: typeof AuthenticatedNiveisRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPreferenciasRoute: typeof AuthenticatedPreferenciasRoute
@@ -454,6 +474,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFirstWorkoutRoute: AuthenticatedFirstWorkoutRoute,
   AuthenticatedJogadorRoute: AuthenticatedJogadorRoute,
   AuthenticatedLembretesRoute: AuthenticatedLembretesRoute,
+  AuthenticatedNiveisRoute: AuthenticatedNiveisRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPreferenciasRoute: AuthenticatedPreferenciasRoute,
