@@ -21,6 +21,7 @@ import { Route as AuthenticatedPreferenciasRouteImport } from './routes/_authent
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedLembretesRouteImport } from './routes/_authenticated/lembretes'
+import { Route as AuthenticatedJogadorRouteImport } from './routes/_authenticated/jogador'
 import { Route as AuthenticatedFirstWorkoutRouteImport } from './routes/_authenticated/first-workout'
 import { Route as AuthenticatedDietaRouteImport } from './routes/_authenticated/dieta'
 import { Route as AuthenticatedAssessmentRouteImport } from './routes/_authenticated/assessment'
@@ -88,6 +89,11 @@ const AuthenticatedLembretesRoute = AuthenticatedLembretesRouteImport.update({
   path: '/lembretes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedJogadorRoute = AuthenticatedJogadorRouteImport.update({
+  id: '/jogador',
+  path: '/jogador',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFirstWorkoutRoute =
   AuthenticatedFirstWorkoutRouteImport.update({
     id: '/first-workout',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/assessment': typeof AuthenticatedAssessmentRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
+  '/jogador': typeof AuthenticatedJogadorRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/assessment': typeof AuthenticatedAssessmentRoute
   '/dieta': typeof AuthenticatedDietaRoute
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
+  '/jogador': typeof AuthenticatedJogadorRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/_authenticated/assessment': typeof AuthenticatedAssessmentRoute
   '/_authenticated/dieta': typeof AuthenticatedDietaRoute
   '/_authenticated/first-workout': typeof AuthenticatedFirstWorkoutRoute
+  '/_authenticated/jogador': typeof AuthenticatedJogadorRoute
   '/_authenticated/lembretes': typeof AuthenticatedLembretesRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/assessment'
     | '/dieta'
     | '/first-workout'
+    | '/jogador'
     | '/lembretes'
     | '/onboarding'
     | '/perfil'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/assessment'
     | '/dieta'
     | '/first-workout'
+    | '/jogador'
     | '/lembretes'
     | '/onboarding'
     | '/perfil'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/_authenticated/assessment'
     | '/_authenticated/dieta'
     | '/_authenticated/first-workout'
+    | '/_authenticated/jogador'
     | '/_authenticated/lembretes'
     | '/_authenticated/onboarding'
     | '/_authenticated/perfil'
@@ -320,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLembretesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/jogador': {
+      id: '/_authenticated/jogador'
+      path: '/jogador'
+      fullPath: '/jogador'
+      preLoaderRoute: typeof AuthenticatedJogadorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/first-workout': {
       id: '/_authenticated/first-workout'
       path: '/first-workout'
@@ -375,6 +394,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssessmentRoute: typeof AuthenticatedAssessmentRoute
   AuthenticatedDietaRoute: typeof AuthenticatedDietaRoute
   AuthenticatedFirstWorkoutRoute: typeof AuthenticatedFirstWorkoutRoute
+  AuthenticatedJogadorRoute: typeof AuthenticatedJogadorRoute
   AuthenticatedLembretesRoute: typeof AuthenticatedLembretesRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
@@ -391,6 +411,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssessmentRoute: AuthenticatedAssessmentRoute,
   AuthenticatedDietaRoute: AuthenticatedDietaRoute,
   AuthenticatedFirstWorkoutRoute: AuthenticatedFirstWorkoutRoute,
+  AuthenticatedJogadorRoute: AuthenticatedJogadorRoute,
   AuthenticatedLembretesRoute: AuthenticatedLembretesRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
