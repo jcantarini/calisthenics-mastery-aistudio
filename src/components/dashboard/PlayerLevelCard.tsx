@@ -17,11 +17,15 @@ export const PlayerLevelCard = memo(function PlayerLevelCard() {
     <DashCard aria-label="Nível do jogador">
       <div className="flex items-center justify-between gap-3">
         <SectionTitle>Nível</SectionTitle>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+        <Link
+          to="/jogador"
+          className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+        >
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
           Nível {progress.level}
-        </span>
+        </Link>
       </div>
+
 
       <div className="mt-4 space-y-2">
         <div className="flex items-baseline justify-between text-sm">
