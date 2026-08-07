@@ -37,7 +37,10 @@ export function xpForLevel(level: number, config: LevelCurveConfig = DEFAULT_LEV
 }
 
 /** Level reached with `lifetimeXP`. Never below 1, never above `maxLevel`. */
-export function levelForXP(lifetimeXP: number, config: LevelCurveConfig = DEFAULT_LEVEL_CURVE): number {
+export function levelForXP(
+  lifetimeXP: number,
+  config: LevelCurveConfig = DEFAULT_LEVEL_CURVE,
+): number {
   const xp = Math.max(0, Math.trunc(lifetimeXP));
   if (xp <= 0) return 1;
   // Binary search over the monotonically increasing threshold table.

@@ -18,11 +18,29 @@ import type {
 
 /* --------------------------- Capability model --------------------------- */
 
-const PUSHUP_LVL: Record<string, number> = { "0-5": 0, "6-10": 1, "11-20": 2, "21-40": 3, "40+": 4 };
+const PUSHUP_LVL: Record<string, number> = {
+  "0-5": 0,
+  "6-10": 1,
+  "11-20": 2,
+  "21-40": 3,
+  "40+": 4,
+};
 const PULLUP_LVL: Record<string, number> = { "0": 0, "1-3": 1, "4-8": 2, "9-15": 3, "15+": 4 };
-const DIPS_LVL: Record<string, number>   = { "0": 0, "1-5": 1, "6-10": 2, "11-20": 3, "20+": 4 };
-const SQUATS_LVL: Record<string, number> = { "0-10": 0, "11-20": 1, "21-40": 2, "41-60": 3, "60+": 4 };
-const PLANK_SEC: Record<string, number>  = { lt20: 15, "20-40": 30, "40-60": 50, "60-120": 90, "120+": 130 };
+const DIPS_LVL: Record<string, number> = { "0": 0, "1-5": 1, "6-10": 2, "11-20": 3, "20+": 4 };
+const SQUATS_LVL: Record<string, number> = {
+  "0-10": 0,
+  "11-20": 1,
+  "21-40": 2,
+  "41-60": 3,
+  "60+": 4,
+};
+const PLANK_SEC: Record<string, number> = {
+  lt20: 15,
+  "20-40": 30,
+  "40-60": 50,
+  "60-120": 90,
+  "120+": 130,
+};
 const MOB_LVL: Record<MobilityBand, number> = { poor: 0, average: 1, good: 2, excellent: 3 };
 
 function cap(v: string | undefined, table: Record<string, number>, fallback = 1) {
@@ -44,7 +62,11 @@ const WARMUP_MOBILITY_EXTRA: WorkoutBlockItem = {
 };
 
 const COOLDOWN_BASE: WorkoutBlockItem[] = [
-  { name: "Alongamento de peito e ombros", duration: "45s", cue: "Braço na parede, gire o tronco." },
+  {
+    name: "Alongamento de peito e ombros",
+    duration: "45s",
+    cue: "Braço na parede, gire o tronco.",
+  },
   { name: "Alongamento de posterior", duration: "45s", cue: "Perna estendida, coluna neutra." },
   { name: "Respiração diafragmática", duration: "60s", cue: "4s inspirar, 6s expirar." },
 ];
@@ -66,58 +88,82 @@ function substituteForCapability(
   const isPull = /barra|pull|muscle-?up|front lever|back lever|human ?flag/.test(nameLower);
   if (isPull) {
     if (!capability.hasBar) {
-      return substituteWith(ex, {
-        name: "Remada invertida na mesa",
-        focus: "Costas, bíceps",
-        cue: "Peito até a mesa. Corpo alinhado.",
-        videoId: "dnpDUwqMX04",
-      }, "Sem barra disponível");
+      return substituteWith(
+        ex,
+        {
+          name: "Remada invertida na mesa",
+          focus: "Costas, bíceps",
+          cue: "Peito até a mesa. Corpo alinhado.",
+          videoId: "dnpDUwqMX04",
+        },
+        "Sem barra disponível",
+      );
     }
     if (/muscle-?up|front lever|back lever|human ?flag/.test(nameLower) && capability.pullups < 3) {
-      return substituteWith(ex, {
-        name: "Barra negativa (descida 5s)",
-        focus: "Dorsais, bíceps, potência",
-        cue: "Suba com salto, desça em 5s.",
-        videoId: "eGo4IYlbE5g",
-      }, "Ainda construindo base de puxada");
+      return substituteWith(
+        ex,
+        {
+          name: "Barra negativa (descida 5s)",
+          focus: "Dorsais, bíceps, potência",
+          cue: "Suba com salto, desça em 5s.",
+          videoId: "eGo4IYlbE5g",
+        },
+        "Ainda construindo base de puxada",
+      );
     }
     if (/^barra/.test(nameLower) && capability.pullups < 1) {
-      return substituteWith(ex, {
-        name: "Barra negativa (descida 5s)",
-        focus: "Dorsais, bíceps",
-        cue: "Suba com salto, desça em 5s.",
-        videoId: "eGo4IYlbE5g",
-      }, "Progressão inicial de barra");
+      return substituteWith(
+        ex,
+        {
+          name: "Barra negativa (descida 5s)",
+          focus: "Dorsais, bíceps",
+          cue: "Suba com salto, desça em 5s.",
+          videoId: "eGo4IYlbE5g",
+        },
+        "Progressão inicial de barra",
+      );
     }
   }
 
   if (/dip|paralelas/.test(nameLower)) {
     if (!capability.hasParallel || capability.dips < 1) {
-      return substituteWith(ex, {
-        name: "Dip de banco (bench dip)",
-        focus: "Tríceps, peito",
-        cue: "Mãos no banco, cotovelos para trás.",
-        videoId: "0326dy_-CzM",
-      }, capability.hasParallel ? "Base inicial para dip" : "Sem paralelas");
+      return substituteWith(
+        ex,
+        {
+          name: "Dip de banco (bench dip)",
+          focus: "Tríceps, peito",
+          cue: "Mãos no banco, cotovelos para trás.",
+          videoId: "0326dy_-CzM",
+        },
+        capability.hasParallel ? "Base inicial para dip" : "Sem paralelas",
+      );
     }
   }
 
   if (/handstand|pike|planche/.test(nameLower) && capability.pushups < 2) {
-    return substituteWith(ex, {
-      name: "Flexão pike apoiada",
-      focus: "Ombros, tríceps",
-      cue: "Quadril alto, empurre o chão para longe.",
-      videoId: "cfns5VDVVvk",
-    }, "Progressão para pike/handstand");
+    return substituteWith(
+      ex,
+      {
+        name: "Flexão pike apoiada",
+        focus: "Ombros, tríceps",
+        cue: "Quadril alto, empurre o chão para longe.",
+        videoId: "cfns5VDVVvk",
+      },
+      "Progressão para pike/handstand",
+    );
   }
 
   if (/^flex/.test(nameLower) && !/inclinada|pike/.test(nameLower) && capability.pushups < 1) {
-    return substituteWith(ex, {
-      name: "Flexão inclinada",
-      focus: "Peito, tríceps, core",
-      cue: "Mãos em superfície elevada. Corpo em linha.",
-      videoId: "cfns5VDVVvk",
-    }, "Adaptação para iniciantes");
+    return substituteWith(
+      ex,
+      {
+        name: "Flexão inclinada",
+        focus: "Peito, tríceps, core",
+        cue: "Mãos em superfície elevada. Corpo em linha.",
+        videoId: "cfns5VDVVvk",
+      },
+      "Adaptação para iniciantes",
+    );
   }
 
   return {

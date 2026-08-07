@@ -22,7 +22,9 @@ function LabelledBar({
         <span className="truncate font-semibold uppercase tracking-widest text-muted-foreground">
           {label}
         </span>
-        {right ? <span className="shrink-0 tabular-nums text-muted-foreground">{right}</span> : null}
+        {right ? (
+          <span className="shrink-0 tabular-nums text-muted-foreground">{right}</span>
+        ) : null}
       </div>
       <ProgressBar
         value={value}

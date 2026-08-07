@@ -9,10 +9,7 @@ import { cn } from "@/lib/utils";
 export function CardSkeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cn(
-        "rounded-3xl border border-border/60 bg-surface p-5 shadow-card",
-        className,
-      )}
+      className={cn("rounded-3xl border border-border/60 bg-surface p-5 shadow-card", className)}
     >
       <div className="flex items-center gap-3">
         <Skeleton className="h-11 w-11 rounded-2xl" />

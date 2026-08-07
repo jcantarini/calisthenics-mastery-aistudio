@@ -68,4 +68,3 @@ export async function notifyXPApplied(payload: XPAppliedPayload): Promise<void> 
     }
   }
 }
-

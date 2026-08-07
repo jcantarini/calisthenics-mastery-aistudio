@@ -5,7 +5,7 @@ import { todayKey, type AppState } from "./store";
 export type WorkoutReminder = {
   id: string;
   days: number[]; // 0=Sun .. 6=Sat
-  time: string;   // "HH:MM"
+  time: string; // "HH:MM"
   snoozeUntil?: string; // ISO
 };
 
@@ -42,7 +42,9 @@ function saveLocal(s: WorkoutReminderSettings) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(KEY, JSON.stringify(s));
-  } catch {}
+  } catch {
+    /* ignore: non-critical */
+  }
 }
 
 // ---------------- Permissions ----------------
@@ -79,7 +81,8 @@ async function capSchedule(items: CapNotif[]) {
     const dyn = new Function("s", "return import(s)") as (s: string) => Promise<unknown>;
     const mod = await dyn(specifier).catch(() => null as unknown);
     if (!mod || typeof mod !== "object") return false;
-    const LN = (mod as { LocalNotifications?: { schedule: (o: unknown) => Promise<unknown> } }).LocalNotifications;
+    const LN = (mod as { LocalNotifications?: { schedule: (o: unknown) => Promise<unknown> } })
+      .LocalNotifications;
     if (!LN) return false;
     await LN.schedule({
       notifications: items.map((n) => ({
@@ -135,7 +138,9 @@ export async function saveRemote(s: WorkoutReminderSettings) {
       vibration: s.vibration,
       reminders: s.reminders as unknown as never,
     });
-  } catch {}
+  } catch {
+    /* ignore: non-critical */
+  }
 }
 
 // ---------------- Hook: settings + sync ----------------
@@ -177,7 +182,11 @@ export function useWorkoutReminders() {
   }, [settings, hydrated]);
 
   const update = useCallback(
-    (patch: Partial<WorkoutReminderSettings> | ((s: WorkoutReminderSettings) => WorkoutReminderSettings)) => {
+    (
+      patch:
+        | Partial<WorkoutReminderSettings>
+        | ((s: WorkoutReminderSettings) => WorkoutReminderSettings),
+    ) => {
       setSettings((s) => {
         const next = typeof patch === "function" ? patch(s) : { ...s, ...patch };
         if (saveTimer.current) window.clearTimeout(saveTimer.current);
@@ -198,7 +207,9 @@ function hhmmToMin(h: string) {
   return a * 60 + (b || 0);
 }
 
-export function nextReminder(s: WorkoutReminderSettings): { reminder: WorkoutReminder; at: Date } | null {
+export function nextReminder(
+  s: WorkoutReminderSettings,
+): { reminder: WorkoutReminder; at: Date } | null {
   if (!s.enabled || s.reminders.length === 0) return null;
   const now = new Date();
   let best: { r: WorkoutReminder; d: Date } | null = null;
@@ -258,15 +269,21 @@ export function fireNotification(
       window.focus();
       try {
         if (window.location.pathname !== "/treinos") window.location.href = "/treinos";
-      } catch {}
+      } catch {
+        /* ignore: non-critical */
+      }
       n.close();
     };
     if (opts.vibration) {
       try {
         navigator.vibrate?.([220, 90, 220]);
-      } catch {}
+      } catch {
+        /* ignore: non-critical */
+      }
     }
-  } catch {}
+  } catch {
+    /* ignore: non-critical */
+  }
 }
 
 function trainedToday(state: AppState): boolean {
@@ -322,11 +339,10 @@ export function useWorkoutReminderEngine(
         const key = `snz:${r.id}:${sn}`;
         if (sn <= nowMs && !settings.lastFired[key]) {
           if (!trainedToday(state)) {
-            fireNotification(
-              t("wr.notif.title"),
-              pickMessage(t, state.streak),
-              { sound: settings.sound, vibration: settings.vibration },
-            );
+            fireNotification(t("wr.notif.title"), pickMessage(t, state.streak), {
+              sound: settings.sound,
+              vibration: settings.vibration,
+            });
           }
           patches[key] = new Date().toISOString();
           clearSnoozeFor = r.id;
@@ -344,28 +360,21 @@ export function useWorkoutReminderEngine(
           patches[key] = new Date().toISOString();
           continue;
         }
-        fireNotification(
-          t("wr.notif.title"),
-          pickMessage(t, state.streak),
-          { sound: settings.sound, vibration: settings.vibration },
-        );
+        fireNotification(t("wr.notif.title"), pickMessage(t, state.streak), {
+          sound: settings.sound,
+          vibration: settings.vibration,
+        });
         patches[key] = new Date().toISOString();
       }
 
       // 3) Reengagement — 3+ days without training, once/day, after 18:00.
       const idle = daysSinceLastWorkout(state);
       const reKey = `re:${today}`;
-      if (
-        idle >= 3 &&
-        nowM >= 18 * 60 &&
-        !settings.lastFired[reKey] &&
-        !trainedToday(state)
-      ) {
-        fireNotification(
-          t("wr.notif.title"),
-          t("wr.msg.reengage"),
-          { sound: settings.sound, vibration: settings.vibration },
-        );
+      if (idle >= 3 && nowM >= 18 * 60 && !settings.lastFired[reKey] && !trainedToday(state)) {
+        fireNotification(t("wr.notif.title"), t("wr.msg.reengage"), {
+          sound: settings.sound,
+          vibration: settings.vibration,
+        });
         patches[reKey] = new Date().toISOString();
       }
 

@@ -1,6 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ChevronLeft, Bell, BellOff, Plus, Trash2, Volume2, VolumeX, Vibrate, Clock, ShieldAlert } from "lucide-react";
+import {
+  ChevronLeft,
+  Bell,
+  BellOff,
+  Plus,
+  Trash2,
+  Volume2,
+  VolumeX,
+  Vibrate,
+  Clock,
+  ShieldAlert,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useAppState } from "@/lib/store";
@@ -24,7 +35,15 @@ export const Route = createFileRoute("/_authenticated/lembretes")({
   component: LembretesPage,
 });
 
-const DAY_KEYS = ["wr.day.sun", "wr.day.mon", "wr.day.tue", "wr.day.wed", "wr.day.thu", "wr.day.fri", "wr.day.sat"] as const;
+const DAY_KEYS = [
+  "wr.day.sun",
+  "wr.day.mon",
+  "wr.day.tue",
+  "wr.day.wed",
+  "wr.day.thu",
+  "wr.day.fri",
+  "wr.day.sat",
+] as const;
 
 function uid() {
   return `wr_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -106,7 +125,13 @@ function LembretesPage() {
   };
 
   const fmtDate = (d: Date) =>
-    d.toLocaleString(locale, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    d.toLocaleString(locale, {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   return (
     <div className="px-5 pt-12">
@@ -146,7 +171,9 @@ function LembretesPage() {
 
         <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border/60 pt-4">
           <ToggleTile
-            icon={settings.sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            icon={
+              settings.sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />
+            }
             label={t("wr.sound")}
             on={settings.sound}
             onChange={() => update({ sound: !settings.sound })}
@@ -172,9 +199,18 @@ function LembretesPage() {
               {next.reminder.days.map((d) => t(DAY_KEYS[d])).join(" · ")} · {next.reminder.time}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <SnoozeBtn onClick={() => snooze(next.reminder.id, 15)} label={`+15 ${t("common.min")}`} />
-              <SnoozeBtn onClick={() => snooze(next.reminder.id, 30)} label={`+30 ${t("common.min")}`} />
-              <SnoozeBtn onClick={() => snooze(next.reminder.id, 60)} label={`+60 ${t("common.min")}`} />
+              <SnoozeBtn
+                onClick={() => snooze(next.reminder.id, 15)}
+                label={`+15 ${t("common.min")}`}
+              />
+              <SnoozeBtn
+                onClick={() => snooze(next.reminder.id, 30)}
+                label={`+30 ${t("common.min")}`}
+              />
+              <SnoozeBtn
+                onClick={() => snooze(next.reminder.id, 60)}
+                label={`+60 ${t("common.min")}`}
+              />
             </div>
           </>
         ) : (

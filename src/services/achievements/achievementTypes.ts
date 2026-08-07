@@ -156,6 +156,4 @@ export interface CategoryProgress {
   percentage: number;
 }
 
-export type AchievementEventListener = (
-  unlocks: AchievementUnlockResult[],
-) => void | Promise<void>;
+export type AchievementEventListener = (unlocks: AchievementUnlockResult[]) => void | Promise<void>;

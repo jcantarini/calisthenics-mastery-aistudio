@@ -11,13 +11,7 @@ import {
   Activity,
 } from "lucide-react";
 import { useAppState, todayKey } from "@/lib/store";
-import {
-  BMI_META,
-  bmi,
-  bmiCategory,
-  buildMealPlan,
-  targetCalories,
-} from "@/lib/nutrition";
+import { BMI_META, bmi, bmiCategory, buildMealPlan, targetCalories } from "@/lib/nutrition";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -41,7 +35,11 @@ function RelatorioPage() {
   const { t, locale } = useT();
   const { profile } = state;
   const localeMap: Record<string, string> = {
-    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+    pt: "pt-BR",
+    en: "en-US",
+    it: "it-IT",
+    es: "es-ES",
+    fr: "fr-FR",
   };
 
   const bmiValue = bmi(profile);
@@ -59,9 +57,7 @@ function RelatorioPage() {
       const kcalTarget = dietLog?.kcalTarget ?? kcalTargetDefault;
       const plan = buildMealPlan(kcalTarget);
       const totalMeals = plan.length;
-      const doneMeals = dietLog
-        ? plan.filter((m) => dietLog.meals[m.id]).length
-        : 0;
+      const doneMeals = dietLog ? plan.filter((m) => dietLog.meals[m.id]).length : 0;
       const kcalIn = dietLog
         ? plan
             .filter((m) => dietLog.meals[m.id])
@@ -91,23 +87,16 @@ function RelatorioPage() {
   const totalKcalOut = week.reduce((s, d) => s + d.kcalOut, 0);
   const totalMin = Math.round(week.reduce((s, d) => s + d.workoutSec, 0) / 60);
   const avgKcalIn = Math.round(
-    week.reduce((s, d) => s + d.kcalIn, 0) /
-      Math.max(1, week.filter((d) => d.kcalIn > 0).length),
+    week.reduce((s, d) => s + d.kcalIn, 0) / Math.max(1, week.filter((d) => d.kcalIn > 0).length),
   );
   const avgWater = Math.round(
-    week.reduce((s, d) => s + d.waterMl, 0) /
-      Math.max(1, week.filter((d) => d.waterMl > 0).length),
+    week.reduce((s, d) => s + d.waterMl, 0) / Math.max(1, week.filter((d) => d.waterMl > 0).length),
   );
   const totalPlanned = week.reduce((s, d) => s + d.totalMeals, 0);
   const totalDoneMeals = week.reduce((s, d) => s + d.doneMeals, 0);
-  const mealAdherence = totalPlanned
-    ? Math.round((totalDoneMeals / totalPlanned) * 100)
-    : 0;
+  const mealAdherence = totalPlanned ? Math.round((totalDoneMeals / totalPlanned) * 100) : 0;
 
-  const maxBar = Math.max(
-    1,
-    ...week.map((d) => Math.max(d.kcalIn, d.kcalOut, d.kcalTarget)),
-  );
+  const maxBar = Math.max(1, ...week.map((d) => Math.max(d.kcalIn, d.kcalOut, d.kcalTarget)));
 
   const allSessions = week
     .flatMap((d) => (state.workoutLog[d.key] ?? []).map((s) => ({ ...s, dayKey: d.key })))
@@ -253,9 +242,7 @@ function RelatorioPage() {
           </p>
           <ul className="mt-3 space-y-2">
             {week.map((d) => {
-              const pct = d.totalMeals
-                ? Math.round((d.doneMeals / d.totalMeals) * 100)
-                : 0;
+              const pct = d.totalMeals ? Math.round((d.doneMeals / d.totalMeals) * 100) : 0;
               const label = d.date.toLocaleDateString(localeMap[locale], {
                 weekday: "short",
                 day: "2-digit",

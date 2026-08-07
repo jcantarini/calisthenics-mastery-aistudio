@@ -65,7 +65,10 @@ export function GamificationHost() {
             aria-modal="true"
             aria-label="Workout rewards"
             className="fixed inset-0 z-[60] overflow-y-auto bg-background/95 backdrop-blur-xl"
-            style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
+            style={{
+              paddingTop: "env(safe-area-inset-top)",
+              paddingBottom: "env(safe-area-inset-bottom)",
+            }}
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}

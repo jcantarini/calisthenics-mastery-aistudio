@@ -71,18 +71,61 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
       </div>
 
       <dl className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-        <StatTile as="dl" icon={<Zap className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.currentXP")} value={stats.currentXP} />
-        <StatTile as="dl" icon={<Trophy className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.achievements")} value={stats.achievementsUnlocked} />
-        <StatTile as="dl" icon={<Flame className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.streak")} value={`${stats.currentStreak} ${tG(locale, "g.days")}`} />
-        <StatTile as="dl" icon={<Layers className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.programsCompleted")} value={stats.programsCompleted} />
-        <StatTile as="dl" icon={<Dumbbell className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.workoutsCompleted")} value={workoutsCompleted} />
-        <StatTile as="dl" icon={<Timer className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.trainingTime")} value={`${trainingMinutes} min`} />
-        <StatTile as="dl" icon={<Flame className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.caloriesBurned")} value={`${caloriesBurned} kcal`} />
+        <StatTile
+          as="dl"
+          icon={<Zap className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.currentXP")}
+          value={stats.currentXP}
+        />
+        <StatTile
+          as="dl"
+          icon={<Trophy className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.achievements")}
+          value={stats.achievementsUnlocked}
+        />
+        <StatTile
+          as="dl"
+          icon={<Flame className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.streak")}
+          value={`${stats.currentStreak} ${tG(locale, "g.days")}`}
+        />
+        <StatTile
+          as="dl"
+          icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.programsCompleted")}
+          value={stats.programsCompleted}
+        />
+        <StatTile
+          as="dl"
+          icon={<Dumbbell className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.workoutsCompleted")}
+          value={workoutsCompleted}
+        />
+        <StatTile
+          as="dl"
+          icon={<Timer className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.trainingTime")}
+          value={`${trainingMinutes} min`}
+        />
+        <StatTile
+          as="dl"
+          icon={<Flame className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.caloriesBurned")}
+          value={`${caloriesBurned} kcal`}
+        />
       </dl>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
-        <MetaRow icon={<Target className="h-4 w-4" aria-hidden />} label={tG(locale, "g.currentGoal")} value={currentGoal ?? "—"} />
-        <MetaRow icon={<Layers className="h-4 w-4" aria-hidden />} label={tG(locale, "g.currentProgram")} value={currentProgram ?? "—"} />
+        <MetaRow
+          icon={<Target className="h-4 w-4" aria-hidden />}
+          label={tG(locale, "g.currentGoal")}
+          value={currentGoal ?? "—"}
+        />
+        <MetaRow
+          icon={<Layers className="h-4 w-4" aria-hidden />}
+          label={tG(locale, "g.currentProgram")}
+          value={currentProgram ?? "—"}
+        />
       </div>
     </DashCard>
   );

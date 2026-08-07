@@ -25,7 +25,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { PageTransition } from "@/components/ui/page-transition";
 import { GamificationHost } from "@/components/gamification/GamificationHost";
 
-
 function NotFoundComponent() {
   const { t } = useT();
   return (
@@ -157,7 +156,14 @@ function BottomNav() {
   useEffect(() => setHydrated(true), []);
   // Hide chrome on the public auth screen and during onboarding/assessment.
   if (!hydrated) return null;
-  if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname.startsWith("/assessment") || pathname.startsWith("/first-workout") || pathname.startsWith("/training-plan")) return null;
+  if (
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/assessment") ||
+    pathname.startsWith("/first-workout") ||
+    pathname.startsWith("/training-plan")
+  )
+    return null;
 
   return (
     <nav
@@ -166,8 +172,7 @@ function BottomNav() {
     >
       <ul className="mx-auto grid max-w-md grid-cols-5">
         {navItems.map(({ to, key, icon: Icon }) => {
-          const active =
-            to === "/" ? pathname === "/" : pathname.startsWith(to);
+          const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
           return (
             <li key={to}>
               <Link

@@ -155,7 +155,6 @@ async function applyDelta(userId: string, delta: number, event: XPEvent): Promis
   });
 
   return { awarded: true, amount: delta, entry: toEntry(data as HistoryRow), stats: nextStats };
-
 }
 
 /* ---------------- Public API ---------------- */

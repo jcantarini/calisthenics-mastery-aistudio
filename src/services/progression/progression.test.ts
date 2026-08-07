@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_LEVEL_CURVE, buildLevelTable, levelForXP, xpForLevel } from "./levelCurve";
-import { buildResult, emptyProgression, eventTypeForTransition, nextProgression, snapshotForXP } from "./levelRules";
+import {
+  buildResult,
+  emptyProgression,
+  eventTypeForTransition,
+  nextProgression,
+  snapshotForXP,
+} from "./levelRules";
 
 describe("level curve", () => {
   it("starts at level 1 with 0 XP", () => {

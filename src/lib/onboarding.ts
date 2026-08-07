@@ -63,20 +63,26 @@ export function loadDraft(): OnboardingData {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (raw) return { ...EMPTY_ONBOARDING, ...JSON.parse(raw) };
-  } catch {}
+  } catch {
+    /* ignore: non-critical */
+  }
   return EMPTY_ONBOARDING;
 }
 
 export function saveDraft(data: OnboardingData) {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-  } catch {}
+  } catch {
+    /* ignore: non-critical */
+  }
 }
 
 export function clearDraft() {
   try {
     localStorage.removeItem(DRAFT_KEY);
-  } catch {}
+  } catch {
+    /* ignore: non-critical */
+  }
 }
 
 /** Fetch a user's onboarding row (or null). Used for gating. */

@@ -95,7 +95,6 @@ function AuthPage() {
       className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-between bg-background bg-grain px-6 pb-10 pt-16"
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 4rem)" }}
     >
-
       <div className="flex flex-col items-center text-center">
         <div className="relative">
           <div className="absolute inset-0 rounded-3xl bg-primary/25 blur-2xl" />
@@ -107,12 +106,8 @@ function AuthPage() {
             height={80}
           />
         </div>
-        <h1 className="mt-6 text-display text-5xl leading-none">
-          BARRA
-        </h1>
-        <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-          {t("auth.subtitle")}
-        </p>
+        <h1 className="mt-6 text-display text-5xl leading-none">BARRA</h1>
+        <p className="mt-3 max-w-xs text-sm text-muted-foreground">{t("auth.subtitle")}</p>
       </div>
 
       <div className="space-y-3">
@@ -181,7 +176,7 @@ function GoogleIcon({ className }: { className?: string }) {
 function AppleIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
-      <path d="M16.365 1.43c0 1.14-.42 2.21-1.26 3.08-.9.93-2.02 1.47-3.07 1.38-.13-1.11.42-2.28 1.23-3.09.83-.86 2.02-1.44 3.1-1.5v.13zM20.5 17.4c-.55 1.24-.82 1.79-1.53 2.88-.99 1.52-2.39 3.42-4.11 3.44-1.53.01-1.93-.99-4.02-.98-2.09.01-2.52 1-4.05.98-1.72-.02-3.05-1.75-4.04-3.27C.14 16.24-.14 11.2 2.03 8.35c1.55-2.02 3.98-3.2 6.27-3.2 2.33 0 3.8 1.28 5.72 1.28 1.87 0 3-1.28 5.7-1.28 2.04 0 4.2 1.11 5.74 3.02-5.04 2.76-4.22 9.97 1.04 12.23-.44 1.2-.65 1.74-2 3z"/>
+      <path d="M16.365 1.43c0 1.14-.42 2.21-1.26 3.08-.9.93-2.02 1.47-3.07 1.38-.13-1.11.42-2.28 1.23-3.09.83-.86 2.02-1.44 3.1-1.5v.13zM20.5 17.4c-.55 1.24-.82 1.79-1.53 2.88-.99 1.52-2.39 3.42-4.11 3.44-1.53.01-1.93-.99-4.02-.98-2.09.01-2.52 1-4.05.98-1.72-.02-3.05-1.75-4.04-3.27C.14 16.24-.14 11.2 2.03 8.35c1.55-2.02 3.98-3.2 6.27-3.2 2.33 0 3.8 1.28 5.72 1.28 1.87 0 3-1.28 5.7-1.28 2.04 0 4.2 1.11 5.74 3.02-5.04 2.76-4.22 9.97 1.04 12.23-.44 1.2-.65 1.74-2 3z" />
     </svg>
   );
 }

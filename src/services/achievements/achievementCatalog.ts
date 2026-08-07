@@ -37,14 +37,16 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   }),
 
   /* ---------------- Workouts ---------------- */
-  ...([
-    ["workouts_1", 1, 50, "common"],
-    ["workouts_5", 5, 100, "common"],
-    ["workouts_10", 10, 100, "uncommon"],
-    ["workouts_25", 25, 200, "rare"],
-    ["workouts_50", 50, 400, "epic"],
-    ["workouts_100", 100, 1000, "legendary"],
-  ] as const).map(([id, target, xp, rarity]) =>
+  ...(
+    [
+      ["workouts_1", 1, 50, "common"],
+      ["workouts_5", 5, 100, "common"],
+      ["workouts_10", 10, 100, "uncommon"],
+      ["workouts_25", 25, 200, "rare"],
+      ["workouts_50", 50, 400, "epic"],
+      ["workouts_100", 100, 1000, "legendary"],
+    ] as const
+  ).map(([id, target, xp, rarity]) =>
     def({
       id,
       category: "workouts",
@@ -62,13 +64,15 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   ),
 
   /* ---------------- Consistency ---------------- */
-  ...([
-    ["streak_3", 3, 50, "common"],
-    ["streak_7", 7, 100, "uncommon"],
-    ["streak_14", 14, 200, "rare"],
-    ["streak_30", 30, 400, "epic"],
-    ["streak_100", 100, 1000, "legendary"],
-  ] as const).map(([id, target, xp, rarity]) =>
+  ...(
+    [
+      ["streak_3", 3, 50, "common"],
+      ["streak_7", 7, 100, "uncommon"],
+      ["streak_14", 14, 200, "rare"],
+      ["streak_30", 30, 400, "epic"],
+      ["streak_100", 100, 1000, "legendary"],
+    ] as const
+  ).map(([id, target, xp, rarity]) =>
     def({
       id,
       category: "consistency",
@@ -100,11 +104,13 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     rarity: "common",
     hidden: false,
   }),
-  ...([
-    ["program_1", 1, 200, "rare"],
-    ["programs_3", 3, 400, "epic"],
-    ["programs_10", 10, 1000, "legendary"],
-  ] as const).map(([id, target, xp, rarity]) =>
+  ...(
+    [
+      ["program_1", 1, 200, "rare"],
+      ["programs_3", 3, 400, "epic"],
+      ["programs_10", 10, 1000, "legendary"],
+    ] as const
+  ).map(([id, target, xp, rarity]) =>
     def({
       id,
       category: "programs",
@@ -122,10 +128,12 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   ),
 
   /* ---------------- Strength ---------------- */
-  ...([
-    ["pushups_100", 100, 100, "common"],
-    ["pushups_500", 500, 200, "rare"],
-  ] as const).map(([id, target, xp, rarity]) =>
+  ...(
+    [
+      ["pushups_100", 100, 100, "common"],
+      ["pushups_500", 500, 200, "rare"],
+    ] as const
+  ).map(([id, target, xp, rarity]) =>
     def({
       id,
       category: "strength",
@@ -155,10 +163,12 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     rarity: "rare",
     hidden: false,
   }),
-  ...([
-    ["pullups_25", 25, 100, "uncommon"],
-    ["pullups_100", 100, 400, "epic"],
-  ] as const).map(([id, target, xp, rarity]) =>
+  ...(
+    [
+      ["pullups_25", 25, 100, "uncommon"],
+      ["pullups_100", 100, 400, "epic"],
+    ] as const
+  ).map(([id, target, xp, rarity]) =>
     def({
       id,
       category: "strength",
@@ -174,10 +184,12 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
       hidden: false,
     }),
   ),
-  ...([
-    ["plank_60", 60, 100, "uncommon"],
-    ["plank_120", 120, 200, "rare"],
-  ] as const).map(([id, target, xp, rarity]) =>
+  ...(
+    [
+      ["plank_60", 60, 100, "uncommon"],
+      ["plank_120", 120, 200, "rare"],
+    ] as const
+  ).map(([id, target, xp, rarity]) =>
     def({
       id,
       category: "strength",
@@ -195,15 +207,17 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   ),
 
   /* ---------------- Skills ---------------- */
-  ...([
-    ["skill_l_sit", "l_sit", 200, "rare", false],
-    ["skill_handstand", "handstand", 400, "epic", false],
-    ["skill_muscle_up", "muscle_up", 400, "epic", false],
-    ["skill_front_lever", "front_lever", 1000, "legendary", false],
-    ["skill_back_lever", "back_lever", 400, "epic", false],
-    ["skill_human_flag", "human_flag", 1000, "legendary", true],
-    ["skill_planche", "planche", 1000, "legendary", true],
-  ] as const).map(([id, , xp, rarity, hidden]) =>
+  ...(
+    [
+      ["skill_l_sit", "l_sit", 200, "rare", false],
+      ["skill_handstand", "handstand", 400, "epic", false],
+      ["skill_muscle_up", "muscle_up", 400, "epic", false],
+      ["skill_front_lever", "front_lever", 1000, "legendary", false],
+      ["skill_back_lever", "back_lever", 400, "epic", false],
+      ["skill_human_flag", "human_flag", 1000, "legendary", true],
+      ["skill_planche", "planche", 1000, "legendary", true],
+    ] as const
+  ).map(([id, , xp, rarity, hidden]) =>
     def({
       id,
       category: "skills",
@@ -221,11 +235,13 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   ),
 
   /* ---------------- Goals ---------------- */
-  ...([
-    ["goals_1", 1, 50, "common"],
-    ["goals_5", 5, 100, "uncommon"],
-    ["goals_10", 10, 200, "rare"],
-  ] as const).map(([id, target, xp, rarity]) =>
+  ...(
+    [
+      ["goals_1", 1, 50, "common"],
+      ["goals_5", 5, 100, "uncommon"],
+      ["goals_10", 10, 200, "rare"],
+    ] as const
+  ).map(([id, target, xp, rarity]) =>
     def({
       id,
       category: "goals",
@@ -249,9 +265,7 @@ export function getAchievement(id: string): AchievementDefinition | undefined {
   return BY_ID.get(id);
 }
 
-export function achievementsByCategory(
-  category: AchievementCategory,
-): AchievementDefinition[] {
+export function achievementsByCategory(category: AchievementCategory): AchievementDefinition[] {
   return ACHIEVEMENT_CATALOG.filter((a) => a.category === category);
 }
 
