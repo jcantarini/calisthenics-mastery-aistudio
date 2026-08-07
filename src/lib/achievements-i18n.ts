@@ -262,11 +262,7 @@ const fr: Dict = {
 
 const DICTS: Record<Locale, Dict> = { pt, en, it, es, fr };
 
-export function tAch(
-  locale: Locale,
-  key: string,
-  vars?: Record<string, string | number>,
-): string {
+export function tAch(locale: Locale, key: string, vars?: Record<string, string | number>): string {
   let s = DICTS[locale]?.[key] ?? DICTS.pt[key] ?? key;
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {

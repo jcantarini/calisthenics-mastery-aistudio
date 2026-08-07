@@ -84,7 +84,11 @@ function AchievementsPage() {
       const secret = a.definition.hidden && !a.unlocked;
       if (secret) return false;
       const title = tAch(locale, a.definition.titleKey).toLowerCase();
-      const desc = tAch(locale, a.definition.descriptionKey, a.definition.descriptionVars).toLowerCase();
+      const desc = tAch(
+        locale,
+        a.definition.descriptionKey,
+        a.definition.descriptionVars,
+      ).toLowerCase();
       return title.includes(q) || desc.includes(q);
     });
   }, [data, status, category, rarity, query, locale]);
@@ -101,7 +105,11 @@ function AchievementsPage() {
         <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
           <StatTile as="dl" label={tG(locale, "g.unlocked")} value={unlocked.length} />
           <StatTile as="dl" label={tG(locale, "g.all")} value={data.length} />
-          <StatTile as="dl" label={tG(locale, "g.completion")} value={`${Math.round(completion)}%`} />
+          <StatTile
+            as="dl"
+            label={tG(locale, "g.completion")}
+            value={`${Math.round(completion)}%`}
+          />
         </dl>
       </DashCard>
 
@@ -143,22 +151,48 @@ function AchievementsPage() {
         </div>
 
         <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={tG(locale, "g.rarity")}>
-          <button type="button" aria-pressed={rarity === "all"} onClick={() => setRarity("all")} className={chip(rarity === "all")}>
+          <button
+            type="button"
+            aria-pressed={rarity === "all"}
+            onClick={() => setRarity("all")}
+            className={chip(rarity === "all")}
+          >
             {tG(locale, "g.rarity")}
           </button>
           {RARITY_ORDER.map((r) => (
-            <button key={r} type="button" aria-pressed={rarity === r} onClick={() => setRarity(r)} className={chip(rarity === r)}>
+            <button
+              key={r}
+              type="button"
+              aria-pressed={rarity === r}
+              onClick={() => setRarity(r)}
+              className={chip(rarity === r)}
+            >
               {tAch(locale, `ach.rarity.${r}`)}
             </button>
           ))}
         </div>
 
-        <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={tG(locale, "g.achievements")}>
-          <button type="button" aria-pressed={category === "all"} onClick={() => setCategory("all")} className={chip(category === "all")}>
+        <div
+          className="mt-2 flex flex-wrap gap-2"
+          role="group"
+          aria-label={tG(locale, "g.achievements")}
+        >
+          <button
+            type="button"
+            aria-pressed={category === "all"}
+            onClick={() => setCategory("all")}
+            className={chip(category === "all")}
+          >
             {tG(locale, "g.all")}
           </button>
           {CATEGORIES.map((c) => (
-            <button key={c} type="button" aria-pressed={category === c} onClick={() => setCategory(c)} className={chip(category === c)}>
+            <button
+              key={c}
+              type="button"
+              aria-pressed={category === c}
+              onClick={() => setCategory(c)}
+              className={chip(category === c)}
+            >
               {tAch(locale, `ach.cat.${c}`)}
             </button>
           ))}

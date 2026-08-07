@@ -187,7 +187,6 @@ function DashboardPage() {
             </FadeIn>
 
             <FadeIn delay={0.24}>
-
               <MotivationCard />
             </FadeIn>
           </>

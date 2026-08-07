@@ -27,7 +27,6 @@ export const PlayerLevelCard = memo(function PlayerLevelCard() {
         </Link>
       </div>
 
-
       <div className="mt-4 space-y-2">
         <div className="flex items-baseline justify-between text-sm">
           <span className="font-semibold">{progress.currentXP} XP</span>

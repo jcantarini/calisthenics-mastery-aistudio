@@ -91,7 +91,9 @@ function ProgramPage() {
         <div className="mt-5 rounded-2xl border border-border/60 bg-surface-elevated/70 p-4 backdrop-blur">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Target className="h-4 w-4" />
-            <p className="text-[11px] font-semibold uppercase tracking-widest">{t("program.goal")}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest">
+              {t("program.goal")}
+            </p>
           </div>
           <p className="mt-1.5 text-sm font-medium">{p18n.goal}</p>
         </div>
@@ -170,7 +172,10 @@ function ProgramPage() {
 
                     <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
                       <Tag icon={<Target className="h-3 w-3" />} value={ex.sets} />
-                      <Tag icon={<Timer className="h-3 w-3" />} value={`${t("program.rest")} ${ex.rest}`} />
+                      <Tag
+                        icon={<Timer className="h-3 w-3" />}
+                        value={`${t("program.rest")} ${ex.rest}`}
+                      />
                     </div>
                   </div>
                 </div>

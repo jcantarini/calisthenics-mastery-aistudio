@@ -15,7 +15,10 @@ interface LoadingButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * Wraps the app's default primary style; consumers pass className to override.
  */
 export const LoadingButton = forwardRef<HTMLButtonElement, LoadingButtonProps>(
-  ({ loading, success, loadingLabel, successLabel, disabled, className, children, ...rest }, ref) => {
+  (
+    { loading, success, loadingLabel, successLabel, disabled, className, children, ...rest },
+    ref,
+  ) => {
     const isBusy = loading || success;
     return (
       <button
@@ -31,7 +34,7 @@ export const LoadingButton = forwardRef<HTMLButtonElement, LoadingButtonProps>(
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         {success && !loading && <Check className="h-4 w-4 animate-scale-in" />}
         <span className={cn(isBusy && "opacity-90")}>
-          {loading ? loadingLabel ?? children : success ? successLabel ?? children : children}
+          {loading ? (loadingLabel ?? children) : success ? (successLabel ?? children) : children}
         </span>
       </button>
     );

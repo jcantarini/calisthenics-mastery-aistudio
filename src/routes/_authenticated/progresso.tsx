@@ -23,12 +23,14 @@ function ProgressoPage() {
   const { t, locale } = useT();
   const [newGoal, setNewGoal] = useState("");
   const localeMap: Record<string, string> = {
-    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+    pt: "pt-BR",
+    en: "en-US",
+    it: "it-IT",
+    es: "es-ES",
+    fr: "fr-FR",
   };
 
-  const doneSet = new Set(
-    state.completedSessions.map((d) => new Date(d).toDateString()),
-  );
+  const doneSet = new Set(state.completedSessions.map((d) => new Date(d).toDateString()));
 
   const days = Array.from({ length: 35 }, (_, i) => {
     const d = new Date();
@@ -59,7 +61,8 @@ function ProgressoPage() {
           {t("progress.eyebrow")}
         </p>
         <h1 className="mt-1 text-display text-4xl">
-          {t("progress.title1")}<br />
+          {t("progress.title1")}
+          <br />
           <span className="text-primary">{t("progress.title2")}</span>
         </h1>
       </header>
@@ -81,7 +84,12 @@ function ProgressoPage() {
       </Link>
 
       <section className="mt-6 grid grid-cols-3 gap-3">
-        <BigStat icon={<Flame className="h-4 w-4" />} value={state.streak} label={t("common.days")} sub={t("progress.streakSub")} />
+        <BigStat
+          icon={<Flame className="h-4 w-4" />}
+          value={state.streak}
+          label={t("common.days")}
+          sub={t("progress.streakSub")}
+        />
         <BigStat
           icon={<TrendingUp className="h-4 w-4" />}
           value={state.completedSessions.length}
@@ -145,15 +153,15 @@ function ProgressoPage() {
                 onClick={() => toggleGoal(g.id)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition-colors",
-                  g.done
-                    ? "border-primary/40 bg-primary/5"
-                    : "border-border/60 bg-surface",
+                  g.done ? "border-primary/40 bg-primary/5" : "border-border/60 bg-surface",
                 )}
               >
                 <span
                   className={cn(
                     "grid h-6 w-6 shrink-0 place-items-center rounded-full border transition-colors",
-                    g.done ? "border-primary bg-primary text-primary-foreground" : "border-border/60",
+                    g.done
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border/60",
                   )}
                 >
                   {g.done && <Check className="h-3.5 w-3.5" strokeWidth={3} />}

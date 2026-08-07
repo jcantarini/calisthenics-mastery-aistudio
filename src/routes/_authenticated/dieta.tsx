@@ -55,7 +55,11 @@ function DietaPage() {
   const [state, setState] = useAppState();
   const { t, locale } = useT();
   const localeMap: Record<string, string> = {
-    pt: "pt-BR", en: "en-US", it: "it-IT", es: "es-ES", fr: "fr-FR",
+    pt: "pt-BR",
+    en: "en-US",
+    it: "it-IT",
+    es: "es-ES",
+    fr: "fr-FR",
   };
   const { profile } = state;
 
@@ -78,14 +82,8 @@ function DietaPage() {
   const today = todayKey();
   const todayLog: DietDayLog = state.dietLog[today] ?? { meals: {}, waterMl: 0 };
   const doneMealIds = meals.filter((m) => todayLog.meals[m.id]);
-  const kcalConsumed = doneMealIds.reduce(
-    (s, m) => s + m.items.reduce((a, i) => a + i.kcal, 0),
-    0,
-  );
-  const kcalBurnedToday = (state.workoutLog[today] ?? []).reduce(
-    (s, w) => s + w.kcalBurned,
-    0,
-  );
+  const kcalConsumed = doneMealIds.reduce((s, m) => s + m.items.reduce((a, i) => a + i.kcal, 0), 0);
+  const kcalBurnedToday = (state.workoutLog[today] ?? []).reduce((s, w) => s + w.kcalBurned, 0);
   const workoutsToday = state.workoutLog[today] ?? [];
   const netKcal = kcalConsumed - kcalBurnedToday;
   const kcalPct = Math.min(100, Math.round((kcalConsumed / kcal) * 100));
@@ -147,7 +145,8 @@ function DietaPage() {
           {t("diet.eyebrow")}
         </p>
         <h1 className="mt-1 text-display text-4xl">
-          {t("diet.title1")}<br />
+          {t("diet.title1")}
+          <br />
           {t("diet.title2")} <span className="text-primary">{t("diet.title3")}</span>
         </h1>
         <p className="mt-3 max-w-xs text-sm text-muted-foreground">{t("diet.intro")}</p>
@@ -203,9 +202,7 @@ function DietaPage() {
                   }
                   className={cn(
                     "shrink-0 rounded-2xl border px-4 py-3 text-left transition-colors",
-                    active
-                      ? "border-primary bg-primary/10"
-                      : "border-border/60 bg-surface",
+                    active ? "border-primary bg-primary/10" : "border-border/60 bg-surface",
                   )}
                 >
                   <p
@@ -249,7 +246,9 @@ function DietaPage() {
                   {t(`goal.${g}.label`)}
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold">
-                  {info.delta === 0 ? "±0%" : `${info.delta > 0 ? "+" : ""}${Math.round(info.delta * 100)}%`}
+                  {info.delta === 0
+                    ? "±0%"
+                    : `${info.delta > 0 ? "+" : ""}${Math.round(info.delta * 100)}%`}
                 </p>
               </button>
             );
@@ -267,12 +266,18 @@ function DietaPage() {
             </p>
             <p className="mt-1 text-display text-5xl leading-none">
               {kcal.toLocaleString(localeMap[locale])}
-              <span className="ml-2 text-sm font-normal text-muted-foreground">{t("diet.kcalDay")}</span>
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                {t("diet.kcalDay")}
+              </span>
             </p>
           </div>
           <div className="text-right text-[11px] text-muted-foreground">
-            <p>{t("diet.bmr")} {bmrValue}</p>
-            <p>{t("diet.tdee")} {tdeeValue}</p>
+            <p>
+              {t("diet.bmr")} {bmrValue}
+            </p>
+            <p>
+              {t("diet.tdee")} {tdeeValue}
+            </p>
           </div>
         </div>
 
@@ -297,20 +302,14 @@ function DietaPage() {
           />
         </div>
 
-        <MacroBar
-          protein={macros.proteinG * 4}
-          carbs={macros.carbsG * 4}
-          fat={macros.fatG * 9}
-        />
+        <MacroBar protein={macros.proteinG * 4} carbs={macros.carbsG * 4} fat={macros.fatG * 9} />
 
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <Droplet className="h-3 w-3" /> {t("diet.water")} {waterL}{t("diet.waterDay")}
+            <Droplet className="h-3 w-3" /> {t("diet.water")} {waterL}
+            {t("diet.waterDay")}
           </span>
-          <Link
-            to="/perfil"
-            className="inline-flex items-center gap-1 font-semibold text-primary"
-          >
+          <Link to="/perfil" className="inline-flex items-center gap-1 font-semibold text-primary">
             <UserCog className="h-3 w-3" /> {t("diet.adjustProfile")}
           </Link>
         </div>
@@ -373,9 +372,7 @@ function DietaPage() {
                         <p className="truncate font-medium">{tFood(locale, i.food)}</p>
                         <p className="text-xs text-muted-foreground">{tQty(locale, i.qty)}</p>
                       </div>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {i.kcal} kcal
-                      </span>
+                      <span className="font-mono text-xs text-muted-foreground">{i.kcal} kcal</span>
                     </li>
                   ))}
                 </ul>
@@ -408,9 +405,7 @@ function DietaPage() {
             </div>
             <p className="mt-2 text-display text-2xl leading-none">
               {kcalConsumed}
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                / {kcal}
-              </span>
+              <span className="ml-1 text-xs font-normal text-muted-foreground">/ {kcal}</span>
             </p>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-background/60">
               <div
@@ -425,14 +420,15 @@ function DietaPage() {
 
           {/* Water today */}
           <div className="rounded-2xl border border-border/60 bg-surface-elevated p-4">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest" style={{ color: "oklch(0.75 0.14 220)" }}>
+            <div
+              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest"
+              style={{ color: "oklch(0.75 0.14 220)" }}
+            >
               <Droplet className="h-3 w-3" /> {t("diet.waterShort")}
             </div>
             <p className="mt-2 text-display text-2xl leading-none">
               {(todayLog.waterMl / 1000).toFixed(1)}
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                / {waterL}L
-              </span>
+              <span className="ml-1 text-xs font-normal text-muted-foreground">/ {waterL}L</span>
             </p>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-background/60">
               <div
@@ -466,7 +462,10 @@ function DietaPage() {
         <div className="mt-3 flex items-center gap-3 rounded-2xl border border-border/60 bg-surface p-3">
           <span
             className="grid h-9 w-9 place-items-center rounded-xl"
-            style={{ background: "color-mix(in oklab, var(--ember) 15%, transparent)", color: "var(--ember)" }}
+            style={{
+              background: "color-mix(in oklab, var(--ember) 15%, transparent)",
+              color: "var(--ember)",
+            }}
           >
             <Flame className="h-4 w-4" />
           </span>
@@ -498,9 +497,6 @@ function DietaPage() {
 
       {/* Reminders */}
       <RemindersCard />
-
-
-
 
       {/* Weekly summary */}
       <section className="mt-8">
@@ -537,7 +533,9 @@ function DietaPage() {
             {week.map((d) => {
               const kPct = Math.min(100, Math.round((d.kcalDone / d.kcalTarget) * 100));
               const wPct = Math.min(100, Math.round((d.waterMl / waterGoalMl) * 100));
-              const label = d.date.toLocaleDateString(localeMap[locale], { weekday: "short" }).slice(0, 3);
+              const label = d.date
+                .toLocaleDateString(localeMap[locale], { weekday: "short" })
+                .slice(0, 3);
               return (
                 <div key={d.key} className="flex flex-1 flex-col items-center gap-1.5">
                   <div className="flex h-24 w-full items-end gap-0.5">
@@ -586,7 +584,9 @@ function DietaPage() {
       <section className="mt-8 rounded-3xl border border-accent/30 bg-accent/5 p-5">
         <div className="flex items-center gap-2 text-accent">
           <Activity className="h-4 w-4" />
-          <p className="text-[11px] font-semibold uppercase tracking-widest">{t("diet.principles")}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest">
+            {t("diet.principles")}
+          </p>
         </div>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed">
           <li className="flex gap-2">
@@ -603,7 +603,8 @@ function DietaPage() {
           </li>
           <li className="flex gap-2">
             <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            {t("diet.tip4a")} <span className="font-bold">{t("diet.tip4b")}</span>{t("diet.tip4c")}
+            {t("diet.tip4a")} <span className="font-bold">{t("diet.tip4b")}</span>
+            {t("diet.tip4c")}
           </li>
         </ul>
       </section>
@@ -667,15 +668,7 @@ function MacroPill({
   );
 }
 
-function MacroBar({
-  protein,
-  carbs,
-  fat,
-}: {
-  protein: number;
-  carbs: number;
-  fat: number;
-}) {
+function MacroBar({ protein, carbs, fat }: { protein: number; carbs: number; fat: number }) {
   const total = protein + carbs + fat || 1;
   return (
     <div className="mt-4 flex h-2 overflow-hidden rounded-full bg-background/60">
@@ -691,7 +684,6 @@ function RemindersCard() {
   const [perm, setPerm] = useNotifPermission();
   const { t } = useT();
   const r = state.reminders;
-
 
   const setR = (patch: Partial<typeof r>) =>
     setState((s) => ({ ...s, reminders: { ...s.reminders, ...patch } }));
@@ -709,7 +701,9 @@ function RemindersCard() {
           body: t("diet.remindersEnabledBody"),
           icon: "/icon-192.png",
         });
-      } catch {}
+      } catch {
+        /* ignore: non-critical */
+      }
     }
   };
 
@@ -737,7 +731,9 @@ function RemindersCard() {
           <span
             className={cn(
               "grid h-11 w-11 place-items-center rounded-xl",
-              on ? "bg-primary text-primary-foreground shadow-glow" : "bg-background/60 text-muted-foreground",
+              on
+                ? "bg-primary text-primary-foreground shadow-glow"
+                : "bg-background/60 text-muted-foreground",
             )}
           >
             {on ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
@@ -803,7 +799,9 @@ function RemindersCard() {
                     </p>
                     <p className="text-display text-xl leading-none">
                       {r.waterEveryMin}
-                      <span className="ml-1 text-xs font-normal text-muted-foreground">{t("common.min")}</span>
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        {t("common.min")}
+                      </span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -909,4 +907,3 @@ function TimeField({
     </label>
   );
 }
-

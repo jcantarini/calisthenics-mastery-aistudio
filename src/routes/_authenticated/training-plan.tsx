@@ -1,7 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Play, Home, ListChecks, ChevronRight, Calendar, Target, Dumbbell } from "lucide-react";
+import {
+  Sparkles,
+  Play,
+  Home,
+  ListChecks,
+  ChevronRight,
+  Calendar,
+  Target,
+  Dumbbell,
+} from "lucide-react";
 import { toast } from "sonner";
 import { TrainingPlanService } from "@/services/training-plan/TrainingPlanService";
 import type { TrainingPlanSummary } from "@/services/training-plan/trainingPlanTypes";
@@ -13,7 +22,10 @@ export const Route = createFileRoute("/_authenticated/training-plan")({
       { title: "Seu plano de 4 semanas — Barra" },
       { name: "description", content: "Plano personalizado de 4 semanas com progressão semanal." },
       { property: "og:title", content: "Seu plano de 4 semanas — Barra" },
-      { property: "og:description", content: "Plano personalizado de 4 semanas com progressão semanal." },
+      {
+        property: "og:description",
+        content: "Plano personalizado de 4 semanas com progressão semanal.",
+      },
     ],
   }),
   component: TrainingPlanPage,
@@ -66,7 +78,11 @@ function TrainingPlanPage() {
   return (
     <div className="min-h-dvh px-5 pb-32 pt-12">
       <AnimatePresence mode="wait">
-        {loading ? <Loader key="l" phase={phase} /> : summary ? <Summary key="s" summary={summary} /> : null}
+        {loading ? (
+          <Loader key="l" phase={phase} />
+        ) : summary ? (
+          <Summary key="s" summary={summary} />
+        ) : null}
       </AnimatePresence>
     </div>
   );
@@ -148,15 +164,32 @@ function Summary({ summary }: { summary: TrainingPlanSummary }) {
       </header>
 
       <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-primary/15 to-accent/10 p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Programa</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Programa
+        </p>
         <p className="mt-1 text-xl font-bold">{summary.programTitle}</p>
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <Stat icon={<Target className="h-4 w-4" />} value={summary.primaryGoal ?? "—"} label="Meta" small />
-          <Stat icon={<Dumbbell className="h-4 w-4" />} value={summary.targetSkill ?? "—"} label="Skill" small />
-          <Stat icon={<Calendar className="h-4 w-4" />} value={`${summary.daysPerWeek}×`} label="Semana" />
+          <Stat
+            icon={<Target className="h-4 w-4" />}
+            value={summary.primaryGoal ?? "—"}
+            label="Meta"
+            small
+          />
+          <Stat
+            icon={<Dumbbell className="h-4 w-4" />}
+            value={summary.targetSkill ?? "—"}
+            label="Skill"
+            small
+          />
+          <Stat
+            icon={<Calendar className="h-4 w-4" />}
+            value={`${summary.daysPerWeek}×`}
+            label="Semana"
+          />
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          Nível: <b>{summary.fitnessLevel ?? "—"}</b> · Duração: <b>{summary.workoutDurationMin} min</b> · Progresso esperado em 4 semanas.
+          Nível: <b>{summary.fitnessLevel ?? "—"}</b> · Duração:{" "}
+          <b>{summary.workoutDurationMin} min</b> · Progresso esperado em 4 semanas.
         </p>
       </section>
 
@@ -178,12 +211,15 @@ function Summary({ summary }: { summary: TrainingPlanSummary }) {
                 )}
               >
                 <span>{DAY_LABELS[d.dayNumber - 1]}</span>
-                <span className="mt-1 text-[9px]">{d.dayType === "workout" ? "Treino" : "Off"}</span>
+                <span className="mt-1 text-[9px]">
+                  {d.dayType === "workout" ? "Treino" : "Off"}
+                </span>
               </div>
             ))}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            {wk.workoutDaysCount} treinos · {wk.recoveryDaysCount} recuperações · ~{wk.estimatedDurationMin} min totais
+            {wk.workoutDaysCount} treinos · {wk.recoveryDaysCount} recuperações · ~
+            {wk.estimatedDurationMin} min totais
           </p>
         </div>
       </section>
@@ -233,7 +269,9 @@ function Stat({
         {icon}
       </div>
       <p className={cn("mt-2 font-bold capitalize", small ? "text-sm" : "text-xl")}>{value}</p>
-      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
     </div>
   );
 }

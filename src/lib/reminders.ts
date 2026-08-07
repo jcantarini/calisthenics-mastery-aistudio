@@ -42,13 +42,19 @@ function fireNotification(title: string, body: string) {
       window.focus();
       try {
         if (window.location.pathname !== "/dieta") window.location.href = "/dieta";
-      } catch {}
+      } catch {
+        /* ignore: non-critical */
+      }
       n.close();
     };
     try {
       navigator.vibrate?.([180, 80, 180]);
-    } catch {}
-  } catch {}
+    } catch {
+      /* ignore: non-critical */
+    }
+  } catch {
+    /* ignore: non-critical */
+  }
 }
 
 /**
@@ -78,8 +84,7 @@ export function useReminderEngine(
         const profile = state.profile;
         const bmiCat = bmiCategory(bmi(profile));
         const goal = BMI_META[bmiCat].suggestedGoal;
-        const kcalTarget =
-          state.dietLog[today]?.kcalTarget ?? targetCalories(profile, goal);
+        const kcalTarget = state.dietLog[today]?.kcalTarget ?? targetCalories(profile, goal);
         const meals = buildMealPlan(kcalTarget);
         const doneMap = state.dietLog[today]?.meals ?? {};
 
@@ -143,12 +148,7 @@ export function useReminderEngine(
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [
-    state.reminders,
-    state.dietLog,
-    state.profile,
-    setState,
-  ]);
+  }, [state.reminders, state.dietLog, state.profile, setState]);
 }
 
 /** Reactive Notification permission hook. */

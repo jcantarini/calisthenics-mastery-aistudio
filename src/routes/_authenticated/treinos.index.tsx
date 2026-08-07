@@ -1,6 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronRight, Clock, Calendar, Target, Dumbbell, Heart, Shield, Timer, SearchX } from "lucide-react";
+import {
+  ChevronRight,
+  Clock,
+  Calendar,
+  Target,
+  Dumbbell,
+  Heart,
+  Shield,
+  Timer,
+  SearchX,
+} from "lucide-react";
 import { PROGRAMS, LEVEL_META, type Level, type Category } from "@/lib/programs";
 import { useT } from "@/lib/i18n";
 import { tLevel, tCategory, tProgram } from "@/lib/content-i18n";
@@ -41,7 +51,8 @@ function TreinosPage() {
   ];
 
   const list = PROGRAMS.filter(
-    (p) => (level === "todos" || p.level === level) && (category === "todas" || p.category === category),
+    (p) =>
+      (level === "todos" || p.level === level) && (category === "todas" || p.category === category),
   );
 
   return (
@@ -51,7 +62,8 @@ function TreinosPage() {
           {t("treinos.eyebrow")}
         </p>
         <h1 className="mt-1 text-display text-4xl">
-          {t("treinos.title1")}<br />
+          {t("treinos.title1")}
+          <br />
           <span className="text-primary">{t("treinos.title2")}</span>
         </h1>
         <p className="mt-3 max-w-xs text-sm text-muted-foreground">{t("treinos.intro")}</p>
@@ -154,9 +166,12 @@ function TreinosPage() {
                     className="font-mono text-[11px] font-bold uppercase tracking-widest"
                     style={{ color: p.color }}
                   >
-                    {LEVEL_META[p.level].badge} · {tLevel(locale, p.level)} · {tCategory(locale, p.category)}
+                    {LEVEL_META[p.level].badge} · {tLevel(locale, p.level)} ·{" "}
+                    {tCategory(locale, p.category)}
                   </p>
-                  <h3 className="mt-1 text-display text-3xl leading-none">{tProgram(locale, p.id).title}</h3>
+                  <h3 className="mt-1 text-display text-3xl leading-none">
+                    {tProgram(locale, p.id).title}
+                  </h3>
                 </div>
                 <div
                   className="absolute right-5 top-5 text-display text-6xl opacity-20"
@@ -168,9 +183,18 @@ function TreinosPage() {
               <div className="p-5">
                 <p className="text-sm text-muted-foreground">{tProgram(locale, p.id).tagline}</p>
                 <div className="mt-4 grid grid-cols-3 gap-2 text-[11px]">
-                  <Meta icon={<Calendar className="h-3 w-3" />} value={`${p.weeks} ${t("treinos.weeks")}`} />
-                  <Meta icon={<Clock className="h-3 w-3" />} value={tProgram(locale, p.id).duration} />
-                  <Meta icon={<Target className="h-3 w-3" />} value={`${p.daysPerWeek}${t("treinos.perWeek")}`} />
+                  <Meta
+                    icon={<Calendar className="h-3 w-3" />}
+                    value={`${p.weeks} ${t("treinos.weeks")}`}
+                  />
+                  <Meta
+                    icon={<Clock className="h-3 w-3" />}
+                    value={tProgram(locale, p.id).duration}
+                  />
+                  <Meta
+                    icon={<Target className="h-3 w-3" />}
+                    value={`${p.daysPerWeek}${t("treinos.perWeek")}`}
+                  />
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-widest text-primary">

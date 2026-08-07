@@ -54,7 +54,12 @@ export const RewardSummaryCard = memo(function RewardSummaryCard({
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-        <StatTile as="dl" icon={<Flame className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.streak")} value={`${result.currentStreak} ${tG(locale, "g.days")}`} />
+        <StatTile
+          as="dl"
+          icon={<Flame className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.streak")}
+          value={`${result.currentStreak} ${tG(locale, "g.days")}`}
+        />
         <StatTile
           as="dl"
           icon={<Target className="h-3.5 w-3.5" aria-hidden />}
@@ -65,7 +70,12 @@ export const RewardSummaryCard = memo(function RewardSummaryCard({
               : "—"
           }
         />
-        <StatTile as="dl" icon={<Trophy className="h-3.5 w-3.5" aria-hidden />} label={tG(locale, "g.achievements")} value={result.newAchievements.length} />
+        <StatTile
+          as="dl"
+          icon={<Trophy className="h-3.5 w-3.5" aria-hidden />}
+          label={tG(locale, "g.achievements")}
+          value={result.newAchievements.length}
+        />
       </dl>
 
       {result.weeklyProgress ? (

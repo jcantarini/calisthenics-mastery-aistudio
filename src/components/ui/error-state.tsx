@@ -9,7 +9,13 @@ interface ErrorStateProps {
   className?: string;
 }
 
-export function ErrorState({ title, description, onRetry, retryLabel = "Retry", className }: ErrorStateProps) {
+export function ErrorState({
+  title,
+  description,
+  onRetry,
+  retryLabel = "Retry",
+  className,
+}: ErrorStateProps) {
   return (
     <div
       role="alert"

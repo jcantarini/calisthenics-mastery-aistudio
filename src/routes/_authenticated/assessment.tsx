@@ -30,7 +30,10 @@ export const Route = createFileRoute("/_authenticated/assessment")({
   head: () => ({
     meta: [
       { title: "Avaliação Física Inicial — Barra" },
-      { name: "description", content: "Descubra seu nível atual para personalizar seu plano de treino." },
+      {
+        name: "description",
+        content: "Descubra seu nível atual para personalizar seu plano de treino.",
+      },
     ],
   }),
   component: AssessmentPage,
@@ -42,7 +45,8 @@ type Dict = Record<string, string>;
 const STRINGS: Record<Locale, Dict> = {
   pt: {
     title: "Avaliação Física Inicial",
-    intro: "Vamos medir seu ponto de partida em 7 testes rápidos. Pule qualquer teste se não puder executar.",
+    intro:
+      "Vamos medir seu ponto de partida em 7 testes rápidos. Pule qualquer teste se não puder executar.",
     start: "Começar avaliação",
     back: "Voltar",
     next: "Próximo",
@@ -73,7 +77,8 @@ const STRINGS: Record<Locale, Dict> = {
   },
   en: {
     title: "Initial Fitness Assessment",
-    intro: "Let's measure your starting point in 7 quick tests. Skip any you can't perform right now.",
+    intro:
+      "Let's measure your starting point in 7 quick tests. Skip any you can't perform right now.",
     start: "Start assessment",
     back: "Back",
     next: "Next",
@@ -104,7 +109,8 @@ const STRINGS: Record<Locale, Dict> = {
   },
   it: {
     title: "Valutazione Fisica Iniziale",
-    intro: "Misuriamo il tuo punto di partenza con 7 test rapidi. Salta qualsiasi test se non riesci.",
+    intro:
+      "Misuriamo il tuo punto di partenza con 7 test rapidi. Salta qualsiasi test se non riesci.",
     start: "Inizia valutazione",
     back: "Indietro",
     next: "Avanti",
@@ -135,7 +141,8 @@ const STRINGS: Record<Locale, Dict> = {
   },
   es: {
     title: "Evaluación Física Inicial",
-    intro: "Vamos a medir tu punto de partida con 7 pruebas rápidas. Salta cualquiera que no puedas.",
+    intro:
+      "Vamos a medir tu punto de partida con 7 pruebas rápidas. Salta cualquiera que no puedas.",
     start: "Empezar evaluación",
     back: "Volver",
     next: "Siguiente",
@@ -227,11 +234,41 @@ const DIPS_OPTS: { v: DipsBand; label: string }[] = [
   { v: "20+", label: "20+" },
 ];
 const PLANK_LABELS: Record<Locale, Record<PlankBand, string>> = {
-  pt: { lt20: "Menos de 20s", "20-40": "20–40s", "40-60": "40–60s", "60-120": "60–120s", "120+": "120s+" },
-  en: { lt20: "Less than 20s", "20-40": "20–40s", "40-60": "40–60s", "60-120": "60–120s", "120+": "120s+" },
-  it: { lt20: "Meno di 20s", "20-40": "20–40s", "40-60": "40–60s", "60-120": "60–120s", "120+": "120s+" },
-  es: { lt20: "Menos de 20s", "20-40": "20–40s", "40-60": "40–60s", "60-120": "60–120s", "120+": "120s+" },
-  fr: { lt20: "Moins de 20s", "20-40": "20–40s", "40-60": "40–60s", "60-120": "60–120s", "120+": "120s+" },
+  pt: {
+    lt20: "Menos de 20s",
+    "20-40": "20–40s",
+    "40-60": "40–60s",
+    "60-120": "60–120s",
+    "120+": "120s+",
+  },
+  en: {
+    lt20: "Less than 20s",
+    "20-40": "20–40s",
+    "40-60": "40–60s",
+    "60-120": "60–120s",
+    "120+": "120s+",
+  },
+  it: {
+    lt20: "Meno di 20s",
+    "20-40": "20–40s",
+    "40-60": "40–60s",
+    "60-120": "60–120s",
+    "120+": "120s+",
+  },
+  es: {
+    lt20: "Menos de 20s",
+    "20-40": "20–40s",
+    "40-60": "40–60s",
+    "60-120": "60–120s",
+    "120+": "120s+",
+  },
+  fr: {
+    lt20: "Moins de 20s",
+    "20-40": "20–40s",
+    "40-60": "40–60s",
+    "60-120": "60–120s",
+    "120+": "120s+",
+  },
 };
 const SQUATS_OPTS: { v: SquatsBand; label: string }[] = [
   { v: "0-10", label: "0–10" },
@@ -248,13 +285,73 @@ const MOBILITY_LABELS: Record<Locale, Record<MobilityBand, string>> = {
   fr: { poor: "Faible", average: "Moyenne", good: "Bonne", excellent: "Excellente" },
 };
 const SKILL_LABELS: Record<Locale, Record<SkillKey, string>> = {
-  pt: { pullup: "Barra fixa", muscleup: "Muscle-up", handstand: "Parada de mão", frontlever: "Front lever", backlever: "Back lever", lsit: "L-Sit", planche: "Planche", humanflag: "Bandeira humana", none: "Nenhuma" },
-  en: { pullup: "Pull-up", muscleup: "Muscle-up", handstand: "Handstand", frontlever: "Front Lever", backlever: "Back Lever", lsit: "L-Sit", planche: "Planche", humanflag: "Human Flag", none: "None" },
-  it: { pullup: "Trazione", muscleup: "Muscle-up", handstand: "Verticale", frontlever: "Front Lever", backlever: "Back Lever", lsit: "L-Sit", planche: "Planche", humanflag: "Bandiera", none: "Nessuna" },
-  es: { pullup: "Dominada", muscleup: "Muscle-up", handstand: "Vertical", frontlever: "Front Lever", backlever: "Back Lever", lsit: "L-Sit", planche: "Planche", humanflag: "Bandera", none: "Ninguna" },
-  fr: { pullup: "Traction", muscleup: "Muscle-up", handstand: "ATR", frontlever: "Front Lever", backlever: "Back Lever", lsit: "L-Sit", planche: "Planche", humanflag: "Drapeau", none: "Aucune" },
+  pt: {
+    pullup: "Barra fixa",
+    muscleup: "Muscle-up",
+    handstand: "Parada de mão",
+    frontlever: "Front lever",
+    backlever: "Back lever",
+    lsit: "L-Sit",
+    planche: "Planche",
+    humanflag: "Bandeira humana",
+    none: "Nenhuma",
+  },
+  en: {
+    pullup: "Pull-up",
+    muscleup: "Muscle-up",
+    handstand: "Handstand",
+    frontlever: "Front Lever",
+    backlever: "Back Lever",
+    lsit: "L-Sit",
+    planche: "Planche",
+    humanflag: "Human Flag",
+    none: "None",
+  },
+  it: {
+    pullup: "Trazione",
+    muscleup: "Muscle-up",
+    handstand: "Verticale",
+    frontlever: "Front Lever",
+    backlever: "Back Lever",
+    lsit: "L-Sit",
+    planche: "Planche",
+    humanflag: "Bandiera",
+    none: "Nessuna",
+  },
+  es: {
+    pullup: "Dominada",
+    muscleup: "Muscle-up",
+    handstand: "Vertical",
+    frontlever: "Front Lever",
+    backlever: "Back Lever",
+    lsit: "L-Sit",
+    planche: "Planche",
+    humanflag: "Bandera",
+    none: "Ninguna",
+  },
+  fr: {
+    pullup: "Traction",
+    muscleup: "Muscle-up",
+    handstand: "ATR",
+    frontlever: "Front Lever",
+    backlever: "Back Lever",
+    lsit: "L-Sit",
+    planche: "Planche",
+    humanflag: "Drapeau",
+    none: "Aucune",
+  },
 };
-const SKILL_ORDER: SkillKey[] = ["pullup", "muscleup", "handstand", "frontlever", "backlever", "lsit", "planche", "humanflag", "none"];
+const SKILL_ORDER: SkillKey[] = [
+  "pullup",
+  "muscleup",
+  "handstand",
+  "frontlever",
+  "backlever",
+  "lsit",
+  "planche",
+  "humanflag",
+  "none",
+];
 
 const TOTAL_TESTS = 7;
 
@@ -279,7 +376,9 @@ function AssessmentPage() {
       if (!u.user || cancelled) return;
       setUserId(u.user.id);
       const meta = u.user.user_metadata ?? {};
-      setDisplayName((meta.full_name as string) || (meta.name as string) || u.user.email?.split("@")[0]);
+      setDisplayName(
+        (meta.full_name as string) || (meta.name as string) || u.user.email?.split("@")[0],
+      );
       const [remoteOb, remoteAssess] = await Promise.all([
         fetchOnboarding(u.user.id),
         fetchAssessment(u.user.id),
@@ -310,9 +409,12 @@ function AssessmentPage() {
   const goBack = () => setStep((n) => Math.max(0, n - 1));
   const goNext = () => setStep((n) => Math.min(TOTAL_TESTS + 1, n + 1));
 
-  const testKey: TestKey | null = step >= 1 && step <= TOTAL_TESTS
-    ? (["pushups", "pullups", "dips", "plank", "squats", "mobility", "skills"] as TestKey[])[step - 1]
-    : null;
+  const testKey: TestKey | null =
+    step >= 1 && step <= TOTAL_TESTS
+      ? (["pushups", "pullups", "dips", "plank", "squats", "mobility", "skills"] as TestKey[])[
+          step - 1
+        ]
+      : null;
 
   const markSkipped = (k: TestKey) =>
     setData((p) => ({ ...p, skipped: Array.from(new Set([...p.skipped, k])) }));
@@ -383,7 +485,10 @@ function AssessmentPage() {
             question={s(locale, "t.pushups.q")}
             options={PUSHUPS_OPTS}
             value={data.pushups}
-            onSelect={(v) => { setData((p) => ({ ...p, pushups: v })); clearSkip("pushups"); }}
+            onSelect={(v) => {
+              setData((p) => ({ ...p, pushups: v }));
+              clearSkip("pushups");
+            }}
           />
         )}
         {testKey === "pullups" && (
@@ -392,7 +497,10 @@ function AssessmentPage() {
             question={s(locale, "t.pullups.q")}
             options={PULLUPS_OPTS}
             value={data.pullups}
-            onSelect={(v) => { setData((p) => ({ ...p, pullups: v })); clearSkip("pullups"); }}
+            onSelect={(v) => {
+              setData((p) => ({ ...p, pullups: v }));
+              clearSkip("pullups");
+            }}
           />
         )}
         {testKey === "dips" && (
@@ -401,16 +509,25 @@ function AssessmentPage() {
             question={s(locale, "t.dips.q")}
             options={DIPS_OPTS}
             value={data.dips}
-            onSelect={(v) => { setData((p) => ({ ...p, dips: v })); clearSkip("dips"); }}
+            onSelect={(v) => {
+              setData((p) => ({ ...p, dips: v }));
+              clearSkip("dips");
+            }}
           />
         )}
         {testKey === "plank" && (
           <Choice
             title={s(locale, "t.plank")}
             question={s(locale, "t.plank.q")}
-            options={(Object.keys(PLANK_LABELS[locale]) as PlankBand[]).map((k) => ({ v: k, label: PLANK_LABELS[locale][k] }))}
+            options={(Object.keys(PLANK_LABELS[locale]) as PlankBand[]).map((k) => ({
+              v: k,
+              label: PLANK_LABELS[locale][k],
+            }))}
             value={data.plank}
-            onSelect={(v) => { setData((p) => ({ ...p, plank: v })); clearSkip("plank"); }}
+            onSelect={(v) => {
+              setData((p) => ({ ...p, plank: v }));
+              clearSkip("plank");
+            }}
           />
         )}
         {testKey === "squats" && (
@@ -419,16 +536,25 @@ function AssessmentPage() {
             question={s(locale, "t.squats.q")}
             options={SQUATS_OPTS}
             value={data.squats}
-            onSelect={(v) => { setData((p) => ({ ...p, squats: v })); clearSkip("squats"); }}
+            onSelect={(v) => {
+              setData((p) => ({ ...p, squats: v }));
+              clearSkip("squats");
+            }}
           />
         )}
         {testKey === "mobility" && (
           <Choice
             title={s(locale, "t.mobility")}
             question={s(locale, "t.mobility.q")}
-            options={(Object.keys(MOBILITY_LABELS[locale]) as MobilityBand[]).map((k) => ({ v: k, label: MOBILITY_LABELS[locale][k] }))}
+            options={(Object.keys(MOBILITY_LABELS[locale]) as MobilityBand[]).map((k) => ({
+              v: k,
+              label: MOBILITY_LABELS[locale][k],
+            }))}
             value={data.mobility}
-            onSelect={(v) => { setData((p) => ({ ...p, mobility: v })); clearSkip("mobility"); }}
+            onSelect={(v) => {
+              setData((p) => ({ ...p, mobility: v }));
+              clearSkip("mobility");
+            }}
           />
         )}
         {testKey === "skills" && (
@@ -442,15 +568,15 @@ function AssessmentPage() {
               setData((p) => {
                 const has = p.skills.includes(k);
                 if (k === "none") return { ...p, skills: has ? [] : ["none"] };
-                const next = has ? p.skills.filter((x) => x !== k) : [...p.skills.filter((x) => x !== "none"), k];
+                const next = has
+                  ? p.skills.filter((x) => x !== k)
+                  : [...p.skills.filter((x) => x !== "none"), k];
                 return { ...p, skills: next };
               });
             }}
           />
         )}
-        {step === TOTAL_TESTS + 1 && (
-          <Summary data={data} ob={ob} locale={locale} />
-        )}
+        {step === TOTAL_TESTS + 1 && <Summary data={data} ob={ob} locale={locale} />}
       </section>
 
       {step > 0 && (
@@ -532,7 +658,11 @@ function Intro({ onStart, locale }: { onStart: () => void; locale: Locale }) {
 }
 
 function Choice<T extends string>({
-  title, question, options, value, onSelect,
+  title,
+  question,
+  options,
+  value,
+  onSelect,
 }: {
   title: string;
   question: string;
@@ -558,7 +688,9 @@ function Choice<T extends string>({
               onClick={() => onSelect(o.v)}
               className={cn(
                 "tap flex w-full items-center gap-3 rounded-2xl border-2 bg-surface p-4 text-left transition-all",
-                active ? "border-primary bg-primary/10 shadow-glow" : "border-border/60 hover:border-border",
+                active
+                  ? "border-primary bg-primary/10 shadow-glow"
+                  : "border-border/60 hover:border-border",
               )}
             >
               <span
@@ -579,7 +711,11 @@ function Choice<T extends string>({
 }
 
 function SkillsPicker({
-  title, question, value, labels, onToggle,
+  title,
+  question,
+  value,
+  labels,
+  onToggle,
 }: {
   title: string;
   question: string;
@@ -624,7 +760,15 @@ function SkillsPicker({
   );
 }
 
-function Summary({ data, ob, locale }: { data: AssessmentData; ob: OnboardingData; locale: Locale }) {
+function Summary({
+  data,
+  ob,
+  locale,
+}: {
+  data: AssessmentData;
+  ob: OnboardingData;
+  locale: Locale;
+}) {
   const score = useMemo(() => scoreAssessment(data), [data]);
   const slug = useMemo(() => recommendProgram(ob, data), [ob, data]);
   const program = PROGRAMS.find((p) => p.slug === slug) ?? PROGRAMS[0];
@@ -633,9 +777,15 @@ function Summary({ data, ob, locale }: { data: AssessmentData; ob: OnboardingDat
     { label: s(locale, "t.pushups"), value: data.pushups ?? s(locale, "skipped") },
     { label: s(locale, "t.pullups"), value: data.pullups ?? s(locale, "skipped") },
     { label: s(locale, "t.dips"), value: data.dips ?? s(locale, "skipped") },
-    { label: s(locale, "t.plank"), value: data.plank ? PLANK_LABELS[locale][data.plank] : s(locale, "skipped") },
+    {
+      label: s(locale, "t.plank"),
+      value: data.plank ? PLANK_LABELS[locale][data.plank] : s(locale, "skipped"),
+    },
     { label: s(locale, "t.squats"), value: data.squats ?? s(locale, "skipped") },
-    { label: s(locale, "t.mobility"), value: data.mobility ? MOBILITY_LABELS[locale][data.mobility] : s(locale, "skipped") },
+    {
+      label: s(locale, "t.mobility"),
+      value: data.mobility ? MOBILITY_LABELS[locale][data.mobility] : s(locale, "skipped"),
+    },
     {
       label: s(locale, "t.skills"),
       value: data.skills.length
@@ -669,7 +819,9 @@ function Summary({ data, ob, locale }: { data: AssessmentData; ob: OnboardingDat
         {rows.map((r, i) => (
           <li key={i} className="flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{r.label}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {r.label}
+              </p>
               <p className="mt-0.5 truncate text-sm font-medium">{r.value}</p>
             </div>
           </li>

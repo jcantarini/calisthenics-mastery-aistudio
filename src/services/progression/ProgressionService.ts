@@ -232,7 +232,10 @@ export const ProgressionService = {
     return writeProgression(await readProgression(uid));
   },
 
-  async getLevelHistory(options?: { userId?: string; limit?: number }): Promise<LevelHistoryEntry[]> {
+  async getLevelHistory(options?: {
+    userId?: string;
+    limit?: number;
+  }): Promise<LevelHistoryEntry[]> {
     const uid = await resolveUserId(options?.userId);
     const { data, error } = await supabase
       .from("level_history")

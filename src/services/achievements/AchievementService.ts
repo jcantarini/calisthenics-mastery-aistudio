@@ -3,11 +3,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { XPService } from "@/services/xp";
-import {
-  ACHIEVEMENT_CATALOG,
-  ACHIEVEMENT_CATEGORIES,
-  getAchievement,
-} from "./achievementCatalog";
+import { ACHIEVEMENT_CATALOG, ACHIEVEMENT_CATEGORIES, getAchievement } from "./achievementCatalog";
 import {
   achievementsForMetric,
   applyUpdate,
@@ -204,20 +200,13 @@ async function collectHistoricalMetrics(userId: string): Promise<MetricUpdate[]>
       .select("completed_at")
       .eq("user_id", userId)
       .eq("is_completed", true),
-    supabase
-      .from("training_plans")
-      .select("status, completed_weeks")
-      .eq("user_id", userId),
+    supabase.from("training_plans").select("status, completed_weeks").eq("user_id", userId),
     supabase
       .from("user_onboarding")
       .select("onboarding_completed")
       .eq("user_id", userId)
       .maybeSingle(),
-    supabase
-      .from("fitness_assessment")
-      .select("completed")
-      .eq("user_id", userId)
-      .maybeSingle(),
+    supabase.from("fitness_assessment").select("completed").eq("user_id", userId).maybeSingle(),
   ]);
 
   const completed = (workouts.data ?? []) as { completed_at: string | null }[];
@@ -275,10 +264,7 @@ export const AchievementService = {
   /** Catalog + per-user progress. Hidden achievements stay hidden until unlocked. */
   async getUserAchievements(userId?: string): Promise<UserAchievement[]> {
     const uid = await resolveUserId(userId);
-    const [progress, unlocked] = await Promise.all([
-      readProgressRows(uid),
-      readUnlockRows(uid),
-    ]);
+    const [progress, unlocked] = await Promise.all([readProgressRows(uid), readUnlockRows(uid)]);
     return ACHIEVEMENT_CATALOG.filter((d) => isVisible(d, unlocked.has(d.id))).map((d) => {
       const row = unlocked.get(d.id);
       const value = row ? d.target : (progress.get(d.id)?.current_value ?? 0);
@@ -305,10 +291,7 @@ export const AchievementService = {
     const definition = getAchievement(achievementId);
     if (!definition) return null;
     const uid = await resolveUserId(userId);
-    const [progress, unlocked] = await Promise.all([
-      readProgressRows(uid),
-      readUnlockRows(uid),
-    ]);
+    const [progress, unlocked] = await Promise.all([readProgressRows(uid), readUnlockRows(uid)]);
     const row = unlocked.get(achievementId);
     const value = row ? definition.target : (progress.get(achievementId)?.current_value ?? 0);
     return buildProgress(definition, value, row?.unlocked_at ?? null);

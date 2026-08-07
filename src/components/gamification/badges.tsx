@@ -15,7 +15,11 @@ function Reveal({ children, delay = 0 }: { children: ReactNode; delay?: number }
       className="inline-flex"
       initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: reduce ? 0.15 : 0.35, delay: reduce ? 0 : delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{
+        duration: reduce ? 0.15 : 0.35,
+        delay: reduce ? 0 : delay,
+        ease: [0.22, 1, 0.36, 1],
+      }}
     >
       {children}
     </motion.span>
@@ -36,7 +40,16 @@ export const LevelBadge = memo(function LevelBadge({
   className?: string;
 }) {
   const { locale } = useT();
-  const label = locale === "en" ? "Level" : locale === "fr" ? "Niveau" : locale === "it" ? "Livello" : locale === "es" ? "Nivel" : "Nível";
+  const label =
+    locale === "en"
+      ? "Level"
+      : locale === "fr"
+        ? "Niveau"
+        : locale === "it"
+          ? "Livello"
+          : locale === "es"
+            ? "Nivel"
+            : "Nível";
   return (
     <Reveal>
       <span

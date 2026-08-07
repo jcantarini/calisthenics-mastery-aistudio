@@ -95,7 +95,9 @@ function TimerPage() {
         setConfig(merged);
         setRemaining(merged.prep);
       }
-    } catch {}
+    } catch {
+      /* ignore: non-critical */
+    }
     setHydrated(true);
   }, []);
 
@@ -103,7 +105,9 @@ function TimerPage() {
     if (!hydrated) return;
     try {
       localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-    } catch {}
+    } catch {
+      /* ignore: non-critical */
+    }
   }, [config, hydrated]);
 
   // Sound helper
@@ -111,7 +115,9 @@ function TimerPage() {
     if (!config.sound) return;
     try {
       if (!audioCtxRef.current) {
-        const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+        const Ctx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
         audioCtxRef.current = new Ctx();
       }
       const ctx = audioCtxRef.current!;
@@ -125,14 +131,18 @@ function TimerPage() {
       osc.connect(gain).connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + duration);
-    } catch {}
+    } catch {
+      /* ignore: non-critical */
+    }
   };
 
   const vibrate = (pattern: number | number[]) => {
     if (!config.vibrate) return;
     try {
       navigator.vibrate?.(pattern);
-    } catch {}
+    } catch {
+      /* ignore: non-critical */
+    }
   };
 
   // Tick loop
@@ -180,10 +190,18 @@ function TimerPage() {
         setTimeout(() => beep(1200, 0.5, "triangle"), 220);
         vibrate([200, 100, 200, 100, 400]);
         // Auto-log workout session
-        const met = presetKey === "tabata" ? 10 : presetKey === "militar" ? 9 : presetKey === "hiit" ? 8.5 : 7;
+        const met =
+          presetKey === "tabata"
+            ? 10
+            : presetKey === "militar"
+              ? 9
+              : presetKey === "hiit"
+                ? 8.5
+                : 7;
         const durationSec =
           config.prep +
-          config.sets * (config.work * config.rounds + config.rest * Math.max(0, config.rounds - 1)) +
+          config.sets *
+            (config.work * config.rounds + config.rest * Math.max(0, config.rounds - 1)) +
           Math.max(0, config.sets - 1) * config.setRest;
         const kcal = estimateKcal(met, stateRef.current.profile.weightKg, durationSec);
         const label = t(`timer.preset.${presetKey}`);
@@ -213,8 +231,7 @@ function TimerPage() {
   const startPhase = (p: Phase, overrideSeconds?: number) => {
     setPhase(p);
     const seconds =
-      overrideSeconds ??
-      (p === "prep" ? config.prep : p === "work" ? config.work : config.rest);
+      overrideSeconds ?? (p === "prep" ? config.prep : p === "work" ? config.work : config.rest);
     setRemaining(seconds);
     // Announce
     if (p === "work") {
@@ -230,11 +247,15 @@ function TimerPage() {
     // resume audio ctx on user gesture
     try {
       if (!audioCtxRef.current) {
-        const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+        const Ctx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
         audioCtxRef.current = new Ctx();
       }
       audioCtxRef.current?.resume?.();
-    } catch {}
+    } catch {
+      /* ignore: non-critical */
+    }
     if (phase === "done") reset(true);
     setRunning(true);
   };
@@ -278,8 +299,7 @@ function TimerPage() {
   };
 
   const totalSeconds = useMemo(() => {
-    const perSet =
-      config.work * config.rounds + config.rest * Math.max(0, config.rounds - 1);
+    const perSet = config.work * config.rounds + config.rest * Math.max(0, config.rounds - 1);
     const setRests = Math.max(0, config.sets - 1) * config.setRest;
     return config.prep + config.sets * perSet + setRests;
   }, [config]);
@@ -418,7 +438,8 @@ function TimerPage() {
                   {t("timer.logged")}
                 </p>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  {Math.round(lastLogged.durationSec / 60)} {t("common.min")} · {lastLogged.kcal} {t("timer.kcalBurned")}
+                  {Math.round(lastLogged.durationSec / 60)} {t("common.min")} · {lastLogged.kcal}{" "}
+                  {t("timer.kcalBurned")}
                 </p>
                 <Link
                   to="/relatorio"
@@ -532,7 +553,8 @@ function TimerPage() {
         <p className="mt-4 text-center font-mono text-xs text-muted-foreground">
           {t("timer.total")}{" "}
           <span className="text-foreground">
-            {Math.floor(totalSeconds / 60)}{t("common.min")} {totalSeconds % 60}s
+            {Math.floor(totalSeconds / 60)}
+            {t("common.min")} {totalSeconds % 60}s
           </span>
         </p>
       </div>

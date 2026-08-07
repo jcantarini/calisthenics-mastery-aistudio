@@ -39,11 +39,7 @@ function useAsync<T>(loader: () => Promise<T>, initial: T, deps: unknown[]) {
 }
 
 export function useAchievements() {
-  return useAsync<UserAchievement[]>(
-    () => AchievementService.getUserAchievements(),
-    [],
-    [],
-  );
+  return useAsync<UserAchievement[]>(() => AchievementService.getUserAchievements(), [], []);
 }
 
 export function useRecentAchievements(limit = 3) {

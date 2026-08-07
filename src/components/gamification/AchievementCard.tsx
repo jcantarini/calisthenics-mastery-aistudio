@@ -26,17 +26,13 @@ export const AchievementCard = memo(function AchievementCard({
   const style = rarityStyle(def.rarity);
 
   const title = secret ? tG(locale, "g.hidden") : tAch(locale, def.titleKey);
-  const description = secret
-    ? "•••"
-    : tAch(locale, def.descriptionKey, def.descriptionVars);
+  const description = secret ? "•••" : tAch(locale, def.descriptionKey, def.descriptionVars);
 
   const Comp = onSelect ? "button" : "div";
 
   return (
     <Comp
-      {...(onSelect
-        ? { type: "button" as const, onClick: () => onSelect(item) }
-        : {})}
+      {...(onSelect ? { type: "button" as const, onClick: () => onSelect(item) } : {})}
       className={cn(
         "tap flex w-full flex-col rounded-3xl border bg-surface-elevated p-4 text-left shadow-card transition-colors",
         locked ? "border-border/60 opacity-70" : style.ring,
@@ -73,8 +69,7 @@ export const AchievementCard = memo(function AchievementCard({
 
       {item.unlocked && item.unlockedAt ? (
         <p className="mt-3 text-[10px] font-semibold uppercase tracking-widest text-primary">
-          {tAch(locale, "ach.unlocked")} ·{" "}
-          {new Date(item.unlockedAt).toLocaleDateString(locale)}
+          {tAch(locale, "ach.unlocked")} · {new Date(item.unlockedAt).toLocaleDateString(locale)}
         </p>
       ) : null}
     </Comp>
