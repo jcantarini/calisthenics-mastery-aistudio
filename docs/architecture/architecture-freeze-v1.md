@@ -13,17 +13,17 @@ not redesign it without a documented architectural reason and a new ADR.
 
 The Core Platform is stable and considered sufficient to support Phase 7.
 
-| Area                                  | Status |
-| ------------------------------------- | ------ |
-| Domain boundaries                     | ✅ Reviewed and documented |
-| Service APIs                          | ✅ Reviewed, no breaking changes needed |
-| Hooks (no domain logic leakage)       | ✅ Verified |
-| Single-source-of-truth violations     | ✅ None found |
-| TypeScript strictness                 | ✅ `any` eliminated from app code |
-| Secrets exposed to client             | ✅ None |
-| Database integrity                    | ✅ Fixed (foreign keys added) |
-| Test execution path                   | ✅ Standardised |
-| Documentation                         | ✅ Created |
+| Area                              | Status                                  |
+| --------------------------------- | --------------------------------------- |
+| Domain boundaries                 | ✅ Reviewed and documented              |
+| Service APIs                      | ✅ Reviewed, no breaking changes needed |
+| Hooks (no domain logic leakage)   | ✅ Verified                             |
+| Single-source-of-truth violations | ✅ None found                           |
+| TypeScript strictness             | ✅ `any` eliminated from app code       |
+| Secrets exposed to client         | ✅ None                                 |
+| Database integrity                | ✅ Fixed (foreign keys added)           |
+| Test execution path               | ✅ Standardised                         |
+| Documentation                     | ✅ Created                              |
 
 ---
 
@@ -31,13 +31,13 @@ The Core Platform is stable and considered sufficient to support Phase 7.
 
 Measured before any change:
 
-| Check      | Result |
-| ---------- | ------ |
-| TypeScript | ✅ 0 errors |
-| Tests      | ✅ 3 files / 37 tests passing |
-| Build      | ✅ passing |
-| Lint       | ❌ **1448 errors, 13 warnings** — pre-existing |
-| Test script| ❌ **absent from `package.json`** — pre-existing |
+| Check       | Result                                           |
+| ----------- | ------------------------------------------------ |
+| TypeScript  | ✅ 0 errors                                      |
+| Tests       | ✅ 3 files / 37 tests passing                    |
+| Build       | ✅ passing                                       |
+| Lint        | ❌ **1448 errors, 13 warnings** — pre-existing   |
+| Test script | ❌ **absent from `package.json`** — pre-existing |
 
 Lint error breakdown at baseline:
 `prettier/prettier` 1425 · `no-empty` 21 · `@typescript-eslint/no-explicit-any` 2 ·
@@ -104,15 +104,15 @@ Duplicate index removal, missing foreign keys, RLS role scoping.
 
 Every direct Supabase call reachable from React was classified per ADR-0001.
 
-| Location                                  | Call                          | Category | Decision |
-| ----------------------------------------- | ----------------------------- | -------- | -------- |
-| `routes/auth.tsx`                         | `auth.getSession`, `onAuthStateChange` | A | Keep — auth infrastructure |
-| `routes/__root.tsx`                       | `auth.onAuthStateChange`      | A | Keep |
-| `routes/_authenticated/route.tsx`         | `auth.getUser` + gate reads   | A | Keep — route gate must run before any service |
-| `routes/_authenticated/perfil.tsx`        | `auth.signOut`                | A | Keep |
-| `.../onboarding.tsx`, `.../assessment.tsx`, `.../first-workout.tsx` | `auth.getUser` | A | Keep — identity only; all domain work already delegates to `src/lib/onboarding.ts`, `src/lib/assessment.ts`, `WorkoutGeneratorService` |
-| `src/lib/onboarding.ts`, `src/lib/assessment.ts`, `src/lib/workout-reminders.ts` | domain persistence | B | Already service-shaped modules behind a public API — left in place, documented |
-| Training / gamification writes from UI    | —                             | C | **None found.** No single-source-of-truth violation exists. |
+| Location                                                                         | Call                                   | Category | Decision                                                                                                                               |
+| -------------------------------------------------------------------------------- | -------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `routes/auth.tsx`                                                                | `auth.getSession`, `onAuthStateChange` | A        | Keep — auth infrastructure                                                                                                             |
+| `routes/__root.tsx`                                                              | `auth.onAuthStateChange`               | A        | Keep                                                                                                                                   |
+| `routes/_authenticated/route.tsx`                                                | `auth.getUser` + gate reads            | A        | Keep — route gate must run before any service                                                                                          |
+| `routes/_authenticated/perfil.tsx`                                               | `auth.signOut`                         | A        | Keep                                                                                                                                   |
+| `.../onboarding.tsx`, `.../assessment.tsx`, `.../first-workout.tsx`              | `auth.getUser`                         | A        | Keep — identity only; all domain work already delegates to `src/lib/onboarding.ts`, `src/lib/assessment.ts`, `WorkoutGeneratorService` |
+| `src/lib/onboarding.ts`, `src/lib/assessment.ts`, `src/lib/workout-reminders.ts` | domain persistence                     | B        | Already service-shaped modules behind a public API — left in place, documented                                                         |
+| Training / gamification writes from UI                                           | —                                      | C        | **None found.** No single-source-of-truth violation exists.                                                                            |
 
 **No component was refactored**, because no Category C violation was found and
 wrapping Category A calls would have been artificial abstraction — explicitly
@@ -186,16 +186,16 @@ issues.
 
 ## 8. Security findings
 
-| Check                                      | Result |
-| ------------------------------------------ | ------ |
-| `service_role` key in client code           | ✅ Not present |
-| Database password in the repository         | ✅ Not present |
-| Private API secrets in client bundles       | ✅ None found |
-| Privileged env vars behind `VITE_`          | ✅ None |
-| Server-only client isolation                | ✅ `SUPABASE_SERVICE_ROLE_KEY` is read only in `src/integrations/supabase/client.server.ts`, which the bundler blocks from every client chunk |
-| Client-side env exposure                    | ✅ Only `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID` — all publishable by design |
-| `.gitignore`                                | ✅ Covers `.dev.vars`, `*.local`, `.wrangler/`, build output |
-| Auth-provider secrets                       | ✅ Held by the backend, never in the frontend |
+| Check                                 | Result                                                                                                                                        |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `service_role` key in client code     | ✅ Not present                                                                                                                                |
+| Database password in the repository   | ✅ Not present                                                                                                                                |
+| Private API secrets in client bundles | ✅ None found                                                                                                                                 |
+| Privileged env vars behind `VITE_`    | ✅ None                                                                                                                                       |
+| Server-only client isolation          | ✅ `SUPABASE_SERVICE_ROLE_KEY` is read only in `src/integrations/supabase/client.server.ts`, which the bundler blocks from every client chunk |
+| Client-side env exposure              | ✅ Only `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID` — all publishable by design                          |
+| `.gitignore`                          | ✅ Covers `.dev.vars`, `*.local`, `.wrangler/`, build output                                                                                  |
+| Auth-provider secrets                 | ✅ Held by the backend, never in the frontend                                                                                                 |
 
 **No privileged secret is exposed to the client. No secret value is printed in
 this documentation or in any log.**
@@ -207,13 +207,13 @@ Known accepted risk (not a leak): gamification writes are client-authoritative
 
 ## 9. Validation after changes
 
-| Check      | Result |
-| ---------- | ------ |
+| Check      | Result                                                          |
+| ---------- | --------------------------------------------------------------- |
 | Build      | ✅ Passing (`bun run build`, Nitro/Cloudflare output generated) |
-| TypeScript | ✅ 0 errors |
-| Tests      | ✅ 3 files / 37 tests passing |
-| Lint       | ✅ **0 errors**, 13 warnings |
-| DB linter  | ✅ 0 issues |
+| TypeScript | ✅ 0 errors                                                     |
+| Tests      | ✅ 3 files / 37 tests passing                                   |
+| Lint       | ✅ **0 errors**, 13 warnings                                    |
+| DB linter  | ✅ 0 issues                                                     |
 
 The 13 remaining lint warnings are all
 `react-refresh/only-export-components`, emitted by shadcn/ui primitives
@@ -255,18 +255,18 @@ Each item was evaluated and deliberately **not** addressed, because fixing it
 would have required product-behaviour change, redesign or speculative
 refactoring — all forbidden by this sprint.
 
-| # | Debt | Why retained |
-| - | ---- | ------------ |
-| 1 | **Client-authoritative gamification.** XP and level writes originate in the browser; RLS protects ownership, not rules. | Moving writes behind `createServerFn` is a trust-boundary redesign, not a stabilisation. **Highest-priority Phase 7 item.** |
-| 2 | **Dual XP storage** (`user_stats` and `user_progression` both hold XP). | Unifying them changes persistence semantics for a live gamification system. Both are written in the same pipeline, so drift is currently contained. |
-| 3 | **`TrainingPlanService` is ~700 LOC** and mixes orchestration with data access. | A repository split is a stylistic refactor of working, tested code. |
-| 4 | **Mixed fetching paradigms** — training uses TanStack Query, gamification hand-rolls `useEffect` + event bus. | Both work correctly; converging them is a paradigm change, not a bug fix. |
-| 5 | **`GamificationResult` is overloaded** — it serves both "what just happened" and "current snapshot". | Splitting the type touches every consumer. |
-| 6 | **No route-level code splitting**; i18n bundles load eagerly. | Performance optimisation, out of scope for a freeze. |
-| 7 | **Magic strings for statuses** instead of const unions. | Cosmetic; no correctness impact. |
-| 8 | **Test coverage gaps** on plan generation and workout completion. | New tests are welcome additions but not required to freeze; the execution path is now standardised. |
-| 9 | **Large route components** (some 900+ LOC). | Splitting risks UI regressions for no architectural gain. |
-| 10 | **13 Fast-Refresh lint warnings.** | Development-only ergonomics. |
+| #   | Debt                                                                                                                    | Why retained                                                                                                                                        |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Client-authoritative gamification.** XP and level writes originate in the browser; RLS protects ownership, not rules. | Moving writes behind `createServerFn` is a trust-boundary redesign, not a stabilisation. **Highest-priority Phase 7 item.**                         |
+| 2   | **Dual XP storage** (`user_stats` and `user_progression` both hold XP).                                                 | Unifying them changes persistence semantics for a live gamification system. Both are written in the same pipeline, so drift is currently contained. |
+| 3   | **`TrainingPlanService` is ~700 LOC** and mixes orchestration with data access.                                         | A repository split is a stylistic refactor of working, tested code.                                                                                 |
+| 4   | **Mixed fetching paradigms** — training uses TanStack Query, gamification hand-rolls `useEffect` + event bus.           | Both work correctly; converging them is a paradigm change, not a bug fix.                                                                           |
+| 5   | **`GamificationResult` is overloaded** — it serves both "what just happened" and "current snapshot".                    | Splitting the type touches every consumer.                                                                                                          |
+| 6   | **No route-level code splitting**; i18n bundles load eagerly.                                                           | Performance optimisation, out of scope for a freeze.                                                                                                |
+| 7   | **Magic strings for statuses** instead of const unions.                                                                 | Cosmetic; no correctness impact.                                                                                                                    |
+| 8   | **Test coverage gaps** on plan generation and workout completion.                                                       | New tests are welcome additions but not required to freeze; the execution path is now standardised.                                                 |
+| 9   | **Large route components** (some 900+ LOC).                                                                             | Splitting risks UI regressions for no architectural gain.                                                                                           |
+| 10  | **13 Fast-Refresh lint warnings.**                                                                                      | Development-only ergonomics.                                                                                                                        |
 
 ---
 
@@ -296,7 +296,7 @@ The binding guardrails live in
 
 ### Future Application Runtime (direction only — do not implement)
 
-A future *Application Runtime* could host domains uniformly — Training,
+A future _Application Runtime_ could host domains uniformly — Training,
 Gamification, Goals, Nutrition, Notifications, AI Coach — each registered
 through the existing plugin port
 (`GamificationOrchestrator.registerEngine`) or an equivalent. This is recorded
@@ -307,18 +307,18 @@ written for it. YAGNI applies.
 
 ## 14. Definition of Done
 
-| # | Condition | Status |
-| - | --------- | ------ |
-| 1 | Existing behaviour intact | ✅ No product behaviour changed |
-| 2 | No unnecessary redesign | ✅ Zero services rewritten |
-| 3 | Reliable test execution path | ✅ `bun run test` / `test:run` / `test:watch` |
-| 4 | Avoidable `any` reduced | ✅ Zero explicit `any` in app code |
-| 5 | Domain boundaries reviewed | ✅ A/B/C classification documented |
-| 6 | No privileged secrets client-side | ✅ Verified |
-| 7 | Core architecture documented | ✅ `docs/architecture/` |
-| 8 | Guardrails documented | ✅ RULE 1–8 |
-| 9 | Build/test/lint status honest | ✅ §2 and §9 |
-| 10 | Ready for Phase 7 without redesign | ✅ |
+| #   | Condition                          | Status                                        |
+| --- | ---------------------------------- | --------------------------------------------- |
+| 1   | Existing behaviour intact          | ✅ No product behaviour changed               |
+| 2   | No unnecessary redesign            | ✅ Zero services rewritten                    |
+| 3   | Reliable test execution path       | ✅ `bun run test` / `test:run` / `test:watch` |
+| 4   | Avoidable `any` reduced            | ✅ Zero explicit `any` in app code            |
+| 5   | Domain boundaries reviewed         | ✅ A/B/C classification documented            |
+| 6   | No privileged secrets client-side  | ✅ Verified                                   |
+| 7   | Core architecture documented       | ✅ `docs/architecture/`                       |
+| 8   | Guardrails documented              | ✅ RULE 1–8                                   |
+| 9   | Build/test/lint status honest      | ✅ §2 and §9                                  |
+| 10  | Ready for Phase 7 without redesign | ✅                                            |
 
 **All conditions satisfied.**
 
