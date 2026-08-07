@@ -84,12 +84,7 @@ export const BMI_META: Record<
 };
 
 // Mifflin–St Jeor
-export function bmr(profile: {
-  weightKg: number;
-  heightCm: number;
-  birthYear: number;
-  sex: Sex;
-}) {
+export function bmr(profile: { weightKg: number; heightCm: number; birthYear: number; sex: Sex }) {
   const age = new Date().getFullYear() - profile.birthYear;
   const base = 10 * profile.weightKg + 6.25 * profile.heightCm - 5 * age;
   return profile.sex === "masculino" ? base + 5 : base - 161;

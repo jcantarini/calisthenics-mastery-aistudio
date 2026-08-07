@@ -90,7 +90,8 @@ const pt: Dict = {
   "profile.light": "Claro",
   "profile.share": "Compartilhar app",
   "share.title": "Barra — Calistenia",
-  "share.text": "Estou treinando com o Barra, um app de calistenia com programas do zero ao avançado. Vem comigo:",
+  "share.text":
+    "Estou treinando com o Barra, um app de calistenia com programas do zero ao avançado. Vem comigo:",
   "share.copied": "Link copiado para a área de transferência",
   "share.sheetTitle": "Compartilhar via",
   "share.email": "E-mail",
@@ -336,11 +337,14 @@ const pt: Dict = {
   "bmi.abaixo.label": "Abaixo do peso",
   "bmi.abaixo.note": "Prioridade em superávit calórico com foco em proteína e ganho progressivo.",
   "bmi.saudavel.label": "Peso saudável",
-  "bmi.saudavel.note": "Faixa ideal para performance. Recomposição corporal é o alvo mais eficiente.",
+  "bmi.saudavel.note":
+    "Faixa ideal para performance. Recomposição corporal é o alvo mais eficiente.",
   "bmi.sobrepeso.label": "Sobrepeso",
-  "bmi.sobrepeso.note": "Déficit moderado com bastante proteína protege a massa magra durante o cutting.",
+  "bmi.sobrepeso.note":
+    "Déficit moderado com bastante proteína protege a massa magra durante o cutting.",
   "bmi.obesidade.label": "Obesidade",
-  "bmi.obesidade.note": "Recomendação de acompanhamento profissional. Foque em déficit sustentável e mobilidade.",
+  "bmi.obesidade.note":
+    "Recomendação de acompanhamento profissional. Foque em déficit sustentável e mobilidade.",
 
   // meal names
   "meal.cafe": "Café da manhã",
@@ -377,12 +381,14 @@ const pt: Dict = {
   "wr.snoozedUntil": "Adiado até",
   "wr.smartHint": "Se você treinar hoje, o lembrete de hoje é ignorado automaticamente.",
   "wr.perm.title": "Ativar notificações",
-  "wr.perm.body": "Para lembrar você dos treinos, precisamos permitir notificações. Elas ficam só no seu aparelho — nada é enviado a servidores externos.",
+  "wr.perm.body":
+    "Para lembrar você dos treinos, precisamos permitir notificações. Elas ficam só no seu aparelho — nada é enviado a servidores externos.",
   "wr.perm.allow": "Permitir",
   "wr.perm.later": "Agora não",
   "wr.perm.granted": "Notificações ativadas",
   "wr.perm.denied": "Notificações bloqueadas nas permissões do navegador.",
-  "wr.perm.deniedHint": "As notificações estão bloqueadas. Habilite-as nas configurações do navegador ou do app para receber lembretes.",
+  "wr.perm.deniedHint":
+    "As notificações estão bloqueadas. Habilite-as nas configurações do navegador ou do app para receber lembretes.",
   "wr.perm.unsupported": "Este dispositivo não suporta notificações.",
   "wr.notif.title": "Barra · Hora de treinar",
   "wr.msg.time": "Hora do treino de hoje! 💪",
@@ -464,14 +470,16 @@ const en: Dict = {
   "profile.light": "Light",
   "profile.share": "Share the app",
   "share.title": "Barra — Calisthenics",
-  "share.text": "I'm training with Barra, a calisthenics app with programs from beginner to advanced. Join me:",
+  "share.text":
+    "I'm training with Barra, a calisthenics app with programs from beginner to advanced. Join me:",
   "share.copied": "Link copied to clipboard",
   "share.sheetTitle": "Share via",
   "share.email": "Email",
   "share.copyLink": "Copy link",
   "share.failed": "Couldn't share",
   "offline.banner": "You are offline. Some features may not work.",
-  "auth.subtitle": "Calisthenics workouts from beginner to advanced, with goals, diet and tracking.",
+  "auth.subtitle":
+    "Calisthenics workouts from beginner to advanced, with goals, diet and tracking.",
   "auth.continueGoogle": "Continue with Google",
   "auth.continueApple": "Continue with Apple",
   "auth.terms": "By continuing you agree to the terms of service",
@@ -699,11 +707,13 @@ const en: Dict = {
   "bmi.abaixo.label": "Underweight",
   "bmi.abaixo.note": "Focus on a calorie surplus with plenty of protein and progressive gains.",
   "bmi.saudavel.label": "Healthy weight",
-  "bmi.saudavel.note": "Ideal range for performance. Body recomposition is the most efficient target.",
+  "bmi.saudavel.note":
+    "Ideal range for performance. Body recomposition is the most efficient target.",
   "bmi.sobrepeso.label": "Overweight",
   "bmi.sobrepeso.note": "A moderate deficit with high protein protects lean mass during cutting.",
   "bmi.obesidade.label": "Obesity",
-  "bmi.obesidade.note": "Professional guidance recommended. Focus on a sustainable deficit and mobility.",
+  "bmi.obesidade.note":
+    "Professional guidance recommended. Focus on a sustainable deficit and mobility.",
 
   "meal.cafe": "Breakfast",
   "meal.lanche1": "Morning snack",
@@ -738,12 +748,14 @@ const en: Dict = {
   "wr.snoozedUntil": "Snoozed until",
   "wr.smartHint": "If you train today, today's reminder is skipped automatically.",
   "wr.perm.title": "Turn on notifications",
-  "wr.perm.body": "To remind you about workouts, we need notification permission. They stay on your device — nothing is sent to external servers.",
+  "wr.perm.body":
+    "To remind you about workouts, we need notification permission. They stay on your device — nothing is sent to external servers.",
   "wr.perm.allow": "Allow",
   "wr.perm.later": "Not now",
   "wr.perm.granted": "Notifications enabled",
   "wr.perm.denied": "Notifications are blocked in your browser settings.",
-  "wr.perm.deniedHint": "Notifications are blocked. Enable them in your browser or app settings to receive reminders.",
+  "wr.perm.deniedHint":
+    "Notifications are blocked. Enable them in your browser or app settings to receive reminders.",
   "wr.perm.unsupported": "This device does not support notifications.",
   "wr.notif.title": "Barra · Workout time",
   "wr.msg.time": "Time for today's workout! 💪",
@@ -825,14 +837,16 @@ const it: Dict = {
   "profile.light": "Chiaro",
   "profile.share": "Condividi l'app",
   "share.title": "Barra — Calisthenics",
-  "share.text": "Mi alleno con Barra, un'app di calisthenics con programmi dal principiante all'avanzato. Unisciti a me:",
+  "share.text":
+    "Mi alleno con Barra, un'app di calisthenics con programmi dal principiante all'avanzato. Unisciti a me:",
   "share.copied": "Link copiato negli appunti",
   "share.sheetTitle": "Condividi tramite",
   "share.email": "Email",
   "share.copyLink": "Copia link",
   "share.failed": "Impossibile condividere",
   "offline.banner": "Sei offline. Alcune funzionalità potrebbero non funzionare.",
-  "auth.subtitle": "Allenamenti di calisthenics dal principiante all'avanzato, con obiettivi, dieta e monitoraggio.",
+  "auth.subtitle":
+    "Allenamenti di calisthenics dal principiante all'avanzato, con obiettivi, dieta e monitoraggio.",
   "auth.continueGoogle": "Continua con Google",
   "auth.continueApple": "Continua con Apple",
   "auth.terms": "Continuando accetti i termini di servizio",
@@ -899,7 +913,8 @@ const it: Dict = {
   "program.register": "Registra sessione",
   "program.activate": "Attiva programma",
   "program.exercises": "Esercizi",
-  "program.exercisesDesc": "Tocca il video per vedere l'esecuzione. Spunta ogni esercizio completato.",
+  "program.exercisesDesc":
+    "Tocca il video per vedere l'esecuzione. Spunta ogni esercizio completato.",
   "program.rest": "riposo",
   "program.uncheck": "Deseleziona",
   "program.markDone": "Segna come fatto",
@@ -964,7 +979,8 @@ const it: Dict = {
   "report.hydration": "Idratazione",
   "report.dailyAdhesion": "Aderenza giornaliera al menu",
   "report.sessions": "Sessioni registrate",
-  "report.empty": "Nessun allenamento registrato questa settimana. Termina un timer per aggiungerlo qui.",
+  "report.empty":
+    "Nessun allenamento registrato questa settimana. Termina un timer per aggiungerlo qui.",
 
   "diet.eyebrow": "Nutrizione",
   "diet.title1": "Dieta basata",
@@ -1010,7 +1026,8 @@ const it: Dict = {
   "diet.disable": "Disattiva",
   "diet.blocked": "Bloccato",
   "diet.enable": "Attiva",
-  "diet.deniedHint": "Per abilitare, apri le impostazioni del sito nel browser e consenti le notifiche.",
+  "diet.deniedHint":
+    "Per abilitare, apri le impostazioni del sito nel browser e consenti le notifiche.",
   "diet.remindMeals": "Agli orari dei pasti",
   "diet.remindMealsHint": "Scatta all'orario di ogni pasto del menu, se non ancora segnato.",
   "diet.remindWater": "Bere acqua",
@@ -1060,11 +1077,13 @@ const it: Dict = {
   "bmi.abaixo.label": "Sottopeso",
   "bmi.abaixo.note": "Priorità al surplus calorico con focus su proteine e progressione.",
   "bmi.saudavel.label": "Peso salutare",
-  "bmi.saudavel.note": "Fascia ideale per la performance. La ricomposizione è il target più efficiente.",
+  "bmi.saudavel.note":
+    "Fascia ideale per la performance. La ricomposizione è il target più efficiente.",
   "bmi.sobrepeso.label": "Sovrappeso",
   "bmi.sobrepeso.note": "Deficit moderato con proteine alte protegge la massa magra nel cutting.",
   "bmi.obesidade.label": "Obesità",
-  "bmi.obesidade.note": "Consigliato accompagnamento professionale. Deficit sostenibile e mobilità.",
+  "bmi.obesidade.note":
+    "Consigliato accompagnamento professionale. Deficit sostenibile e mobilità.",
 
   "meal.cafe": "Colazione",
   "meal.lanche1": "Spuntino mattutino",
@@ -1099,12 +1118,14 @@ const it: Dict = {
   "wr.snoozedUntil": "Rimandato fino a",
   "wr.smartHint": "Se ti alleni oggi, il promemoria di oggi viene saltato automaticamente.",
   "wr.perm.title": "Attiva le notifiche",
-  "wr.perm.body": "Per ricordarti gli allenamenti serve il permesso delle notifiche. Restano sul tuo dispositivo, nulla viene inviato a server esterni.",
+  "wr.perm.body":
+    "Per ricordarti gli allenamenti serve il permesso delle notifiche. Restano sul tuo dispositivo, nulla viene inviato a server esterni.",
   "wr.perm.allow": "Consenti",
   "wr.perm.later": "Non ora",
   "wr.perm.granted": "Notifiche attive",
   "wr.perm.denied": "Notifiche bloccate nelle impostazioni del browser.",
-  "wr.perm.deniedHint": "Le notifiche sono bloccate. Attivale nelle impostazioni del browser o dell'app per ricevere i promemoria.",
+  "wr.perm.deniedHint":
+    "Le notifiche sono bloccate. Attivale nelle impostazioni del browser o dell'app per ricevere i promemoria.",
   "wr.perm.unsupported": "Questo dispositivo non supporta le notifiche.",
   "wr.notif.title": "Barra · Ora di allenarsi",
   "wr.msg.time": "È l'ora dell'allenamento di oggi! 💪",
@@ -1186,14 +1207,16 @@ const es: Dict = {
   "profile.light": "Claro",
   "profile.share": "Compartir la app",
   "share.title": "Barra — Calistenia",
-  "share.text": "Estoy entrenando con Barra, una app de calistenia con programas de principiante a avanzado. Únete:",
+  "share.text":
+    "Estoy entrenando con Barra, una app de calistenia con programas de principiante a avanzado. Únete:",
   "share.copied": "Enlace copiado al portapapeles",
   "share.sheetTitle": "Compartir vía",
   "share.email": "Correo",
   "share.copyLink": "Copiar enlace",
   "share.failed": "No se pudo compartir",
   "offline.banner": "Estás sin conexión. Algunas funciones pueden no funcionar.",
-  "auth.subtitle": "Entrenamientos de calistenia de principiante a avanzado, con metas, dieta y seguimiento.",
+  "auth.subtitle":
+    "Entrenamientos de calistenia de principiante a avanzado, con metas, dieta y seguimiento.",
   "auth.continueGoogle": "Continuar con Google",
   "auth.continueApple": "Continuar con Apple",
   "auth.terms": "Al continuar aceptas los términos del servicio",
@@ -1325,7 +1348,8 @@ const es: Dict = {
   "report.hydration": "Hidratación",
   "report.dailyAdhesion": "Adherencia diaria al menú",
   "report.sessions": "Sesiones registradas",
-  "report.empty": "Ningún entreno registrado esta semana. Termina un temporizador para añadirlo aquí.",
+  "report.empty":
+    "Ningún entreno registrado esta semana. Termina un temporizador para añadirlo aquí.",
 
   "diet.eyebrow": "Nutrición",
   "diet.title1": "Dieta basada",
@@ -1371,7 +1395,8 @@ const es: Dict = {
   "diet.disable": "Desactivar",
   "diet.blocked": "Bloqueado",
   "diet.enable": "Activar",
-  "diet.deniedHint": "Para habilitar, abre los ajustes del sitio en el navegador y permite las notificaciones.",
+  "diet.deniedHint":
+    "Para habilitar, abre los ajustes del sitio en el navegador y permite las notificaciones.",
   "diet.remindMeals": "En las horas de las comidas",
   "diet.remindMealsHint": "Suena a la hora de cada comida del menú, si aún no está marcada.",
   "diet.remindWater": "Beber agua",
@@ -1421,11 +1446,14 @@ const es: Dict = {
   "bmi.abaixo.label": "Bajo peso",
   "bmi.abaixo.note": "Prioridad al superávit calórico con foco en proteína y progresión.",
   "bmi.saudavel.label": "Peso saludable",
-  "bmi.saudavel.note": "Rango ideal para rendimiento. La recomposición corporal es el objetivo más eficiente.",
+  "bmi.saudavel.note":
+    "Rango ideal para rendimiento. La recomposición corporal es el objetivo más eficiente.",
   "bmi.sobrepeso.label": "Sobrepeso",
-  "bmi.sobrepeso.note": "Un déficit moderado con mucha proteína protege la masa magra en la definición.",
+  "bmi.sobrepeso.note":
+    "Un déficit moderado con mucha proteína protege la masa magra en la definición.",
   "bmi.obesidade.label": "Obesidad",
-  "bmi.obesidade.note": "Se recomienda acompañamiento profesional. Enfócate en un déficit sostenible y movilidad.",
+  "bmi.obesidade.note":
+    "Se recomienda acompañamiento profesional. Enfócate en un déficit sostenible y movilidad.",
 
   "meal.cafe": "Desayuno",
   "meal.lanche1": "Media mañana",
@@ -1460,12 +1488,14 @@ const es: Dict = {
   "wr.snoozedUntil": "Aplazado hasta",
   "wr.smartHint": "Si entrenas hoy, el recordatorio de hoy se omite automáticamente.",
   "wr.perm.title": "Activar notificaciones",
-  "wr.perm.body": "Para recordarte los entrenos necesitamos permiso de notificaciones. Se quedan en tu dispositivo; no se envían a servidores externos.",
+  "wr.perm.body":
+    "Para recordarte los entrenos necesitamos permiso de notificaciones. Se quedan en tu dispositivo; no se envían a servidores externos.",
   "wr.perm.allow": "Permitir",
   "wr.perm.later": "Ahora no",
   "wr.perm.granted": "Notificaciones activadas",
   "wr.perm.denied": "Notificaciones bloqueadas en la configuración del navegador.",
-  "wr.perm.deniedHint": "Las notificaciones están bloqueadas. Actívalas en la configuración del navegador o de la app para recibir recordatorios.",
+  "wr.perm.deniedHint":
+    "Las notificaciones están bloqueadas. Actívalas en la configuración del navegador o de la app para recibir recordatorios.",
   "wr.perm.unsupported": "Este dispositivo no admite notificaciones.",
   "wr.notif.title": "Barra · Hora de entrenar",
   "wr.msg.time": "¡Es hora del entreno de hoy! 💪",
@@ -1547,14 +1577,16 @@ const fr: Dict = {
   "profile.light": "Clair",
   "profile.share": "Partager l'app",
   "share.title": "Barra — Callisthénie",
-  "share.text": "Je m'entraîne avec Barra, une app de callisthénie avec des programmes du débutant à l'avancé. Rejoins-moi :",
+  "share.text":
+    "Je m'entraîne avec Barra, une app de callisthénie avec des programmes du débutant à l'avancé. Rejoins-moi :",
   "share.copied": "Lien copié dans le presse-papiers",
   "share.sheetTitle": "Partager via",
   "share.email": "E-mail",
   "share.copyLink": "Copier le lien",
   "share.failed": "Impossible de partager",
   "offline.banner": "Vous êtes hors ligne. Certaines fonctions peuvent ne pas fonctionner.",
-  "auth.subtitle": "Entraînements de callisthénie du débutant à l'avancé, avec objectifs, régime et suivi.",
+  "auth.subtitle":
+    "Entraînements de callisthénie du débutant à l'avancé, avec objectifs, régime et suivi.",
   "auth.continueGoogle": "Continuer avec Google",
   "auth.continueApple": "Continuer avec Apple",
   "auth.terms": "En continuant vous acceptez les conditions d'utilisation",
@@ -1621,7 +1653,8 @@ const fr: Dict = {
   "program.register": "Enregistrer la séance",
   "program.activate": "Activer le programme",
   "program.exercises": "Exercices",
-  "program.exercisesDesc": "Touchez la vidéo pour voir l'exécution. Cochez chaque exercice terminé.",
+  "program.exercisesDesc":
+    "Touchez la vidéo pour voir l'exécution. Cochez chaque exercice terminé.",
   "program.rest": "repos",
   "program.uncheck": "Décocher",
   "program.markDone": "Marquer comme fait",
@@ -1686,7 +1719,8 @@ const fr: Dict = {
   "report.hydration": "Hydratation",
   "report.dailyAdhesion": "Adhérence quotidienne au menu",
   "report.sessions": "Séances enregistrées",
-  "report.empty": "Aucune séance enregistrée cette semaine. Terminez un minuteur pour l'ajouter ici.",
+  "report.empty":
+    "Aucune séance enregistrée cette semaine. Terminez un minuteur pour l'ajouter ici.",
 
   "diet.eyebrow": "Nutrition",
   "diet.title1": "Régime basé",
@@ -1732,7 +1766,8 @@ const fr: Dict = {
   "diet.disable": "Désactiver",
   "diet.blocked": "Bloqué",
   "diet.enable": "Activer",
-  "diet.deniedHint": "Pour activer, ouvrez les paramètres du site dans le navigateur et autorisez les notifications.",
+  "diet.deniedHint":
+    "Pour activer, ouvrez les paramètres du site dans le navigateur et autorisez les notifications.",
   "diet.remindMeals": "Aux heures de repas",
   "diet.remindMealsHint": "Sonne à l'heure de chaque repas du menu, s'il n'est pas encore coché.",
   "diet.remindWater": "Boire de l'eau",
@@ -1782,9 +1817,11 @@ const fr: Dict = {
   "bmi.abaixo.label": "Insuffisance pondérale",
   "bmi.abaixo.note": "Priorité au surplus calorique avec beaucoup de protéines et une progression.",
   "bmi.saudavel.label": "Poids sain",
-  "bmi.saudavel.note": "Plage idéale pour la performance. La recomposition corporelle est la plus efficace.",
+  "bmi.saudavel.note":
+    "Plage idéale pour la performance. La recomposition corporelle est la plus efficace.",
   "bmi.sobrepeso.label": "Surpoids",
-  "bmi.sobrepeso.note": "Un déficit modéré et beaucoup de protéines protègent la masse maigre en sèche.",
+  "bmi.sobrepeso.note":
+    "Un déficit modéré et beaucoup de protéines protègent la masse maigre en sèche.",
   "bmi.obesidade.label": "Obésité",
   "bmi.obesidade.note": "Accompagnement professionnel recommandé. Déficit soutenable et mobilité.",
 
@@ -1819,14 +1856,17 @@ const fr: Dict = {
   "wr.removed": "Rappel supprimé",
   "wr.snoozed": "Reporté de {n} min",
   "wr.snoozedUntil": "Reporté jusqu'à",
-  "wr.smartHint": "Si vous vous entraînez aujourd'hui, le rappel du jour est ignoré automatiquement.",
+  "wr.smartHint":
+    "Si vous vous entraînez aujourd'hui, le rappel du jour est ignoré automatiquement.",
   "wr.perm.title": "Activer les notifications",
-  "wr.perm.body": "Pour vous rappeler vos entraînements, nous avons besoin de votre autorisation. Elles restent sur votre appareil — rien n'est envoyé à des serveurs externes.",
+  "wr.perm.body":
+    "Pour vous rappeler vos entraînements, nous avons besoin de votre autorisation. Elles restent sur votre appareil — rien n'est envoyé à des serveurs externes.",
   "wr.perm.allow": "Autoriser",
   "wr.perm.later": "Plus tard",
   "wr.perm.granted": "Notifications activées",
   "wr.perm.denied": "Notifications bloquées dans les paramètres du navigateur.",
-  "wr.perm.deniedHint": "Les notifications sont bloquées. Activez-les dans les paramètres du navigateur ou de l'app pour recevoir les rappels.",
+  "wr.perm.deniedHint":
+    "Les notifications sont bloquées. Activez-les dans les paramètres du navigateur ou de l'app pour recevoir les rappels.",
   "wr.perm.unsupported": "Cet appareil ne prend pas en charge les notifications.",
   "wr.notif.title": "Barra · C'est l'heure",
   "wr.msg.time": "C'est l'heure de l'entraînement du jour ! 💪",
@@ -1834,7 +1874,8 @@ const fr: Dict = {
   "wr.msg.closer": "Chaque séance vous rapproche de votre objectif.",
   "wr.msg.streak": "Ne cassez pas votre série de {n} jours ! 🔥",
   "wr.msg.futureSelf": "Votre futur vous dira merci.",
-  "wr.msg.reengage": "Vous nous manquez ! Et si vous reveniez avec une séance rapide de 15 minutes ?",
+  "wr.msg.reengage":
+    "Vous nous manquez ! Et si vous reveniez avec une séance rapide de 15 minutes ?",
 };
 
 const DICTS: Record<Locale, Dict> = { pt, en, it, es, fr };
@@ -1849,7 +1890,9 @@ function detectInitial(): Locale {
     if (saved && DICTS[saved]) return saved;
     const nav = (navigator.language || "pt").slice(0, 2).toLowerCase() as Locale;
     if (DICTS[nav]) return nav;
-  } catch {}
+  } catch {
+    /* ignore: non-critical */
+  }
   return "pt";
 }
 
@@ -1874,7 +1917,9 @@ export function setLocale(next: Locale) {
     const html = document.documentElement;
     const info = LOCALES.find((l) => l.code === next);
     if (info) html.lang = info.htmlLang;
-  } catch {}
+  } catch {
+    /* ignore: non-critical */
+  }
   listeners.forEach((l) => l());
 }
 

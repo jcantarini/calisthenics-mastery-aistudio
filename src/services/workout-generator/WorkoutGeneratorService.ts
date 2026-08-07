@@ -8,18 +8,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { PROGRAMS } from "@/lib/programs";
-import {
-  fetchOnboarding,
-  EMPTY_ONBOARDING,
-  type OnboardingData,
-} from "@/lib/onboarding";
-import {
-  fetchAssessment,
-  EMPTY_ASSESSMENT,
-  type AssessmentData,
-} from "@/lib/assessment";
+import { fetchOnboarding, EMPTY_ONBOARDING, type OnboardingData } from "@/lib/onboarding";
+import { fetchAssessment, EMPTY_ASSESSMENT, type AssessmentData } from "@/lib/assessment";
 import { buildWorkoutFromRules, resolveProgram } from "./workoutRules";
-import type { GeneratedWorkout, GenerateOptions, WorkoutBlockItem, WorkoutExercise, Difficulty } from "./workoutTypes";
+import type {
+  GeneratedWorkout,
+  GenerateOptions,
+  WorkoutBlockItem,
+  WorkoutExercise,
+  Difficulty,
+} from "./workoutTypes";
 
 async function ensureTrainingPlan(
   userId: string,
@@ -124,17 +122,11 @@ export const WorkoutGeneratorService = {
    * Steps: fetch onboarding + assessment → resolve program → apply rules
    * → persist to Supabase → return the generated workout.
    */
-  async generateFirstWorkout(
-    userId: string,
-    opts?: GenerateOptions,
-  ): Promise<GeneratedWorkout> {
+  async generateFirstWorkout(userId: string, opts?: GenerateOptions): Promise<GeneratedWorkout> {
     const existing = await fetchFirstWorkoutRow(userId);
     if (existing) return existing;
 
-    const [ob, ass] = await Promise.all([
-      fetchOnboarding(userId),
-      fetchAssessment(userId),
-    ]);
+    const [ob, ass] = await Promise.all([fetchOnboarding(userId), fetchAssessment(userId)]);
     const onboarding: OnboardingData = ob ?? EMPTY_ONBOARDING;
     const assessment: AssessmentData = ass ?? EMPTY_ASSESSMENT;
 

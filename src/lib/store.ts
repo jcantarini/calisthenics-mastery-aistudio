@@ -115,9 +115,7 @@ export function logWorkoutSession(
     kcalBurned: session.kcalBurned,
   };
   const prevList = state.workoutLog[key] ?? [];
-  const wasToday = state.lastSession
-    ? todayKey(new Date(state.lastSession)) === todayKey()
-    : false;
+  const wasToday = state.lastSession ? todayKey(new Date(state.lastSession)) === todayKey() : false;
   return {
     ...state,
     workoutLog: { ...state.workoutLog, [key]: [s, ...prevList] },
@@ -152,7 +150,9 @@ export function useAppState() {
           reminders: { ...DEFAULT_REMINDERS, ...(parsed.reminders ?? {}) },
         });
       }
-    } catch {}
+    } catch {
+      /* ignore: non-critical */
+    }
     setHydrated(true);
   }, []);
 
@@ -160,7 +160,9 @@ export function useAppState() {
     if (!hydrated) return;
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
-    } catch {}
+    } catch {
+      /* ignore: non-critical */
+    }
   }, [state, hydrated]);
 
   return [state, setState, hydrated] as const;

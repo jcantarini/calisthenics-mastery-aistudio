@@ -4,7 +4,11 @@
 import type { OnboardingData } from "@/lib/onboarding";
 import { scoreAssessment, type AssessmentData } from "@/lib/assessment";
 import type { Program } from "@/lib/programs";
-import type { Difficulty, GeneratedWorkout, WorkoutExercise } from "@/services/workout-generator/workoutTypes";
+import type {
+  Difficulty,
+  GeneratedWorkout,
+  WorkoutExercise,
+} from "@/services/workout-generator/workoutTypes";
 import type { ProgressionData, TrainingDay, TrainingWeek } from "./trainingPlanTypes";
 
 /* ---------------- Weekly frequency & recovery ---------------- */
@@ -107,7 +111,8 @@ export function applyWeeklyProgression(
   });
 
   const difficulty: Difficulty = weekNumber === 4 ? base.difficulty : base.difficulty;
-  const durationDelta = progression.strategy === "deload" ? -5 : progression.strategy === "volume" ? 5 : 0;
+  const durationDelta =
+    progression.strategy === "deload" ? -5 : progression.strategy === "volume" ? 5 : 0;
 
   return {
     workout: {
@@ -146,36 +151,85 @@ function shiftRest(rest: string, deltaSec: number): string {
 /* ---------------- Skill accessory work ---------------- */
 
 const SKILL_ACCESSORIES: Record<string, WorkoutExercise[]> = {
-  muscleup: [{
-    id: "acc-muscleup", name: "Barra explosiva + trânsito", sets: 3, reps: "3-5",
-    rest: "90s", focus: "Muscle-up", cue: "Puxe alto até o peito, gire os punhos.",
-    videoId: "eGo4IYlbE5g",
-  }],
-  handstand: [{
-    id: "acc-handstand", name: "Parada de mãos na parede", sets: 4, reps: "30s",
-    rest: "60s", focus: "Handstand", cue: "Barriga contraída, olhar entre as mãos.",
-    videoId: "cfns5VDVVvk",
-  }],
-  frontlever: [{
-    id: "acc-frontlever", name: "Front lever tuck hold", sets: 4, reps: "10-20s",
-    rest: "90s", focus: "Front lever", cue: "Escápulas retraídas, quadril acima da linha.",
-  }],
-  backlever: [{
-    id: "acc-backlever", name: "Back lever tuck", sets: 4, reps: "10-15s",
-    rest: "90s", focus: "Back lever", cue: "Empurre a barra para longe do peito.",
-  }],
-  planche: [{
-    id: "acc-planche", name: "Planche lean", sets: 4, reps: "15-25s",
-    rest: "90s", focus: "Planche", cue: "Ombros à frente das mãos, cotovelos travados.",
-  }],
-  humanflag: [{
-    id: "acc-flag", name: "Flag tuck (barra vertical)", sets: 4, reps: "8-12s",
-    rest: "90s", focus: "Human flag", cue: "Puxe com o braço de cima, empurre com o de baixo.",
-  }],
-  lsit: [{
-    id: "acc-lsit", name: "L-Sit no chão / paralelas", sets: 4, reps: "10-20s",
-    rest: "60s", focus: "L-Sit", cue: "Ative o core, pernas altas e retas.",
-  }],
+  muscleup: [
+    {
+      id: "acc-muscleup",
+      name: "Barra explosiva + trânsito",
+      sets: 3,
+      reps: "3-5",
+      rest: "90s",
+      focus: "Muscle-up",
+      cue: "Puxe alto até o peito, gire os punhos.",
+      videoId: "eGo4IYlbE5g",
+    },
+  ],
+  handstand: [
+    {
+      id: "acc-handstand",
+      name: "Parada de mãos na parede",
+      sets: 4,
+      reps: "30s",
+      rest: "60s",
+      focus: "Handstand",
+      cue: "Barriga contraída, olhar entre as mãos.",
+      videoId: "cfns5VDVVvk",
+    },
+  ],
+  frontlever: [
+    {
+      id: "acc-frontlever",
+      name: "Front lever tuck hold",
+      sets: 4,
+      reps: "10-20s",
+      rest: "90s",
+      focus: "Front lever",
+      cue: "Escápulas retraídas, quadril acima da linha.",
+    },
+  ],
+  backlever: [
+    {
+      id: "acc-backlever",
+      name: "Back lever tuck",
+      sets: 4,
+      reps: "10-15s",
+      rest: "90s",
+      focus: "Back lever",
+      cue: "Empurre a barra para longe do peito.",
+    },
+  ],
+  planche: [
+    {
+      id: "acc-planche",
+      name: "Planche lean",
+      sets: 4,
+      reps: "15-25s",
+      rest: "90s",
+      focus: "Planche",
+      cue: "Ombros à frente das mãos, cotovelos travados.",
+    },
+  ],
+  humanflag: [
+    {
+      id: "acc-flag",
+      name: "Flag tuck (barra vertical)",
+      sets: 4,
+      reps: "8-12s",
+      rest: "90s",
+      focus: "Human flag",
+      cue: "Puxe com o braço de cima, empurre com o de baixo.",
+    },
+  ],
+  lsit: [
+    {
+      id: "acc-lsit",
+      name: "L-Sit no chão / paralelas",
+      sets: 4,
+      reps: "10-20s",
+      rest: "60s",
+      focus: "L-Sit",
+      cue: "Ative o core, pernas altas e retas.",
+    },
+  ],
 };
 
 export function skillAccessoriesFor(skill?: string | null): WorkoutExercise[] {

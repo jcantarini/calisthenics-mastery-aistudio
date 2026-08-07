@@ -14,7 +14,8 @@ const pt: Dict = {
   "ob.edit": "Editar",
 
   "ob.s1.title": "Bem-vindo ao Barra",
-  "ob.s1.body": "Vamos montar um plano de calistenia sob medida para você. São poucas perguntas — em menos de 2 minutos você começa a treinar.",
+  "ob.s1.body":
+    "Vamos montar um plano de calistenia sob medida para você. São poucas perguntas — em menos de 2 minutos você começa a treinar.",
   "ob.s1.cta": "Começar",
 
   "ob.s2.title": "Informações pessoais",
@@ -145,7 +146,8 @@ const en: Dict = {
   "ob.edit": "Edit",
 
   "ob.s1.title": "Welcome to Barra",
-  "ob.s1.body": "Let's build a personalized calisthenics plan for you. A few quick questions — in under 2 minutes you'll start training.",
+  "ob.s1.body":
+    "Let's build a personalized calisthenics plan for you. A few quick questions — in under 2 minutes you'll start training.",
   "ob.s1.cta": "Get started",
 
   "ob.s2.title": "Personal information",
@@ -276,7 +278,8 @@ const it: Dict = {
   "ob.edit": "Modifica",
 
   "ob.s1.title": "Benvenuto in Barra",
-  "ob.s1.body": "Creiamo un piano di calisthenics su misura per te. Poche domande — in meno di 2 minuti inizi ad allenarti.",
+  "ob.s1.body":
+    "Creiamo un piano di calisthenics su misura per te. Poche domande — in meno di 2 minuti inizi ad allenarti.",
   "ob.s1.cta": "Inizia",
 
   "ob.s2.title": "Informazioni personali",
@@ -407,7 +410,8 @@ const es: Dict = {
   "ob.edit": "Editar",
 
   "ob.s1.title": "Bienvenido a Barra",
-  "ob.s1.body": "Vamos a crear un plan de calistenia a tu medida. Unas preguntas rápidas — en menos de 2 minutos empiezas.",
+  "ob.s1.body":
+    "Vamos a crear un plan de calistenia a tu medida. Unas preguntas rápidas — en menos de 2 minutos empiezas.",
   "ob.s1.cta": "Empezar",
 
   "ob.s2.title": "Información personal",
@@ -538,7 +542,8 @@ const fr: Dict = {
   "ob.edit": "Modifier",
 
   "ob.s1.title": "Bienvenue sur Barra",
-  "ob.s1.body": "Construisons un plan de calisthénie sur mesure. Quelques questions rapides — en moins de 2 minutes vous commencez.",
+  "ob.s1.body":
+    "Construisons un plan de calisthénie sur mesure. Quelques questions rapides — en moins de 2 minutes vous commencez.",
   "ob.s1.cta": "Commencer",
 
   "ob.s2.title": "Informations personnelles",

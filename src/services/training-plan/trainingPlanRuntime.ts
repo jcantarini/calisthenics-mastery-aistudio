@@ -192,9 +192,11 @@ export function findPreviousWorkout(plan: TrainingPlan): PlannedWorkout | null {
   return before.at(-1) ?? null;
 }
 
-export function nextCursor(
-  plan: Pick<TrainingPlan, "currentWeek" | "currentDay" | "totalWeeks">,
-): { week: number; day: number; finished: boolean } {
+export function nextCursor(plan: Pick<TrainingPlan, "currentWeek" | "currentDay" | "totalWeeks">): {
+  week: number;
+  day: number;
+  finished: boolean;
+} {
   let day = plan.currentDay + 1;
   let week = plan.currentWeek;
   if (day > 7) {
@@ -234,7 +236,9 @@ export function assertTransition(from: PlanStatus, to: PlanStatus): void {
 export function buildProgramState(plan: TrainingPlan): CurrentProgramState {
   const withStatus = applyDerivedStatuses(plan);
   const currentWeek =
-    withStatus.weeks.find((w) => w.weekNumber === withStatus.currentWeek) ?? withStatus.weeks[0] ?? null;
+    withStatus.weeks.find((w) => w.weekNumber === withStatus.currentWeek) ??
+    withStatus.weeks[0] ??
+    null;
   const tomorrow = nextCursor(withStatus);
 
   return {
@@ -244,7 +248,9 @@ export function buildProgramState(plan: TrainingPlan): CurrentProgramState {
     currentWeekNumber: withStatus.currentWeek,
     currentDay: withStatus.currentDay,
     todayWorkout: findWorkoutAt(withStatus, withStatus.currentWeek, withStatus.currentDay),
-    tomorrowWorkout: tomorrow.finished ? null : findWorkoutAt(withStatus, tomorrow.week, tomorrow.day),
+    tomorrowWorkout: tomorrow.finished
+      ? null
+      : findWorkoutAt(withStatus, tomorrow.week, tomorrow.day),
     nextWorkout: findNextWorkout(withStatus),
     previousWorkout: findPreviousWorkout(withStatus),
     weekly: currentWeek ? computeWeeklyProgress(currentWeek) : null,

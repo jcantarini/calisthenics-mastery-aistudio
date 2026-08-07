@@ -23,15 +23,14 @@ export const AchievementGrid = memo(function AchievementGrid({
   const [visible, setVisible] = useState(PAGE);
 
   if (items.length === 0) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">{tG(locale, "g.noResults")}</p>;
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">{tG(locale, "g.noResults")}</p>
+    );
   }
 
   return (
     <>
-      <StaggerList
-        as="ul"
-        className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
-      >
+      <StaggerList as="ul" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.slice(0, visible).map((item) => (
           <StaggerItem key={item.achievementId} as="li">
             <AchievementCard item={item} onSelect={onSelect} />
@@ -60,7 +59,9 @@ export const AchievementList = memo(function AchievementList({
 }) {
   const { locale } = useT();
   if (items.length === 0) {
-    return <p className="py-6 text-center text-sm text-muted-foreground">{tG(locale, "g.empty")}</p>;
+    return (
+      <p className="py-6 text-center text-sm text-muted-foreground">{tG(locale, "g.empty")}</p>
+    );
   }
   return (
     <ul className="space-y-3">

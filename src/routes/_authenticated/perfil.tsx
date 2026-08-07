@@ -38,11 +38,7 @@ export const Route = createFileRoute("/_authenticated/perfil")({
 });
 
 const profileSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Nome muito curto")
-    .max(60, "Máximo de 60 caracteres"),
+  name: z.string().trim().min(2, "Nome muito curto").max(60, "Máximo de 60 caracteres"),
   weightKg: z
     .number({ message: "Peso inválido" })
     .min(30, "Mínimo 30 kg")
@@ -137,7 +133,8 @@ function PerfilPage() {
               <p className="truncate text-xs text-muted-foreground">{displayEmail}</p>
             )}
             <p className="truncate text-[11px] text-muted-foreground">
-              {t("profile.since")} {profile.memberSince} · {state.completedSessions.length} {t("profile.sessions")}
+              {t("profile.since")} {profile.memberSince} · {state.completedSessions.length}{" "}
+              {t("profile.sessions")}
             </p>
           </div>
         </div>
@@ -161,7 +158,6 @@ function PerfilPage() {
         />
       )}
 
-
       {/* Weekly goal control */}
       <section className="mt-6 rounded-2xl border border-border/60 bg-surface p-5">
         <div className="flex items-center justify-between">
@@ -171,20 +167,18 @@ function PerfilPage() {
             </p>
             <p className="mt-1 text-display text-2xl">
               {state.weeklyGoal}
-              <span className="ml-1 text-sm font-normal text-muted-foreground">{t("profile.perWeek")}</span>
+              <span className="ml-1 text-sm font-normal text-muted-foreground">
+                {t("profile.perWeek")}
+              </span>
             </p>
           </div>
           <div className="flex items-center gap-2">
             <StepBtn
-              onClick={() =>
-                setState((s) => ({ ...s, weeklyGoal: Math.max(1, s.weeklyGoal - 1) }))
-              }
+              onClick={() => setState((s) => ({ ...s, weeklyGoal: Math.max(1, s.weeklyGoal - 1) }))}
               label="−"
             />
             <StepBtn
-              onClick={() =>
-                setState((s) => ({ ...s, weeklyGoal: Math.min(7, s.weeklyGoal + 1) }))
-              }
+              onClick={() => setState((s) => ({ ...s, weeklyGoal: Math.min(7, s.weeklyGoal + 1) }))}
               label="+"
             />
           </div>
@@ -226,8 +220,16 @@ function PerfilPage() {
           label={t("profile.share")}
           onClick={() => setSharing(true)}
         />
-        <SettingRow icon={<Bell className="h-4 w-4" />} label={t("profile.reminders")} to="/lembretes" />
-        <SettingRow icon={<Settings className="h-4 w-4" />} label={t("profile.settings")} to="/preferencias" />
+        <SettingRow
+          icon={<Bell className="h-4 w-4" />}
+          label={t("profile.reminders")}
+          to="/lembretes"
+        />
+        <SettingRow
+          icon={<Settings className="h-4 w-4" />}
+          label={t("profile.settings")}
+          to="/preferencias"
+        />
         <SettingRow
           icon={<LogOut className="h-4 w-4" />}
           label={signingOut ? t("auth.signingOut") : t("profile.logout")}
@@ -292,7 +294,11 @@ function SettingRow({
       >
         {icon}
       </span>
-      <span className={danger ? "flex-1 text-sm font-medium text-destructive" : "flex-1 text-sm font-medium"}>
+      <span
+        className={
+          danger ? "flex-1 text-sm font-medium text-destructive" : "flex-1 text-sm font-medium"
+        }
+      >
         {label}
       </span>
       {value && <span className="text-xs text-muted-foreground">{value}</span>}
@@ -399,7 +405,9 @@ function EditProfileSheet({
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
         <div className="flex items-center justify-between">
-          <h2 id={titleId} className="text-display text-2xl">{t("profile.editTitle")}</h2>
+          <h2 id={titleId} className="text-display text-2xl">
+            {t("profile.editTitle")}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -523,9 +531,7 @@ function Field({
 }: {
   label: string;
   error?: string;
-  children:
-    | React.ReactNode
-    | ((props: FieldRenderProps) => React.ReactNode);
+  children: React.ReactNode | ((props: FieldRenderProps) => React.ReactNode);
 }) {
   const inputId = useId();
   const errorId = `${inputId}-err`;
@@ -617,8 +623,7 @@ function ShareSheet({ onClose }: { onClose: () => void }) {
       label: "Telegram",
       icon: <Send className="h-5 w-5" />,
       className: "bg-[#229ED9]/15 text-[#229ED9]",
-      onClick: () =>
-        openExternal(`https://t.me/share/url?url=${enc(url)}&text=${enc(text)}`),
+      onClick: () => openExternal(`https://t.me/share/url?url=${enc(url)}&text=${enc(text)}`),
     },
     {
       key: "email",

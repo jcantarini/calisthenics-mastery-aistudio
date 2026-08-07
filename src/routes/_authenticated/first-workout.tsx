@@ -1,7 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Play, Home, ListChecks, Flame, Clock, Dumbbell, ChevronRight, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  Play,
+  Home,
+  ListChecks,
+  Flame,
+  Clock,
+  Dumbbell,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchOnboarding } from "@/lib/onboarding";
@@ -332,16 +342,32 @@ function ResultView({ workout, locale }: { workout: GeneratedWorkout; locale: Lo
         <p className="mt-1 text-sm text-muted-foreground">{workout.name}</p>
 
         <div className="mt-5 grid grid-cols-3 gap-3">
-          <Stat icon={<Clock className="h-4 w-4" />} value={`${workout.estimatedDurationMin}`} label={s(locale, "min")} />
-          <Stat icon={<Flame className="h-4 w-4" />} value={`${workout.estimatedCalories}`} label={s(locale, "kcal")} />
-          <Stat icon={<Dumbbell className="h-4 w-4" />} value={difficultyLabel} label={s(locale, "difficulty")} small />
+          <Stat
+            icon={<Clock className="h-4 w-4" />}
+            value={`${workout.estimatedDurationMin}`}
+            label={s(locale, "min")}
+          />
+          <Stat
+            icon={<Flame className="h-4 w-4" />}
+            value={`${workout.estimatedCalories}`}
+            label={s(locale, "kcal")}
+          />
+          <Stat
+            icon={<Dumbbell className="h-4 w-4" />}
+            value={difficultyLabel}
+            label={s(locale, "difficulty")}
+            small
+          />
         </div>
       </section>
 
       <Block title={s(locale, "warmup")}>
         <ul className="space-y-2">
           {workout.warmup.map((w, i) => (
-            <li key={i} className="flex items-center justify-between rounded-xl bg-surface px-3 py-2">
+            <li
+              key={i}
+              className="flex items-center justify-between rounded-xl bg-surface px-3 py-2"
+            >
               <span className="text-sm font-medium">{w.name}</span>
               {w.duration && <span className="text-xs text-muted-foreground">{w.duration}</span>}
             </li>
@@ -380,7 +406,10 @@ function ResultView({ workout, locale }: { workout: GeneratedWorkout; locale: Lo
       <Block title={s(locale, "cooldown")}>
         <ul className="space-y-2">
           {workout.cooldown.map((w, i) => (
-            <li key={i} className="flex items-center justify-between rounded-xl bg-surface px-3 py-2">
+            <li
+              key={i}
+              className="flex items-center justify-between rounded-xl bg-surface px-3 py-2"
+            >
               <span className="text-sm font-medium">{w.name}</span>
               {w.duration && <span className="text-xs text-muted-foreground">{w.duration}</span>}
             </li>

@@ -69,7 +69,9 @@ export const TodayWorkoutCard = memo(function TodayWorkoutCard({
   if (done) {
     return (
       <DashCard className="border-accent/40" aria-labelledby="today-title">
-        <SectionTitle action={<StatusBadge tone="accent">Concluído</StatusBadge>}>Hoje</SectionTitle>
+        <SectionTitle action={<StatusBadge tone="accent">Concluído</StatusBadge>}>
+          Hoje
+        </SectionTitle>
         <div className="mt-3 flex items-start gap-3">
           <CardIcon tone="accent" className="animate-celebrate">
             <CheckCircle2 className="h-5 w-5" aria-hidden />
@@ -100,9 +102,7 @@ export const TodayWorkoutCard = memo(function TodayWorkoutCard({
 
   return (
     <DashCard className="border-primary/30" aria-labelledby="today-title">
-      <SectionTitle
-        action={<StatusBadge>{WORKOUT_STATUS_LABEL[workout.status]}</StatusBadge>}
-      >
+      <SectionTitle action={<StatusBadge>{WORKOUT_STATUS_LABEL[workout.status]}</StatusBadge>}>
         Treino de hoje
       </SectionTitle>
 
