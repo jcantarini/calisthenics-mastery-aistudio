@@ -14,12 +14,12 @@ would need to know all three.
 Each engine publishes on its own in-process bus and subscribes to the ones it
 cares about:
 
-| Bus                     | Publisher          | Subscriber                          |
-| ----------------------- | ------------------ | ----------------------------------- |
-| `xpEvents`              | XPService          | ProgressionService                  |
-| `progressionEvents`     | ProgressionService | UI                                  |
-| `achievementEvents`     | AchievementService | UI                                  |
-| `gamificationEvents`    | Orchestrator       | `useGamification`, GamificationHost |
+| Bus                  | Publisher          | Subscriber                          |
+| -------------------- | ------------------ | ----------------------------------- |
+| `xpEvents`           | XPService          | ProgressionService                  |
+| `progressionEvents`  | ProgressionService | UI                                  |
+| `achievementEvents`  | AchievementService | UI                                  |
+| `gamificationEvents` | Orchestrator       | `useGamification`, GamificationHost |
 
 Producers (training, assessment, onboarding) emit domain events; they never
 call an engine's calculation.

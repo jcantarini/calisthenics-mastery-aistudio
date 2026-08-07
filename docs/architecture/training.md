@@ -18,11 +18,11 @@ available equipment + injuries) into one concrete workout:
 It is **deterministic**: same profile in, same workout out. It knows nothing
 about weeks, scheduling, completion state or XP.
 
-| Item     | Value                                                               |
-| -------- | ------------------------------------------------------------------- |
-| Rules    | `workoutRules.ts` (pure)                                             |
-| Types    | `GeneratedWorkout`, `WorkoutExercise`, `WorkoutBlockItem`, `Difficulty` |
-| Table    | `generated_workouts`                                                 |
+| Item  | Value                                                                   |
+| ----- | ----------------------------------------------------------------------- |
+| Rules | `workoutRules.ts` (pure)                                                |
+| Types | `GeneratedWorkout`, `WorkoutExercise`, `WorkoutBlockItem`, `Difficulty` |
+| Table | `generated_workouts`                                                    |
 
 ## 2. Training-plan generation — `TrainingPlanService` + `trainingPlanRules`
 
@@ -39,7 +39,7 @@ counts and deload flag; for each training day it materialises a
 
 ## 3. Training-plan execution (Runtime) — `trainingPlanRuntime.ts`
 
-Owns *state over time*, not structure:
+Owns _state over time_, not structure:
 
 - **Lifecycle:** `active` · `paused` · `completed`
 - **Workout state:** `locked` · `available` · `in_progress` · `completed` · `skipped`

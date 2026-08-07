@@ -13,15 +13,15 @@ Spanish and French.
 
 ## Technology stack
 
-| Layer      | Technology                                             |
-| ---------- | ------------------------------------------------------ |
-| Framework  | TanStack Start v1 (React 19, file-based routing)        |
-| Build      | Vite 8                                                  |
-| Styling    | Tailwind CSS v4, shadcn/ui, `motion`                    |
-| Data       | TanStack Query (training runtime) + domain event buses  |
-| Backend    | Supabase — Postgres, Auth (Google/Apple), RLS           |
-| Testing    | Vitest                                                  |
-| Language   | TypeScript (strict)                                     |
+| Layer     | Technology                                             |
+| --------- | ------------------------------------------------------ |
+| Framework | TanStack Start v1 (React 19, file-based routing)       |
+| Build     | Vite 8                                                 |
+| Styling   | Tailwind CSS v4, shadcn/ui, `motion`                   |
+| Data      | TanStack Query (training runtime) + domain event buses |
+| Backend   | Supabase — Postgres, Auth (Google/Apple), RLS          |
+| Testing   | Vitest                                                 |
+| Language  | TypeScript (strict)                                    |
 
 ## Local setup
 
@@ -35,12 +35,12 @@ bun run dev        # http://localhost:8080
 Client-side configuration is read from `import.meta.env` and must use the
 `VITE_` prefix:
 
-| Variable                        | Scope  | Sensitivity              |
-| ------------------------------- | ------ | ------------------------ |
-| `VITE_SUPABASE_URL`             | client | public                   |
+| Variable                        | Scope  | Sensitivity               |
+| ------------------------------- | ------ | ------------------------- |
+| `VITE_SUPABASE_URL`             | client | public                    |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | client | publishable / anon — safe |
-| `VITE_SUPABASE_PROJECT_ID`      | client | public                   |
-| `SUPABASE_SERVICE_ROLE_KEY`     | server | **privileged**           |
+| `VITE_SUPABASE_PROJECT_ID`      | client | public                    |
+| `SUPABASE_SERVICE_ROLE_KEY`     | server | **privileged**            |
 
 Privileged credentials are injected at runtime on the server only and are read
 exclusively inside `src/integrations/supabase/client.server.ts`, which the

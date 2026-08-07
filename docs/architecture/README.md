@@ -6,17 +6,17 @@ aspirational design.
 
 ## Index
 
-| Document                                    | Content                                              |
-| ------------------------------------------- | ---------------------------------------------------- |
-| [domains.md](./domains.md)                   | Domain boundaries and responsibilities                |
-| [services.md](./services.md)                 | Public service APIs and conventions                   |
-| [data-flow.md](./data-flow.md)               | Dependency direction and runtime flows                |
-| [database.md](./database.md)                 | Schema, RLS, indexes, integrity                       |
-| [training.md](./training.md)                 | Workout generation, plan generation, plan runtime     |
-| [gamification.md](./gamification.md)         | XP, Progression, Achievements, Orchestrator           |
-| [conventions.md](./conventions.md)           | Coding conventions and architecture guardrails        |
-| [architecture-freeze-v1.md](./architecture-freeze-v1.md) | Sprint 6.6B freeze report                |
-| [decisions/](./decisions/)                   | Architecture Decision Records (ADRs)                  |
+| Document                                                 | Content                                           |
+| -------------------------------------------------------- | ------------------------------------------------- |
+| [domains.md](./domains.md)                               | Domain boundaries and responsibilities            |
+| [services.md](./services.md)                             | Public service APIs and conventions               |
+| [data-flow.md](./data-flow.md)                           | Dependency direction and runtime flows            |
+| [database.md](./database.md)                             | Schema, RLS, indexes, integrity                   |
+| [training.md](./training.md)                             | Workout generation, plan generation, plan runtime |
+| [gamification.md](./gamification.md)                     | XP, Progression, Achievements, Orchestrator       |
+| [conventions.md](./conventions.md)                       | Coding conventions and architecture guardrails    |
+| [architecture-freeze-v1.md](./architecture-freeze-v1.md) | Sprint 6.6B freeze report                         |
+| [decisions/](./decisions/)                               | Architecture Decision Records (ADRs)              |
 
 ## Architecture overview
 

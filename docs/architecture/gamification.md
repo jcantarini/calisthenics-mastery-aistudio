@@ -66,14 +66,14 @@ rules.** It contains no formula, no threshold and no reward table.
 
 ## Presentation
 
-| Layer            | Modules                                                                    |
-| ---------------- | --------------------------------------------------------------------------- |
-| Hooks            | `useGamification`, `useLevelProgress`, `useWorkoutRewards`, `usePlayerProgression`, `useAchievements`, `useXPHistory` |
-| Host             | `GamificationHost.tsx` — subscribes to the result bus and sequences celebrations |
-| Celebrations     | `WorkoutCompleteScreen`, `LevelUpModal`, `AchievementModal`                  |
-| Cards            | `PlayerLevelCard`, `PlayerStatsCard`, `RecentAchievementsCard`, `XPHistoryCard`, `LevelHistoryCard`, `AchievementGrid` |
-| Design tokens    | `rarity.ts` (Common → Legendary), `badges.tsx`, `progress-bars.tsx`, `CountUp.tsx` |
-| Routes           | `/jogador`, `/conquistas`, `/xp`, `/niveis`                                  |
+| Layer         | Modules                                                                                                                |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Hooks         | `useGamification`, `useLevelProgress`, `useWorkoutRewards`, `usePlayerProgression`, `useAchievements`, `useXPHistory`  |
+| Host          | `GamificationHost.tsx` — subscribes to the result bus and sequences celebrations                                       |
+| Celebrations  | `WorkoutCompleteScreen`, `LevelUpModal`, `AchievementModal`                                                            |
+| Cards         | `PlayerLevelCard`, `PlayerStatsCard`, `RecentAchievementsCard`, `XPHistoryCard`, `LevelHistoryCard`, `AchievementGrid` |
+| Design tokens | `rarity.ts` (Common → Legendary), `badges.tsx`, `progress-bars.tsx`, `CountUp.tsx`                                     |
+| Routes        | `/jogador`, `/conquistas`, `/xp`, `/niveis`                                                                            |
 
 UI components read the consolidated result. They never recompute XP, levels or
 unlock conditions for display.

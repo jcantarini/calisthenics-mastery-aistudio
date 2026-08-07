@@ -2,14 +2,14 @@
 
 ## API conventions (reviewed in Sprint 6.6B)
 
-| Aspect        | Convention                                                                 |
-| ------------- | -------------------------------------------------------------------------- |
-| Async         | Every persistence-touching method is `async` and returns a Promise.          |
-| `userId`      | Optional trailing/first argument; when omitted the service resolves the current session user. |
-| Return types  | Domain objects or explicit result objects. No raw Supabase `{ data, error }` leaks past a service. |
-| Errors        | Services throw on unrecoverable failures. The Orchestrator converts stage failures into collected partial errors instead of aborting the pipeline. |
-| Purity        | Rule modules (`*Rules.ts`, `levelCurve.ts`, `workoutRules.ts`) are pure and independently unit-testable. |
-| Side effects  | Engines publish on their own event bus; consumers subscribe. No engine calls another engine directly except via a documented port. |
+| Aspect       | Convention                                                                                                                                         |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Async        | Every persistence-touching method is `async` and returns a Promise.                                                                                |
+| `userId`     | Optional trailing/first argument; when omitted the service resolves the current session user.                                                      |
+| Return types | Domain objects or explicit result objects. No raw Supabase `{ data, error }` leaks past a service.                                                 |
+| Errors       | Services throw on unrecoverable failures. The Orchestrator converts stage failures into collected partial errors instead of aborting the pipeline. |
+| Purity       | Rule modules (`*Rules.ts`, `levelCurve.ts`, `workoutRules.ts`) are pure and independently unit-testable.                                           |
+| Side effects | Engines publish on their own event bus; consumers subscribe. No engine calls another engine directly except via a documented port.                 |
 
 ## WorkoutGeneratorService
 
@@ -25,6 +25,7 @@ Deterministic given the same capability profile. No scheduling awareness.
 The single source of truth for training-plan generation **and** runtime.
 
 Generation / read:
+
 ```ts
 getCurrentProgress(userId?): Promise<CurrentProgramState | null>
 getWeeklyProgress(userId?): Promise<WeeklyProgress | null>
@@ -32,10 +33,11 @@ regenerateProgram(userId?): Promise<TrainingPlan>
 ```
 
 Runtime transitions (all return the refreshed `CurrentProgramState`):
+
 ```ts
-startWorkout(workoutId), completeWorkout(workoutId), skipWorkout(workoutId)
-pauseProgram(), resumeProgram(), restartProgram()
-advanceDay(), advanceWeek()
+(startWorkout(workoutId), completeWorkout(workoutId), skipWorkout(workoutId));
+(pauseProgram(), resumeProgram(), restartProgram());
+(advanceDay(), advanceWeek());
 ```
 
 `regenerateTrainingPlan()` is a retained `@deprecated` alias of

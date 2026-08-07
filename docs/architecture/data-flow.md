@@ -50,9 +50,9 @@ A failing stage never aborts the pipeline: the failure is collected into
 
 ## Event buses
 
-| Bus                     | Publisher              | Subscriber                        |
-| ----------------------- | ---------------------- | --------------------------------- |
-| `xpEvents.ts`           | XPService              | ProgressionService                |
-| `progressionEvents.ts`  | ProgressionService     | UI (level history / level-up)     |
-| `achievementEvents.ts`  | AchievementService     | UI (achievement modal)            |
-| `gamificationEvents.ts` | Orchestrator           | `useGamification`, GamificationHost |
+| Bus                     | Publisher          | Subscriber                          |
+| ----------------------- | ------------------ | ----------------------------------- |
+| `xpEvents.ts`           | XPService          | ProgressionService                  |
+| `progressionEvents.ts`  | ProgressionService | UI (level history / level-up)       |
+| `achievementEvents.ts`  | AchievementService | UI (achievement modal)              |
+| `gamificationEvents.ts` | Orchestrator       | `useGamification`, GamificationHost |
