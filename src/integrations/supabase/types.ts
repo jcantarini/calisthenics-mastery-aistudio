@@ -598,6 +598,66 @@ export type Database = {
           },
         ]
       }
+      user_goals: {
+        Row: {
+          category: string
+          completed_at: string | null
+          created_at: string
+          current_value: number
+          description: string | null
+          id: string
+          metadata: Json
+          progress_type: string
+          start_date: string
+          status: string
+          target_date: string | null
+          target_value: number
+          title: string
+          type: string
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          id?: string
+          metadata?: Json
+          progress_type: string
+          start_date?: string
+          status?: string
+          target_date?: string | null
+          target_value?: number
+          title: string
+          type: string
+          unit: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          id?: string
+          metadata?: Json
+          progress_type?: string
+          start_date?: string
+          status?: string
+          target_date?: string | null
+          target_value?: number
+          title?: string
+          type?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           age: number | null

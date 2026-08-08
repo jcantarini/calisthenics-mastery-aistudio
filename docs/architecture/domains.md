@@ -99,3 +99,16 @@ another domain's tables.
 - **Main module:** `GamificationOrchestrator` (`src/services/gamification/`).
 - **Hooks:** `useGamification`, `useLevelProgress`, `useWorkoutRewards`.
 - **MUST NOT:** calculate XP, levels or achievements. Ever.
+
+## Goals (added Sprint 7.1)
+
+- **Responsibility:** goal definitions, lifecycle, progress, validation,
+  completion rules, persistence and queries.
+- **Main service:** `GoalService` (`src/services/goals/`), rules in
+  `goalRules.ts`, validation in `goalValidation.ts`.
+- **Tables:** `user_goals`.
+- **Hooks:** `useGoals`, `useActiveGoals`, `useCompletedGoals`, `useGoal`,
+  `useGoalProgress`, `useGoalMutations`.
+- **Bus:** `goalEvents.ts` (contracts only in 7.1).
+- **MUST NOT:** award XP, unlock achievements, generate workouts or write into
+  another domain's tables. See [goals.md](./goals.md).
