@@ -22,6 +22,7 @@ import { Route as AuthenticatedPreferenciasRouteImport } from './routes/_authent
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNiveisRouteImport } from './routes/_authenticated/niveis'
+import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedLembretesRouteImport } from './routes/_authenticated/lembretes'
 import { Route as AuthenticatedJogadorRouteImport } from './routes/_authenticated/jogador'
 import { Route as AuthenticatedFirstWorkoutRouteImport } from './routes/_authenticated/first-workout'
@@ -97,6 +98,11 @@ const AuthenticatedNiveisRoute = AuthenticatedNiveisRouteImport.update({
   path: '/niveis',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
+  id: '/metas',
+  path: '/metas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLembretesRoute = AuthenticatedLembretesRouteImport.update({
   id: '/lembretes',
   path: '/lembretes',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/jogador': typeof AuthenticatedJogadorRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
+  '/metas': typeof AuthenticatedMetasRoute
   '/niveis': typeof AuthenticatedNiveisRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/jogador': typeof AuthenticatedJogadorRoute
   '/lembretes': typeof AuthenticatedLembretesRoute
+  '/metas': typeof AuthenticatedMetasRoute
   '/niveis': typeof AuthenticatedNiveisRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/perfil': typeof AuthenticatedPerfilRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/first-workout': typeof AuthenticatedFirstWorkoutRoute
   '/_authenticated/jogador': typeof AuthenticatedJogadorRoute
   '/_authenticated/lembretes': typeof AuthenticatedLembretesRoute
+  '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/niveis': typeof AuthenticatedNiveisRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/first-workout'
     | '/jogador'
     | '/lembretes'
+    | '/metas'
     | '/niveis'
     | '/onboarding'
     | '/perfil'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/first-workout'
     | '/jogador'
     | '/lembretes'
+    | '/metas'
     | '/niveis'
     | '/onboarding'
     | '/perfil'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/_authenticated/first-workout'
     | '/_authenticated/jogador'
     | '/_authenticated/lembretes'
+    | '/_authenticated/metas'
     | '/_authenticated/niveis'
     | '/_authenticated/onboarding'
     | '/_authenticated/perfil'
@@ -375,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNiveisRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/metas': {
+      id: '/_authenticated/metas'
+      path: '/metas'
+      fullPath: '/metas'
+      preLoaderRoute: typeof AuthenticatedMetasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lembretes': {
       id: '/_authenticated/lembretes'
       path: '/lembretes'
@@ -454,6 +473,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFirstWorkoutRoute: typeof AuthenticatedFirstWorkoutRoute
   AuthenticatedJogadorRoute: typeof AuthenticatedJogadorRoute
   AuthenticatedLembretesRoute: typeof AuthenticatedLembretesRoute
+  AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedNiveisRoute: typeof AuthenticatedNiveisRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
@@ -474,6 +494,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFirstWorkoutRoute: AuthenticatedFirstWorkoutRoute,
   AuthenticatedJogadorRoute: AuthenticatedJogadorRoute,
   AuthenticatedLembretesRoute: AuthenticatedLembretesRoute,
+  AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedNiveisRoute: AuthenticatedNiveisRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
@@ -497,13 +518,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
