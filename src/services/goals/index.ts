@@ -20,12 +20,7 @@ export {
   validateUpdateGoal,
 } from "./goalValidation";
 export type { ValidationResult } from "./goalValidation";
-export {
-  clearGoalListeners,
-  emitGoalEvent,
-  emitGoalEventAsync,
-  onGoalEvent,
-} from "./goalEvents";
+export { clearGoalListeners, emitGoalEvent, emitGoalEventAsync, onGoalEvent } from "./goalEvents";
 export type {
   GoalEvent,
   GoalEventListener,

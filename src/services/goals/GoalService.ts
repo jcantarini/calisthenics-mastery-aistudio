@@ -11,10 +11,7 @@ import {
   validateGoalTransition,
 } from "./goalRules";
 import { emitGoalEvent, type GoalProgressSignal } from "./goalEvents";
-import {
-  validateCreateGoal,
-  validateUpdateGoal,
-} from "./goalValidation";
+import { validateCreateGoal, validateUpdateGoal } from "./goalValidation";
 import {
   GoalError,
   type CreateGoalInput,
@@ -215,10 +212,7 @@ async function transition(goalId: string, to: GoalStatus, userId?: string): Prom
   const goal = await requireGoal(goalId, userId);
   if (goal.status === to) return goal; // idempotent no-op
   if (!validateGoalTransition(goal.status, to)) {
-    throw new GoalError(
-      "invalid_transition",
-      `Transição inválida: ${goal.status} → ${to}.`,
-    );
+    throw new GoalError("invalid_transition", `Transição inválida: ${goal.status} → ${to}.`);
   }
 
   const completedAt = to === "completed" ? new Date().toISOString() : goal.completedAt;
@@ -247,13 +241,31 @@ async function transition(goalId: string, to: GoalStatus, userId?: string): Prom
       } as never);
       break;
     case "paused":
-      await emitGoalEvent({ type: "goal_paused", userId: next.userId, goalId: next.id, goal: next, occurredAt });
+      await emitGoalEvent({
+        type: "goal_paused",
+        userId: next.userId,
+        goalId: next.id,
+        goal: next,
+        occurredAt,
+      });
       break;
     case "cancelled":
-      await emitGoalEvent({ type: "goal_cancelled", userId: next.userId, goalId: next.id, goal: next, occurredAt });
+      await emitGoalEvent({
+        type: "goal_cancelled",
+        userId: next.userId,
+        goalId: next.id,
+        goal: next,
+        occurredAt,
+      });
       break;
     case "expired":
-      await emitGoalEvent({ type: "goal_expired", userId: next.userId, goalId: next.id, goal: next, occurredAt });
+      await emitGoalEvent({
+        type: "goal_expired",
+        userId: next.userId,
+        goalId: next.id,
+        goal: next,
+        occurredAt,
+      });
       break;
     case "completed":
       await emitGoalEvent({
@@ -335,7 +347,10 @@ async function updateGoalProgress(
  */
 async function evaluateGoal(goalId: string, userId?: string): Promise<Goal> {
   const goal = await requireGoal(goalId, userId);
-  if (isGoalCompleted(goal.currentValue, goal.targetValue, goal.progressType) && goal.status === "active") {
+  if (
+    isGoalCompleted(goal.currentValue, goal.targetValue, goal.progressType) &&
+    goal.status === "active"
+  ) {
     return completeGoal(goal.id, goal.userId);
   }
   if (isGoalExpired(goal)) return transition(goal.id, "expired", goal.userId);

@@ -237,10 +237,7 @@ function GoalRow({
   );
 }
 
-function ActionButton({
-  children,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+function ActionButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       type="button"

@@ -92,9 +92,9 @@ describe("goal creation validation", () => {
   });
 
   it("blocks edits on finished goals", () => {
-    expect(validateUpdateGoal(goal({ status: "completed", completedAt: "x" }), { title: "novo" }).valid).toBe(
-      false,
-    );
+    expect(
+      validateUpdateGoal(goal({ status: "completed", completedAt: "x" }), { title: "novo" }).valid,
+    ).toBe(false);
   });
 });
 
@@ -174,18 +174,22 @@ describe("lifecycle transitions", () => {
 
 describe("expiration", () => {
   it("expires an active goal past its target date", () => {
-    expect(isGoalExpired(goal({ targetDate: "2026-01-05" }), new Date("2026-01-06T10:00:00Z"))).toBe(true);
+    expect(
+      isGoalExpired(goal({ targetDate: "2026-01-05" }), new Date("2026-01-06T10:00:00Z")),
+    ).toBe(true);
   });
 
   it("does not expire before the target date or without one", () => {
-    expect(isGoalExpired(goal({ targetDate: "2026-01-05" }), new Date("2026-01-05T10:00:00Z"))).toBe(false);
+    expect(
+      isGoalExpired(goal({ targetDate: "2026-01-05" }), new Date("2026-01-05T10:00:00Z")),
+    ).toBe(false);
     expect(isGoalExpired(goal({ targetDate: null }))).toBe(false);
   });
 
   it("never expires finished goals", () => {
-    expect(
-      isGoalExpired(goal({ targetDate: "2020-01-01", status: "completed" }), new Date()),
-    ).toBe(false);
+    expect(isGoalExpired(goal({ targetDate: "2020-01-01", status: "completed" }), new Date())).toBe(
+      false,
+    );
   });
 });
 

@@ -1,12 +1,6 @@
 // Goals Engine — pure domain rules. No IO, no React: unit-testable as-is.
 
-import type {
-  Goal,
-  GoalProgress,
-  GoalProgressType,
-  GoalStatus,
-  GoalUnit,
-} from "./goalTypes";
+import type { Goal, GoalProgress, GoalProgressType, GoalStatus, GoalUnit } from "./goalTypes";
 
 /** Explicit lifecycle. Anything not listed here is invalid. */
 export const GOAL_TRANSITIONS: Record<GoalStatus, readonly GoalStatus[]> = {

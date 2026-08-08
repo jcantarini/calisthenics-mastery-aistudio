@@ -42,7 +42,10 @@ export function validateCreateGoal(input: CreateGoalInput): ValidationResult {
   if (input.progressType === "boolean" && input.targetValue !== 1) {
     errors.push("Metas de conquista (sim/não) precisam ter valor alvo igual a 1.");
   }
-  if (input.currentValue !== undefined && (!Number.isFinite(input.currentValue) || input.currentValue < 0)) {
+  if (
+    input.currentValue !== undefined &&
+    (!Number.isFinite(input.currentValue) || input.currentValue < 0)
+  ) {
     errors.push("O valor atual não pode ser negativo.");
   }
   if (
@@ -50,14 +53,20 @@ export function validateCreateGoal(input: CreateGoalInput): ValidationResult {
     GOAL_UNITS.includes(input.unit) &&
     !isUnitAllowed(input.progressType, input.unit)
   ) {
-    errors.push(`A unidade "${input.unit}" não é válida para metas do tipo "${input.progressType}".`);
+    errors.push(
+      `A unidade "${input.unit}" não é válida para metas do tipo "${input.progressType}".`,
+    );
   }
 
   if (input.startDate && !isIsoDate(input.startDate)) errors.push("Data de início inválida.");
   if (input.targetDate) {
     if (!isIsoDate(input.targetDate)) {
       errors.push("Data alvo inválida.");
-    } else if (input.startDate && isIsoDate(input.startDate) && input.targetDate < input.startDate) {
+    } else if (
+      input.startDate &&
+      isIsoDate(input.startDate) &&
+      input.targetDate < input.startDate
+    ) {
       errors.push("A data alvo não pode ser anterior à data de início.");
     }
   }
@@ -71,7 +80,10 @@ export function validateUpdateGoal(goal: Goal, patch: UpdateGoalInput): Validati
   if (patch.title !== undefined && patch.title.trim().length < 3) {
     errors.push("O título da meta precisa ter ao menos 3 caracteres.");
   }
-  if (patch.targetValue !== undefined && (!Number.isFinite(patch.targetValue) || patch.targetValue <= 0)) {
+  if (
+    patch.targetValue !== undefined &&
+    (!Number.isFinite(patch.targetValue) || patch.targetValue <= 0)
+  ) {
     errors.push("O valor alvo precisa ser maior que zero.");
   }
   if (patch.unit !== undefined) {

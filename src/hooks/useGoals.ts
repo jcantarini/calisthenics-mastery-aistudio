@@ -39,7 +39,7 @@ function useAsync<T>(loader: () => Promise<T>, initial: T, deps: unknown[]) {
 
 export function useGoals(query: GoalQuery = {}) {
   const key = JSON.stringify(query);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   return useAsync<Goal[]>(() => GoalService.getGoals(query), [], [key]);
 }
 
@@ -73,7 +73,7 @@ export function useGoalMutations(onChanged?: () => void) {
   const [error, setError] = useState<Error | null>(null);
 
   const run = useCallback(
-    async <T,>(action: () => Promise<T>): Promise<T | null> => {
+    async <T>(action: () => Promise<T>): Promise<T | null> => {
       setPending(true);
       setError(null);
       try {
