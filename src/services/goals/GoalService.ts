@@ -300,11 +300,15 @@ async function getGoalProgress(goalId: string, userId?: string): Promise<GoalPro
 /**
  * Records observed progress. Completion is auto-applied (and only once)
  * when the domain rules say the target was reached.
+ *
+ * The write uses a compare-and-set guard on `current_value` and retries on a
+ * lost race, so two concurrent observations can never overwrite each other.
  */
 async function updateGoalProgress(
   goalId: string,
   signal: GoalProgressSignal,
   userId?: string,
+  attempt = 0,
 ): Promise<Goal> {
   const goal = await requireGoal(goalId, userId);
   if (goal.status === "completed") return goal; // idempotent
@@ -320,9 +324,17 @@ async function updateGoalProgress(
     .update({ current_value: nextValue })
     .eq("id", goal.id)
     .eq("user_id", goal.userId)
+    .eq("current_value", goal.currentValue) // optimistic guard against lost updates
     .select(COLUMNS)
-    .single();
-  if (error || !data) fail("updateGoalProgress", error);
+    .maybeSingle();
+  if (error) fail("updateGoalProgress", error);
+  if (!data) {
+    // Someone else moved the value between our read and write: re-read and retry.
+    if (attempt >= 4) {
+      throw new GoalError("persistence_failed", "Não foi possível salvar a meta agora.");
+    }
+    return updateGoalProgress(goalId, signal, userId, attempt + 1);
+  }
 
   const updated = toGoal(data as GoalRow);
   await emitGoalEvent({
@@ -340,6 +352,7 @@ async function updateGoalProgress(
   }
   return updated;
 }
+
 
 /**
  * Re-evaluates a goal against the rules (expiration + completion).
