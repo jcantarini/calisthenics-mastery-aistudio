@@ -2,7 +2,8 @@
 // Tracking DETECTS progress. It never persists goal state itself:
 // GoalService remains the single source of truth.
 
-import type { Goal, GoalProgressSignal } from "./index-types";
+import type { GoalProgressSignal } from "./goalEvents";
+import type { Goal } from "./goalTypes";
 
 /* ---------------- Activity events ---------------- */
 
