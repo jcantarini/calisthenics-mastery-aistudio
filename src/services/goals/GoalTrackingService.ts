@@ -240,7 +240,7 @@ export function createGoalTrackingService(deps: GoalTrackingDeps) {
             workoutId: workout.id,
             planId: plan.id,
             occurredAt: workout.completedAt as string,
-            estimatedDurationMin: workout.estimatedDurationMin,
+            estimatedDurationMin: workout.estimatedDurationMin ?? null,
             userId: uid,
           },
           result,
