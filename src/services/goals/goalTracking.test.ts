@@ -37,7 +37,10 @@ function makeGoal(overrides: Partial<Goal> = {}): Goal {
   };
 }
 
-const workoutEvent = (id: string, extra: Partial<Record<string, unknown>> = {}): GoalActivityEvent =>
+const workoutEvent = (
+  id: string,
+  extra: Partial<Record<string, unknown>> = {},
+): GoalActivityEvent =>
   ({
     type: "workout_completed",
     workoutId: id,
@@ -170,9 +173,9 @@ describe("time windows", () => {
 
   it("defaults an open-ended frequency goal to a 7-day window", () => {
     const goal = makeGoal({ type: "workout_frequency", startDate: "2026-01-05", targetDate: null });
-    expect(matchGoalToEvent(goal, workoutEvent("w", { occurredAt: "2026-01-11T00:00:00Z" }))).not.toBe(
-      "out_of_window",
-    );
+    expect(
+      matchGoalToEvent(goal, workoutEvent("w", { occurredAt: "2026-01-11T00:00:00Z" })),
+    ).not.toBe("out_of_window");
     expect(matchGoalToEvent(goal, workoutEvent("w", { occurredAt: "2026-01-12T00:00:00Z" }))).toBe(
       "out_of_window",
     );
@@ -307,9 +310,7 @@ describe("training time goals", () => {
 
   it("prefers real duration over the estimate and accumulates", async () => {
     const { service, store } = makeHarness([goal]);
-    await service.track(
-      workoutEvent("w1", { actualDurationMin: 42, estimatedDurationMin: 30 }),
-    );
+    await service.track(workoutEvent("w1", { actualDurationMin: 42, estimatedDurationMin: 30 }));
     await service.track(workoutEvent("w2", { estimatedDurationMin: 30 }));
     expect(store.get("goal-1")?.currentValue).toBe(72);
   });

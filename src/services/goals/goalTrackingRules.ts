@@ -137,7 +137,10 @@ function minutesToUnit(minutes: number, unit: GoalUnit): number {
  * Threshold semantics ask for the BEST single performance, cumulative/count
  * semantics ask for the TOTAL. Mixing the two is the classic tracking bug.
  */
-function exerciseValue(goal: Goal, event: Extract<GoalActivityEvent, { type: "exercise_completed" }>) {
+function exerciseValue(
+  goal: Goal,
+  event: Extract<GoalActivityEvent, { type: "exercise_completed" }>,
+) {
   const best = goal.progressType === "threshold" || goal.progressType === "target_value";
   switch (goal.unit) {
     case "repetitions":

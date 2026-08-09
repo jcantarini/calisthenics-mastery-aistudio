@@ -614,7 +614,6 @@ export const TrainingPlanService = {
       console.error("[training-plan] goal tracking failed", error);
     }
 
-
     return buildProgramState(plan);
   },
 

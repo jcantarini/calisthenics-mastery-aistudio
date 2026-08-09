@@ -353,7 +353,6 @@ async function updateGoalProgress(
   return updated;
 }
 
-
 /**
  * Re-evaluates a goal against the rules (expiration + completion).
  * Pure decisions live in goalRules; this only persists the outcome.
