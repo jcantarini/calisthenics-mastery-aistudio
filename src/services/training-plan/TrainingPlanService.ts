@@ -562,6 +562,58 @@ export const TrainingPlanService = {
       console.error("[training-plan] gamification pipeline failed", error);
     }
 
+    // Automatic goal tracking (Sprint 7.2). Detection only: it awards nothing
+    // and is fully isolated — a tracking failure never fails the workout.
+    try {
+      const { GoalTrackingService } = await import("@/services/goals");
+      const startedAt = finished?.startedAt ? new Date(finished.startedAt).getTime() : null;
+      const actualDurationMin = startedAt
+        ? Math.max(1, Math.round((new Date(nowIso).getTime() - startedAt) / 60000))
+        : null;
+
+      await GoalTrackingService.trackSafely({
+        type: "workout_completed",
+        workoutId: plannedWorkoutId,
+        planId: plan.id,
+        occurredAt: nowIso,
+        actualDurationMin,
+        estimatedDurationMin: finished?.estimatedDurationMin ?? null,
+        userId: uid,
+      });
+
+      const streak = computeStreak(plan);
+      if (streak > 0) {
+        await GoalTrackingService.trackSafely({
+          type: "streak_updated",
+          currentStreak: streak,
+          occurredAt: nowIso,
+          userId: uid,
+        });
+      }
+
+      if (week && isWeekComplete(week)) {
+        await GoalTrackingService.trackSafely({
+          type: "training_week_completed",
+          planId: plan.id,
+          weekNumber: week.weekNumber,
+          occurredAt: nowIso,
+          userId: uid,
+        });
+      }
+      if (done) {
+        await GoalTrackingService.trackSafely({
+          type: "training_program_completed",
+          planId: plan.id,
+          programSlug: plan.programSlug,
+          occurredAt: nowIso,
+          userId: uid,
+        });
+      }
+    } catch (error) {
+      console.error("[training-plan] goal tracking failed", error);
+    }
+
+
     return buildProgramState(plan);
   },
 
