@@ -186,7 +186,6 @@ describe("only active goals are tracked", () => {
     it(`ignores a ${status} goal`, async () => {
       const { service, store } = makeHarness([makeGoal({ status })]);
       const result = await service.track(workoutEvent("w1"));
-      if (status === "active") return;
       expect(store.get("goal-1")?.currentValue).toBe(0);
       expect(result.updatedGoals).toHaveLength(0);
     });
