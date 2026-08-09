@@ -1,6 +1,36 @@
 // Goals domain public entry point.
 
 export { GoalService } from "./GoalService";
+export { GoalTrackingService, createGoalTrackingService } from "./GoalTrackingService";
+export type { GoalTrackingServiceInstance } from "./GoalTrackingService";
+export {
+  activitySourceId,
+  directionalObservation,
+  goalDirection,
+  goalExerciseId,
+  goalMeasurementKey,
+  goalProgramScope,
+  goalSkillId,
+  isMatch,
+  isWithinFrequencyWindow,
+  isWithinGoalWindow,
+  matchGoalToEvent,
+} from "./goalTrackingRules";
+export type { GoalDirection } from "./goalTrackingRules";
+export type {
+  GoalActivityEvent,
+  GoalActivityEventType,
+  GoalTrackingDeps,
+  GoalTrackingError,
+  GoalTrackingGoalsPort,
+  GoalTrackingIgnored,
+  GoalTrackingIgnoreReason,
+  GoalTrackingLedgerEntry,
+  GoalTrackingLedgerPort,
+  GoalTrackingMatch,
+  GoalTrackingResult,
+  GoalTrackingUpdate,
+} from "./goalTrackingTypes";
 export {
   GOAL_TRANSITIONS,
   UNITS_BY_PROGRESS_TYPE,
