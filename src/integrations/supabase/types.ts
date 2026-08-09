@@ -160,6 +160,53 @@ export type Database = {
           },
         ]
       }
+      goal_progress_events: {
+        Row: {
+          created_at: string
+          goal_id: string
+          id: string
+          metadata: Json
+          observed_value: number
+          processed_at: string
+          progress_delta: number
+          source_event_id: string
+          source_event_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          goal_id: string
+          id?: string
+          metadata?: Json
+          observed_value?: number
+          processed_at?: string
+          progress_delta?: number
+          source_event_id: string
+          source_event_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          goal_id?: string
+          id?: string
+          metadata?: Json
+          observed_value?: number
+          processed_at?: string
+          progress_delta?: number
+          source_event_id?: string
+          source_event_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_progress_events_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "user_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       level_history: {
         Row: {
           created_at: string
