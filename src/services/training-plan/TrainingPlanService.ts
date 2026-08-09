@@ -28,6 +28,7 @@ import {
   findNextWorkout,
   findPreviousWorkout,
   findWorkoutAt,
+  computeStreak,
   isWeekComplete,
   nextCursor,
   scheduledDateFor,

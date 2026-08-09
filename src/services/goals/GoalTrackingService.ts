@@ -225,7 +225,7 @@ export function createGoalTrackingService(deps: GoalTrackingDeps) {
 
       const completed = plan.weeks
         .flatMap((week) => week.workouts)
-        .filter((workout) => workout.status === "completed" && workout.completedAt)
+        .filter((workout) => workout.status === "completed" && workout.completedAt && workout.id)
         .sort((a, b) => String(a.completedAt).localeCompare(String(b.completedAt)))
         .slice(-200); // bounded: never a full-history analytics scan
 
@@ -237,7 +237,7 @@ export function createGoalTrackingService(deps: GoalTrackingDeps) {
           fresh,
           {
             type: "workout_completed",
-            workoutId: workout.id,
+            workoutId: workout.id as string,
             planId: plan.id,
             occurredAt: workout.completedAt as string,
             estimatedDurationMin: workout.estimatedDurationMin ?? null,
