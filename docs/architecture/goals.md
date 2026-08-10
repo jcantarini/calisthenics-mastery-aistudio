@@ -258,9 +258,56 @@ Training integration calls `trackSafely()` inside its own `try/catch` in
 returned in the typed result; workout completion and the training runtime
 always succeed.
 
-## No rewards
+## Rewards — Sprint 7.3 (Goals x Gamification)
 
-Automatic tracking awards **no XP**, unlocks **no achievements** and does not
-call `GamificationOrchestrator`. Completed goals are returned in
-`GoalTrackingResult.completedGoals` and emitted as `goal_completed` by
-GoalService. **Sprint 7.3 owns the Goals × Gamification integration.**
+Goals never calculate XP, levels or achievements. `GoalService` only emits
+`goal_completed`; every reward consequence comes from the existing pipeline:
+
+```
+GoalService (status -> completed)
+  -> goal_completed event
+  -> goalGamification bridge (lazy import, one direction only)
+  -> GamificationOrchestrator.processGoalCompleted()
+  -> XP -> Progression -> Achievements -> consolidated GamificationResult
+```
+
+### Difficulty
+
+`user_goals.difficulty` is `easy | medium | hard | epic` (default `medium`).
+It is a Goals-domain attribute; the **XP domain** owns the prices in
+`src/services/xp/xpRules.ts`:
+
+| Difficulty | XP  |
+| ---------- | --- |
+| easy       | 50  |
+| medium     | 100 |
+| hard       | 200 |
+| epic       | 400 |
+
+Unknown or missing difficulty falls back to the `medium` tier.
+
+### Idempotency
+
+The bridge derives a deterministic reference `goal_completed:<goalId>`
+(`goalCompletionSourceId`). XPService already enforces uniqueness on
+`(user, event_type, source_id)`, so a duplicate event, a retry after a lost
+response, an app restart or a re-emitted completion award XP exactly once —
+and therefore create no duplicate level history and no duplicate unlocks.
+
+Achievement counting uses an **authoritative absolute update**: the bridge
+reads `GoalService.countCompletedGoals()` and passes it as
+`payload.goalsCompleted`, so `goals_completed` is set, never incremented.
+When the count is unavailable the engine falls back to a safe increment and
+XP is still awarded.
+
+### Failure isolation
+
+The bridge is fully wrapped: a gamification failure is logged and swallowed,
+so goal completion, tracking and workout completion always succeed. Both
+manual completion and automatic tracking travel the same single pipeline.
+
+### UI
+
+`GamificationHost` reuses the shared celebrations for goal completions
+(level-up modal and achievement modals); the dedicated Goals reward screen is
+deferred.
