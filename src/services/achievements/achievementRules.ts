@@ -43,9 +43,17 @@ export function deriveMetricUpdates(event: AchievementEvent): MetricUpdate[] {
     case "TrainingProgramCompleted":
       updates.push({ metric: "programs_completed", value: 1, mode: "increment" });
       break;
-    case "GoalCompleted":
-      updates.push({ metric: "goals_completed", value: 1, mode: "increment" });
+    case "GoalCompleted": {
+      // Authoritative count wins: replays of the same completion cannot
+      // inflate the metric. Falls back to increment when no count is given.
+      const authoritative = p.goalsCompleted;
+      if (typeof authoritative === "number" && Number.isFinite(authoritative)) {
+        updates.push({ metric: "goals_completed", value: authoritative, mode: "absolute" });
+      } else {
+        updates.push({ metric: "goals_completed", value: 1, mode: "increment" });
+      }
       break;
+    }
     case "StreakUpdated":
       updates.push({ metric: "streak_days", value: reps(p.streakDays), mode: "absolute" });
       break;

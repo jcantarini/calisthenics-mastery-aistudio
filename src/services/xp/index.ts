@@ -9,8 +9,20 @@ export { XPService, registerXPEngine } from "./XPService";
 export { emitXPEvent, emitXPEventAsync, notifyXPApplied, onXPApplied, onXPEvent } from "./xpEvents";
 export type { XPAppliedListener, XPAppliedPayload } from "./xpEvents";
 
-export { XP_REWARDS, XP_REASONS, levelForXP, levelProgress, xpForLevel } from "./xpRules";
+export {
+  DEFAULT_GOAL_DIFFICULTY_TIER,
+  GOAL_COMPLETION_XP,
+  XP_REWARDS,
+  XP_REASONS,
+  goalCompletionSourceId,
+  goalCompletionXP,
+  isGoalDifficultyTier,
+  levelForXP,
+  levelProgress,
+  xpForLevel,
+} from "./xpRules";
 export type {
+  GoalDifficultyTier,
   UserXPStats,
   XPAwardResult,
   XPEntry,

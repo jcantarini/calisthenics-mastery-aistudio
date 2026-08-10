@@ -5,6 +5,7 @@
 import type { AchievementEvent, AchievementUnlockResult } from "@/services/achievements";
 import type { LevelUpResult, PlayerProfileStats } from "@/services/progression";
 import type { WeeklyProgress } from "@/services/training-plan/trainingPlanTypes";
+import { goalCompletionXP } from "@/services/xp";
 import type { XPEvent, XPEventType } from "@/services/xp";
 import type {
   GamificationEvent,
@@ -52,11 +53,16 @@ export function toXPEvents(event: GamificationEvent): XPEvent[] {
   }
   const mapped = XP_EVENT_BY_TYPE[event.type] ?? null;
   if (mapped) {
+    // Goal completion is priced by the XP Engine from the declared difficulty.
+    // The orchestrator never computes an amount itself.
+    const amount =
+      event.xpAmount ??
+      (mapped === "goal_completed" ? goalCompletionXP(event.metadata?.["goalDifficulty"]) : undefined);
     events.push({
       type: mapped,
       sourceId: event.sourceId ?? null,
       userId: event.userId,
-      amount: event.xpAmount,
+      amount,
       metadata: event.metadata,
     });
   }
@@ -253,6 +259,9 @@ export function buildMessages(result: GamificationResult): GamificationMessage[]
       key: "gamification.streak",
       values: { days: result.currentStreak },
     });
+  }
+  if (result.eventType === "goal_completed") {
+    messages.push({ kind: "goal", key: "gamification.goalCompleted" });
   }
   if (result.eventType === "week_completed") {
     messages.push({ kind: "week", key: "gamification.weekCompleted" });
