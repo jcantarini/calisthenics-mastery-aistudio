@@ -16,7 +16,11 @@ import { deriveMetricUpdates } from "@/services/achievements/achievementRules";
 import type { AchievementUnlockResult } from "@/services/achievements";
 import type { LevelUpResult, PlayerProfileStats } from "@/services/progression";
 import type { XPAwardResult } from "@/services/xp";
-import { GOAL_COMPLETION_XP, goalCompletionSourceId, goalCompletionXP } from "@/services/xp/xpRules";
+import {
+  GOAL_COMPLETION_XP,
+  goalCompletionSourceId,
+  goalCompletionXP,
+} from "@/services/xp/xpRules";
 import { createGoalGamificationBridge, isRewardableCompletion } from "./goalGamification";
 import type { GoalCompletedEvent } from "./goalEvents";
 import type { Goal, GoalDifficulty, GoalStatus } from "./goalTypes";
@@ -187,8 +191,7 @@ function makeAchievementEngine() {
       const updates = deriveMetricUpdates(event);
       for (const update of updates) {
         if (update.metric !== "goals_completed") continue;
-        goalsCompleted =
-          update.mode === "absolute" ? update.value : goalsCompleted + update.value;
+        goalsCompleted = update.mode === "absolute" ? update.value : goalsCompleted + update.value;
       }
       const results: AchievementUnlockResult[] = [];
       for (const [id, target] of [
@@ -371,7 +374,11 @@ describe("manual and automatic completion share one pipeline", () => {
 describe("progression and achievements consequences", () => {
   it("goal completion can trigger a level up", async () => {
     const { orchestrator } = makeSetup(950);
-    const result = await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "medium", userId: USER });
+    const result = await orchestrator.processGoalCompleted({
+      goalId: "g1",
+      difficulty: "medium",
+      userId: USER,
+    });
     expect(result.leveledUp).toBe(true);
     expect(result.levelsGained).toBe(1);
     expect(result.newLevel).toBe(result.oldLevel + 1);
@@ -379,7 +386,11 @@ describe("progression and achievements consequences", () => {
 
   it("an epic goal can trigger multiple level ups", async () => {
     const { orchestrator } = makeSetup(200);
-    const result = await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "epic", userId: USER });
+    const result = await orchestrator.processGoalCompleted({
+      goalId: "g1",
+      difficulty: "epic",
+      userId: USER,
+    });
     expect(result.levelsGained).toBeGreaterThan(1);
     expect(result.messages.some((m) => m.key === "gamification.multiLevelUp")).toBe(true);
   });
@@ -478,7 +489,10 @@ describe("existing behaviour is unchanged", () => {
 
   it("workout gamification still runs the full pipeline", async () => {
     const { orchestrator, xp } = makeSetup();
-    const result = await orchestrator.processWorkoutCompleted({ plannedWorkoutId: "w1", userId: USER });
+    const result = await orchestrator.processWorkoutCompleted({
+      plannedWorkoutId: "w1",
+      userId: USER,
+    });
     expect(result.eventType).toBe("workout_completed");
     expect(xp.calls[0]!.type).toBe("workout_completed");
   });

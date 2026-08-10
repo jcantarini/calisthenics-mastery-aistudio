@@ -85,7 +85,6 @@ export function isGoalDifficulty(value: unknown): value is GoalDifficulty {
 /** Free-form context. Typed as unknown values — never `any`. */
 export type GoalMetadata = Record<string, unknown>;
 
-
 export interface Goal {
   id: string;
   userId: string;

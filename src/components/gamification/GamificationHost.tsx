@@ -43,7 +43,6 @@ export function GamificationHost() {
     [],
   );
 
-
   const advance = useCallback(() => {
     setPhase((current) => {
       if (current === "summary" && result?.leveledUp) return "levelup";
