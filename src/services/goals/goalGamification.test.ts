@@ -371,7 +371,7 @@ describe("manual and automatic completion share one pipeline", () => {
 describe("progression and achievements consequences", () => {
   it("goal completion can trigger a level up", async () => {
     const { orchestrator } = makeSetup(950);
-    const result = await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "medium" });
+    const result = await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "medium", userId: USER });
     expect(result.leveledUp).toBe(true);
     expect(result.levelsGained).toBe(1);
     expect(result.newLevel).toBe(result.oldLevel + 1);
@@ -379,7 +379,7 @@ describe("progression and achievements consequences", () => {
 
   it("an epic goal can trigger multiple level ups", async () => {
     const { orchestrator } = makeSetup(0);
-    const result = await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "epic" });
+    const result = await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "epic", userId: USER });
     expect(result.levelsGained).toBeGreaterThan(1);
     expect(result.messages.some((m) => m.key === "gamification.multiLevelUp")).toBe(true);
   });
@@ -390,6 +390,7 @@ describe("progression and achievements consequences", () => {
       goalId: "g1",
       difficulty: "easy",
       goalsCompleted: 1,
+      userId: USER,
     });
     expect(result.newAchievements.map((a) => a.achievement.id)).toEqual(["goal_first"]);
   });
@@ -401,6 +402,7 @@ describe("progression and achievements consequences", () => {
         goalId: `g${i}`,
         difficulty: "easy",
         goalsCompleted: i,
+        userId: USER,
       });
     }
     expect(achievements.metric()).toBe(5);
@@ -476,7 +478,7 @@ describe("existing behaviour is unchanged", () => {
 
   it("workout gamification still runs the full pipeline", async () => {
     const { orchestrator, xp } = makeSetup();
-    const result = await orchestrator.processWorkoutCompleted({ plannedWorkoutId: "w1" });
+    const result = await orchestrator.processWorkoutCompleted({ plannedWorkoutId: "w1", userId: USER });
     expect(result.eventType).toBe("workout_completed");
     expect(xp.calls[0]!.type).toBe("workout_completed");
   });
@@ -492,7 +494,7 @@ describe("existing behaviour is unchanged", () => {
   it("progression keeps owning the level math", async () => {
     const { orchestrator, progression } = makeSetup(0);
     const spy = vi.spyOn(progression.engine, "processXPUpdate");
-    await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "medium" });
+    await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "medium", userId: USER });
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ xpEarned: 100 }));
   });
 });
