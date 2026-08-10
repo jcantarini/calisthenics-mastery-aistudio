@@ -236,7 +236,6 @@ export function createGamificationOrchestrator(engines: GamificationEngines) {
       });
     },
 
-
     /** Escape hatch for any event not covered by a dedicated method. */
     processCustomEvent(event: GamificationEvent): Promise<GamificationResult> {
       return process(event);

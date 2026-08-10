@@ -57,7 +57,9 @@ export function toXPEvents(event: GamificationEvent): XPEvent[] {
     // The orchestrator never computes an amount itself.
     const amount =
       event.xpAmount ??
-      (mapped === "goal_completed" ? goalCompletionXP(event.metadata?.["goalDifficulty"]) : undefined);
+      (mapped === "goal_completed"
+        ? goalCompletionXP(event.metadata?.["goalDifficulty"])
+        : undefined);
     events.push({
       type: mapped,
       sourceId: event.sourceId ?? null,
