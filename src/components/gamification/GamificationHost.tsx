@@ -22,6 +22,16 @@ export function GamificationHost() {
   useEffect(
     () =>
       onGamificationResult((next) => {
+        // Goal completion reuses the same consolidated result: no dedicated
+        // reward screen yet (Sprint 7.4 owns the Goals experience), only the
+        // shared level-up and achievement celebrations.
+        if (next.eventType === "goal_completed") {
+          if (!next.leveledUp && next.newAchievements.length === 0) return;
+          setResult(next);
+          setQueue(next.newAchievements);
+          setPhase(next.leveledUp ? "levelup" : "achievements");
+          return;
+        }
         // Only celebration-worthy events open the full screen experience.
         if (next.eventType !== "workout_completed" && next.eventType !== "program_completed") {
           return;
@@ -32,6 +42,7 @@ export function GamificationHost() {
       }),
     [],
   );
+
 
   const advance = useCallback(() => {
     setPhase((current) => {
