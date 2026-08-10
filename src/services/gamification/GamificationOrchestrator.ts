@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AchievementService } from "@/services/achievements";
 import { ProgressionService } from "@/services/progression";
 import { TrainingPlanService } from "@/services/training-plan/TrainingPlanService";
-import { XPService } from "@/services/xp";
+import { XPService, goalCompletionSourceId } from "@/services/xp";
 import { emitGamificationResult } from "./gamificationEvents";
 import {
   emptyResult,
