@@ -13,7 +13,9 @@ import {
 import { emitGoalEvent, type GoalProgressSignal } from "./goalEvents";
 import { validateCreateGoal, validateUpdateGoal } from "./goalValidation";
 import {
+  DEFAULT_GOAL_DIFFICULTY,
   GoalError,
+  isGoalDifficulty,
   type CreateGoalInput,
   type Goal,
   type GoalCategory,
@@ -38,7 +40,7 @@ async function resolveUserId(userId?: string): Promise<string> {
 /* ---------------- Mapping ---------------- */
 
 const COLUMNS =
-  "id, user_id, type, category, progress_type, title, description, target_value, current_value, unit, status, start_date, target_date, completed_at, metadata, created_at, updated_at";
+  "id, user_id, type, category, progress_type, title, description, target_value, current_value, unit, status, difficulty, start_date, target_date, completed_at, metadata, created_at, updated_at";
 
 interface GoalRow {
   id: string;
@@ -52,6 +54,7 @@ interface GoalRow {
   current_value: number;
   unit: string;
   status: string;
+  difficulty: string | null;
   start_date: string;
   target_date: string | null;
   completed_at: string | null;
@@ -73,6 +76,7 @@ function toGoal(row: GoalRow): Goal {
     currentValue: Number(row.current_value),
     unit: row.unit as GoalUnit,
     status: row.status as GoalStatus,
+    difficulty: isGoalDifficulty(row.difficulty) ? row.difficulty : DEFAULT_GOAL_DIFFICULTY,
     startDate: row.start_date,
     targetDate: row.target_date,
     completedAt: row.completed_at,
@@ -114,6 +118,7 @@ async function createGoal(input: CreateGoalInput): Promise<Goal> {
       current_value: input.currentValue ?? 0,
       unit: input.unit,
       status,
+      difficulty: input.difficulty ?? DEFAULT_GOAL_DIFFICULTY,
       start_date: input.startDate ?? todayIso(),
       target_date: input.targetDate ?? null,
       metadata: (input.metadata ?? {}) as Json,
@@ -190,6 +195,7 @@ async function updateGoal(goalId: string, patch: UpdateGoalInput, userId?: strin
       ...(patch.description !== undefined ? { description: patch.description } : {}),
       ...(patch.targetValue !== undefined ? { target_value: patch.targetValue } : {}),
       ...(patch.unit !== undefined ? { unit: patch.unit } : {}),
+      ...(patch.difficulty !== undefined ? { difficulty: patch.difficulty } : {}),
       ...(patch.targetDate !== undefined ? { target_date: patch.targetDate } : {}),
       ...(patch.metadata !== undefined ? { metadata: patch.metadata as Json } : {}),
     })
@@ -369,6 +375,22 @@ async function evaluateGoal(goalId: string, userId?: string): Promise<Goal> {
   return goal;
 }
 
+/**
+ * Authoritative count of completed goals. Used by the Gamification pipeline so
+ * goal achievements never trust a client-provided number. Goals owns the data;
+ * it still knows nothing about achievements.
+ */
+async function countCompletedGoals(userId?: string): Promise<number> {
+  const uid = await resolveUserId(userId);
+  const { count, error } = await supabase
+    .from("user_goals")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", uid)
+    .eq("status", "completed");
+  if (error) fail("countCompletedGoals", error);
+  return count ?? 0;
+}
+
 /** Explicit restart of a finished goal: creates a fresh copy at zero. */
 async function duplicateGoal(goalId: string, userId?: string): Promise<Goal> {
   const goal = await requireGoal(goalId, userId);
@@ -381,6 +403,7 @@ async function duplicateGoal(goalId: string, userId?: string): Promise<Goal> {
     description: goal.description,
     targetValue: goal.targetValue,
     unit: goal.unit,
+    difficulty: goal.difficulty,
     status: "active",
     startDate: todayIso(),
     targetDate: null,
@@ -394,6 +417,7 @@ export const GoalService = {
   getGoals,
   getActiveGoals,
   getCompletedGoals,
+  countCompletedGoals,
   updateGoal,
   deleteGoal,
   activateGoal,
