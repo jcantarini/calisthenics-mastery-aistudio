@@ -204,18 +204,38 @@ export function createGamificationOrchestrator(engines: GamificationEngines) {
       });
     },
 
+    /**
+     * Single reward path for goal completion — manual and automatically
+     * tracked goals both land here. XP amount comes from the XP Engine
+     * (difficulty tier), never from Goals or from this orchestrator.
+     * `sourceId` is the deterministic reference that makes retries safe.
+     */
     processGoalCompleted(options: {
       goalId: string;
+      goalType?: string;
+      difficulty?: string;
+      /** Authoritative number of completed goals, read from the Goals domain. */
+      goalsCompleted?: number;
       userId?: string;
       metadata?: Record<string, unknown>;
     }): Promise<GamificationResult> {
       return process({
         type: "goal_completed",
-        sourceId: options.goalId,
+        sourceId: goalCompletionSourceId(options.goalId),
         userId: options.userId,
-        metadata: options.metadata,
+        payload:
+          typeof options.goalsCompleted === "number"
+            ? { goalsCompleted: options.goalsCompleted }
+            : undefined,
+        metadata: {
+          goalId: options.goalId,
+          goalType: options.goalType,
+          goalDifficulty: options.difficulty,
+          ...options.metadata,
+        },
       });
     },
+
 
     /** Escape hatch for any event not covered by a dedicated method. */
     processCustomEvent(event: GamificationEvent): Promise<GamificationResult> {
