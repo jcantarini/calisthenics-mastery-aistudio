@@ -13,6 +13,13 @@ export type XPEventType =
   | "achievement_unlocked"
   | "manual_adjustment";
 
+/**
+ * Effort tiers the XP Engine prices. Structurally identical to the Goals
+ * domain `GoalDifficulty`; declared here so the XP domain owns its own input
+ * contract instead of importing from Goals.
+ */
+export type GoalDifficultyTier = "easy" | "medium" | "hard" | "epic";
+
 /** Payload emitted by producers (services), consumed by the XP engine. */
 export interface XPEvent {
   type: XPEventType;

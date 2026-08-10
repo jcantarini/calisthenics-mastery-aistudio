@@ -118,6 +118,7 @@ export type GamificationMessageKind =
   | "level_up"
   | "achievement"
   | "streak"
+  | "goal"
   | "week"
   | "program"
   | "info";

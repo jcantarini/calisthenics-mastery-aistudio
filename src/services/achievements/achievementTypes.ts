@@ -109,6 +109,8 @@ export interface AchievementEvent {
     /** Current streak length in days. */
     streakDays?: number;
     skill?: SkillSlug;
+    /** Authoritative number of goals completed by the user so far. */
+    goalsCompleted?: number;
     [key: string]: unknown;
   };
 }

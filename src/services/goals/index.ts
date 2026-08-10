@@ -1,6 +1,17 @@
 // Goals domain public entry point.
+// Importing this module registers the Goals -> Gamification wire (Sprint 7.3).
+
+import { registerGoalGamification } from "./goalGamification";
+
+registerGoalGamification();
 
 export { GoalService } from "./GoalService";
+export {
+  createGoalGamificationBridge,
+  isRewardableCompletion,
+  registerGoalGamification,
+} from "./goalGamification";
+export type { GoalGamificationBridge, GoalGamificationPorts } from "./goalGamification";
 export { GoalTrackingService, createGoalTrackingService } from "./GoalTrackingService";
 export type { GoalTrackingServiceInstance } from "./GoalTrackingService";
 export {
@@ -52,6 +63,7 @@ export {
 export type { ValidationResult } from "./goalValidation";
 export { clearGoalListeners, emitGoalEvent, emitGoalEventAsync, onGoalEvent } from "./goalEvents";
 export type {
+  GoalCompletedEvent,
   GoalEvent,
   GoalEventListener,
   GoalEventType,
@@ -59,7 +71,10 @@ export type {
   GoalTrackingSource,
 } from "./goalEvents";
 export {
+  DEFAULT_GOAL_DIFFICULTY,
   GOAL_CATEGORIES,
+  GOAL_DIFFICULTIES,
+  isGoalDifficulty,
   GOAL_PROGRESS_TYPES,
   GOAL_STATUSES,
   GOAL_TYPES,
@@ -70,6 +85,7 @@ export type {
   CreateGoalInput,
   Goal,
   GoalCategory,
+  GoalDifficulty,
   GoalErrorCode,
   GoalMetadata,
   GoalProgress,

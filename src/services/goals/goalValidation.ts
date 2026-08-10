@@ -2,6 +2,7 @@
 
 import {
   GOAL_CATEGORIES,
+  GOAL_DIFFICULTIES,
   GOAL_PROGRESS_TYPES,
   GOAL_TYPES,
   GOAL_UNITS,
@@ -35,6 +36,9 @@ export function validateCreateGoal(input: CreateGoalInput): ValidationResult {
     errors.push("Tipo de progresso inválido.");
   }
   if (!GOAL_UNITS.includes(input.unit)) errors.push("Unidade inválida.");
+  if (input.difficulty !== undefined && !GOAL_DIFFICULTIES.includes(input.difficulty)) {
+    errors.push("Dificuldade da meta inválida.");
+  }
 
   if (!Number.isFinite(input.targetValue) || input.targetValue <= 0) {
     errors.push("O valor alvo precisa ser maior que zero.");
@@ -92,6 +96,9 @@ export function validateUpdateGoal(goal: Goal, patch: UpdateGoalInput): Validati
     } else if (!isUnitAllowed(goal.progressType, patch.unit)) {
       errors.push(`A unidade "${patch.unit}" não é válida para esta meta.`);
     }
+  }
+  if (patch.difficulty !== undefined && !GOAL_DIFFICULTIES.includes(patch.difficulty)) {
+    errors.push("Dificuldade da meta inválida.");
   }
   if (patch.targetDate) {
     if (!isIsoDate(patch.targetDate)) {
