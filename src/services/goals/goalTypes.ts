@@ -67,6 +67,21 @@ export const GOAL_STATUSES = [
 ] as const;
 export type GoalStatus = (typeof GOAL_STATUSES)[number];
 
+/**
+ * Explicit effort tier of a goal (Sprint 7.3). It is NEVER inferred from the
+ * title, description or target value. Goals only declare it; the XP Engine
+ * owns what it is worth.
+ */
+export const GOAL_DIFFICULTIES = ["easy", "medium", "hard", "epic"] as const;
+export type GoalDifficulty = (typeof GOAL_DIFFICULTIES)[number];
+
+/** Safe default for goals created before difficulty existed. */
+export const DEFAULT_GOAL_DIFFICULTY: GoalDifficulty = "medium";
+
+export function isGoalDifficulty(value: unknown): value is GoalDifficulty {
+  return typeof value === "string" && (GOAL_DIFFICULTIES as readonly string[]).includes(value);
+}
+
 /** Free-form context. Typed as unknown values — never `any`. */
 export type GoalMetadata = Record<string, unknown>;
 
@@ -82,6 +97,8 @@ export interface Goal {
   currentValue: number;
   unit: GoalUnit;
   status: GoalStatus;
+  /** Explicit effort tier. Drives Goal completion XP through the XP Engine. */
+  difficulty: GoalDifficulty;
   /** ISO date (yyyy-mm-dd). */
   startDate: string;
   /** ISO date (yyyy-mm-dd) or null when the goal is open-ended. */
@@ -102,6 +119,8 @@ export interface CreateGoalInput {
   currentValue?: number;
   unit: GoalUnit;
   status?: Extract<GoalStatus, "draft" | "active">;
+  /** Defaults to `medium` when the caller does not declare it. */
+  difficulty?: GoalDifficulty;
   startDate?: string;
   targetDate?: string | null;
   metadata?: GoalMetadata;
@@ -114,6 +133,7 @@ export interface UpdateGoalInput {
   description?: string | null;
   targetValue?: number;
   unit?: GoalUnit;
+  difficulty?: GoalDifficulty;
   targetDate?: string | null;
   metadata?: GoalMetadata;
 }
