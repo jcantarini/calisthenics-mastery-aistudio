@@ -652,6 +652,7 @@ export type Database = {
           created_at: string
           current_value: number
           description: string | null
+          difficulty: string
           id: string
           metadata: Json
           progress_type: string
@@ -671,6 +672,7 @@ export type Database = {
           created_at?: string
           current_value?: number
           description?: string | null
+          difficulty?: string
           id?: string
           metadata?: Json
           progress_type: string
@@ -690,6 +692,7 @@ export type Database = {
           created_at?: string
           current_value?: number
           description?: string | null
+          difficulty?: string
           id?: string
           metadata?: Json
           progress_type?: string
