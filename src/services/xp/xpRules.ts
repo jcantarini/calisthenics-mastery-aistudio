@@ -1,6 +1,35 @@
 // XP Engine — pure rules. Deterministic, side-effect free, unit-testable.
 
-import type { XPEvent, XPEventType } from "./xpTypes";
+import type { GoalDifficultyTier, XPEvent, XPEventType } from "./xpTypes";
+
+/**
+ * Goal completion balancing. Centralised here (XP domain) so Goals, the
+ * orchestrator and the UI never contain reward numbers. These are balancing
+ * constants: change them here and every surface follows.
+ */
+export const GOAL_COMPLETION_XP: Record<GoalDifficultyTier, number> = {
+  easy: 50,
+  medium: 100,
+  hard: 200,
+  epic: 400,
+};
+
+export const DEFAULT_GOAL_DIFFICULTY_TIER: GoalDifficultyTier = "medium";
+
+export function isGoalDifficultyTier(value: unknown): value is GoalDifficultyTier {
+  return typeof value === "string" && value in GOAL_COMPLETION_XP;
+}
+
+/** XP awarded when a goal legitimately reaches `completed`. */
+export function goalCompletionXP(difficulty?: unknown): number {
+  const tier = isGoalDifficultyTier(difficulty) ? difficulty : DEFAULT_GOAL_DIFFICULTY_TIER;
+  return GOAL_COMPLETION_XP[tier];
+}
+
+/** Deterministic idempotency reference for goal completion XP. */
+export function goalCompletionSourceId(goalId: string): string {
+  return `goal_completed:${goalId}`;
+}
 
 /** Default reward table. Single source of truth for XP values. */
 export const XP_REWARDS: Record<XPEventType, number> = {
@@ -11,7 +40,7 @@ export const XP_REWARDS: Record<XPEventType, number> = {
   workout_streak: 75,
   week_completed: 250,
   program_completed: 1000,
-  goal_completed: 200,
+  goal_completed: 100, // medium tier; see GOAL_COMPLETION_XP
   achievement_unlocked: 100,
   manual_adjustment: 0,
 };
