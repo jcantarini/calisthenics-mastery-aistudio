@@ -27,6 +27,7 @@ function goal(overrides: Partial<Goal> = {}): Goal {
     currentValue: 0,
     unit: "workouts",
     status: "active",
+    difficulty: "medium",
     startDate: "2026-01-01",
     targetDate: null,
     completedAt: null,
