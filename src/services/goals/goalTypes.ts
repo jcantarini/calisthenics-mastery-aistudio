@@ -67,8 +67,24 @@ export const GOAL_STATUSES = [
 ] as const;
 export type GoalStatus = (typeof GOAL_STATUSES)[number];
 
+/**
+ * Explicit effort tier of a goal (Sprint 7.3). It is NEVER inferred from the
+ * title, description or target value. Goals only declare it; the XP Engine
+ * owns what it is worth.
+ */
+export const GOAL_DIFFICULTIES = ["easy", "medium", "hard", "epic"] as const;
+export type GoalDifficulty = (typeof GOAL_DIFFICULTIES)[number];
+
+/** Safe default for goals created before difficulty existed. */
+export const DEFAULT_GOAL_DIFFICULTY: GoalDifficulty = "medium";
+
+export function isGoalDifficulty(value: unknown): value is GoalDifficulty {
+  return typeof value === "string" && (GOAL_DIFFICULTIES as readonly string[]).includes(value);
+}
+
 /** Free-form context. Typed as unknown values — never `any`. */
 export type GoalMetadata = Record<string, unknown>;
+
 
 export interface Goal {
   id: string;
