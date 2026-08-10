@@ -378,7 +378,7 @@ describe("progression and achievements consequences", () => {
   });
 
   it("an epic goal can trigger multiple level ups", async () => {
-    const { orchestrator } = makeSetup(0);
+    const { orchestrator } = makeSetup(200);
     const result = await orchestrator.processGoalCompleted({ goalId: "g1", difficulty: "epic", userId: USER });
     expect(result.levelsGained).toBeGreaterThan(1);
     expect(result.messages.some((m) => m.key === "gamification.multiLevelUp")).toBe(true);
