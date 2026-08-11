@@ -7,6 +7,20 @@ registerGoalGamification();
 
 export { GoalService } from "./GoalService";
 export {
+  GOAL_REWARDS_ACTIVATED_AT,
+  GOAL_REWARD_RECOVERY_LIMIT,
+  GoalRewardRecoveryService,
+  createGoalRewardRecovery,
+  goalRewardEligibility,
+} from "./GoalRewardRecovery";
+export type {
+  GoalRewardRecoveryEntry,
+  GoalRewardRecoveryInstance,
+  GoalRewardRecoveryPorts,
+  GoalRewardRecoveryReport,
+  GoalRewardSkipReason,
+} from "./GoalRewardRecovery";
+export {
   createGoalGamificationBridge,
   isRewardableCompletion,
   registerGoalGamification,
