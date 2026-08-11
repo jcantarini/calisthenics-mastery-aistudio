@@ -216,11 +216,7 @@ export const XPService = {
    * The XP domain owns idempotency, so reliability layers (e.g. goal reward
    * recovery) ask here instead of querying `xp_history` themselves.
    */
-  async hasProcessedSource(
-    type: XPEventType,
-    sourceId: string,
-    userId?: string,
-  ): Promise<boolean> {
+  async hasProcessedSource(type: XPEventType, sourceId: string, userId?: string): Promise<boolean> {
     const uid = await resolveUserId(userId);
     const { data, error } = await supabase
       .from("xp_history")
