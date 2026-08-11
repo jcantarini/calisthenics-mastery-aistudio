@@ -77,3 +77,17 @@ rules.** It contains no formula, no threshold and no reward table.
 
 UI components read the consolidated result. They never recompute XP, levels or
 unlock conditions for display.
+
+## Goal Reward Recovery (Sprint 7.3B)
+
+Goal completion rewards have a persistent recovery path. If the pipeline is
+interrupted after a goal is persisted as `completed`,
+`GoalRewardRecoveryService.reconcileCompletedGoalRewards(userId)` detects the
+missing execution — the deterministic XP source `goal_completed:<goalId>` is
+absent — and replays `GamificationOrchestrator.processGoalCompleted(...)`.
+
+Guardrails: recovery never writes XP, levels or achievements directly, never
+changes goal state, is bounded (50 most recent completions), and is limited to
+goals completed after the Goals × Gamification activation migration. It adds no
+new reward engine; ownership stays XPService (XP), ProgressionService (levels),
+AchievementService (unlocks). Details: `docs/architecture/goals.md`.
