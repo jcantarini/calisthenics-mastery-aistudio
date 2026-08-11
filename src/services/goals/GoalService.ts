@@ -436,6 +436,7 @@ export const GoalService = {
   getGoals,
   getActiveGoals,
   getCompletedGoals,
+  getRecentCompletedGoals,
   countCompletedGoals,
   updateGoal,
   deleteGoal,
