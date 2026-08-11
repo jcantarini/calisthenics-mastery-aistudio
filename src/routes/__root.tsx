@@ -272,6 +272,7 @@ function RootComponent() {
         <I18nBootstrap>
           <ThemeColorSync />
           <AuthStateSync />
+          <GoalRewardRecoveryHost />
           <WorkoutReminderHost state={state} />
           <SplashScreen />
           <OfflineBanner />
