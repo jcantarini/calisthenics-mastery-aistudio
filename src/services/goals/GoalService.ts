@@ -181,6 +181,25 @@ async function getGoals(query: GoalQuery = {}, userId?: string): Promise<Goal[]>
 const getActiveGoals = (userId?: string) => getGoals({ status: "active" }, userId);
 const getCompletedGoals = (userId?: string) => getGoals({ status: "completed" }, userId);
 
+/**
+ * Bounded list of the most recently completed goals (newest completion first).
+ * Used by the reward reconciliation layer — reliability, not analytics — so the
+ * query is always limited and ordered by the authoritative `completed_at`.
+ */
+async function getRecentCompletedGoals(limit = 50, userId?: string): Promise<Goal[]> {
+  const uid = await resolveUserId(userId);
+  const { data, error } = await supabase
+    .from("user_goals")
+    .select(COLUMNS)
+    .eq("user_id", uid)
+    .eq("status", "completed")
+    .not("completed_at", "is", null)
+    .order("completed_at", { ascending: false })
+    .limit(Math.max(1, Math.trunc(limit)));
+  if (error) fail("getRecentCompletedGoals", error);
+  return (data as GoalRow[]).map(toGoal);
+}
+
 async function updateGoal(goalId: string, patch: UpdateGoalInput, userId?: string): Promise<Goal> {
   const goal = await requireGoal(goalId, userId);
   const validation = validateUpdateGoal(goal, patch);
