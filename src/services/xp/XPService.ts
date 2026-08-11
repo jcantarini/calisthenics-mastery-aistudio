@@ -211,6 +211,24 @@ export const XPService = {
     return ((data ?? []) as HistoryRow[]).map(toEntry);
   },
 
+  /**
+   * Has this deterministic source reference already produced XP?
+   * The XP domain owns idempotency, so reliability layers (e.g. goal reward
+   * recovery) ask here instead of querying `xp_history` themselves.
+   */
+  async hasProcessedSource(type: XPEventType, sourceId: string, userId?: string): Promise<boolean> {
+    const uid = await resolveUserId(userId);
+    const { data, error } = await supabase
+      .from("xp_history")
+      .select("id")
+      .eq("user_id", uid)
+      .eq("event_type", type)
+      .eq("source_id", sourceId)
+      .maybeSingle();
+    if (error) throw error;
+    return Boolean(data);
+  },
+
   /** Ensure a stats row exists (called after onboarding/auth if needed). */
   async ensureStats(userId?: string): Promise<UserXPStats> {
     const uid = await resolveUserId(userId);

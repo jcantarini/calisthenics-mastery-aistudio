@@ -311,3 +311,79 @@ manual completion and automatic tracking travel the same single pipeline.
 `GamificationHost` reuses the shared celebrations for goal completions
 (level-up modal and achievement modals); the dedicated Goals reward screen is
 deferred.
+
+---
+
+# Goal Reward Recovery (Sprint 7.3B)
+
+## Failure scenario
+
+A goal can be persisted as `completed` while the in-memory `goal_completed`
+event never finishes the Gamification pipeline (crash, lost network, app
+closed). The goal stays completed forever, but XP, level and achievement side
+effects never happened.
+
+## Deterministic reward identity
+
+`goal_completed:<goalId>` (`goalCompletionSourceId`, XP domain) is the
+authoritative proof that goal-completion XP ran. No new table, no new column:
+recovery asks the XP domain through `XPService.hasProcessedSource(type,
+sourceId, userId)`.
+
+## Module
+
+`src/services/goals/GoalRewardRecovery.ts` — `createGoalRewardRecovery(ports)`
+(pure, port-driven) plus the live `GoalRewardRecoveryService`, which lazily
+imports GoalService, XPService and the orchestrator.
+
+Public API:
+
+- `reconcileCompletedGoalRewards(userId)` → typed report
+  `{ scanned, alreadyProcessed, recovered, skipped, failed, errors, entries }`
+- `reconcileGoalReward(goalId, userId)` — diagnostics / targeted retry
+- `reconcileSafely(userId)` — fire-and-forget
+
+**GoalRewardRecovery does NOT own rewards.** It only reconciles a missing
+execution of the existing pipeline:
+
+```
+GoalRewardRecovery -> GamificationOrchestrator.processGoalCompleted
+                   -> XPService -> ProgressionService -> AchievementService
+```
+
+It never writes XP, levels or achievements, and never touches goal state
+(no reopen, no re-complete, no rewrite of `completed_at`).
+
+## Eligibility and historical boundary
+
+A goal is reconciled only when `status = completed`, `completed_at` is present,
+`completed_at >= GOAL_REWARDS_ACTIVATED_AT` and the XP source is unprocessed.
+The activation boundary is the Sprint 7.3 migration instant
+(`2026-08-10T19:41:17.000Z`, the `user_goals.difficulty` migration), so goals
+completed before Goals × Gamification existed are never retro-awarded.
+Difficulty is read from persisted state, never recalculated.
+
+## Bounded reconciliation
+
+Newest-first `completed_at` query, `LIMIT 50`
+(`GoalService.getRecentCompletedGoals`). Reliability, not analytics.
+
+## Idempotency, retry and partial failure
+
+Running reconciliation ten times equals running it once: XP idempotency on
+`(user, event_type, source_id)` blocks duplicate XP, hence duplicate level
+history; achievements use the authoritative absolute `goalsCompleted` count.
+Goals are processed sequentially; a failing goal is recorded in `errors` and
+never stops the others, and a later run retries it safely.
+
+## Trigger
+
+One non-blocking React host in `src/routes/__root.tsx` fires the service once
+per authenticated session (initial session, `SIGNED_IN`) and again on the
+`online` event. It never blocks rendering or authentication, and failures are
+logged only. The method is reconnect-safe and can also be called manually.
+
+## Observability
+
+Logs reconciliation start and the final counters (scanned / recovered /
+already processed / skipped / failed). No secrets, no database internals.
