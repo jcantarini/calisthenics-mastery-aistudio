@@ -214,6 +214,46 @@ function AuthStateSync() {
   return null;
 }
 
+/**
+ * Sprint 7.3B — single, non-blocking trigger for goal reward reconciliation.
+ * React only fires the call; all recovery logic lives in the service layer.
+ * Runs once per authenticated session (and on reconnect); failures are silent
+ * for the user and logged for diagnostics.
+ */
+function GoalRewardRecoveryHost() {
+  useEffect(() => {
+    const done = new Set<string>();
+    let disposed = false;
+
+    const run = (userId?: string) => {
+      if (disposed || !userId || done.has(userId)) return;
+      done.add(userId);
+      void import("@/services/goals/GoalRewardRecovery").then(({ GoalRewardRecoveryService }) => {
+        if (!disposed) GoalRewardRecoveryService.reconcileSafely(userId);
+      });
+    };
+
+    void supabase.auth.getSession().then(({ data }) => run(data.session?.user.id));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") done.clear();
+      if (event === "SIGNED_IN") run(session?.user.id);
+    });
+    // Reconnect-safe: the method is idempotent, so a reconnect may re-run it.
+    const onOnline = () => {
+      done.clear();
+      void supabase.auth.getSession().then(({ data }) => run(data.session?.user.id));
+    };
+    window.addEventListener("online", onOnline);
+
+    return () => {
+      disposed = true;
+      window.removeEventListener("online", onOnline);
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+  return null;
+}
+
 function WorkoutReminderHost({ state }: { state: AppState }) {
   const { settings, update } = useWorkoutReminders();
   const { t } = useT();
