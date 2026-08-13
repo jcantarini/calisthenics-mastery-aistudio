@@ -6,13 +6,14 @@ import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { GoalService, buildGoalProgress } from "@/services/goals";
-import type { Goal, GoalProgress } from "@/services/goals";
+import type { CreateGoalInput, Goal, GoalProgress } from "@/services/goals";
 import { useGoalMutations, useGoals } from "@/hooks/useGoals";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { FadeIn } from "@/components/ui/motion";
 import { GoalCard } from "@/components/goals/GoalCard";
+import { GoalCreationWizard } from "@/components/goals/GoalCreationWizard";
 import { GoalDetails } from "@/components/goals/GoalDetails";
 import { GoalsEmptyState } from "@/components/goals/GoalsEmptyState";
 import { GoalsFilters } from "@/components/goals/GoalsFilters";
@@ -72,6 +73,7 @@ function GoalsPage() {
   const { pending, run } = useGoalMutations(reload);
   const [filter, setFilter] = useState<GoalFilter>("active");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   // Canonical progress, computed once per goal by the domain helper.
   const progressById = useMemo(() => {
@@ -109,12 +111,18 @@ function GoalsPage() {
     if (action === "delete" || action === "cancel") setSelectedId(null);
   };
 
+  // Creation goes through GoalService only; the wizard never touches the backend.
+  const handleCreate = async (input: CreateGoalInput): Promise<boolean> => {
+    if (pending) return false;
+    const created = await run(() => GoalService.createGoal(input));
+    if (!created) return false;
+    setFilter("active");
+    toast.success(tg("gl.toast.created"));
+    return true;
+  };
+
   const createCta = (
-    <Button
-      type="button"
-      className="min-h-11 rounded-full"
-      onClick={() => toast.info(tg("gl.createSoon"))}
-    >
+    <Button type="button" className="min-h-11 rounded-full" onClick={() => setWizardOpen(true)}>
       <Plus className="h-4 w-4" aria-hidden />
       {tg("gl.create")}
     </Button>
@@ -169,6 +177,13 @@ function GoalsPage() {
           )}
         </>
       )}
+
+      <GoalCreationWizard
+        open={wizardOpen}
+        pending={pending}
+        onOpenChange={setWizardOpen}
+        onCreate={handleCreate}
+      />
 
       <GoalDetails
         goal={selected}
