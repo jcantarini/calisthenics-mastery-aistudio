@@ -144,33 +144,43 @@ overlap, dialog dismissal during mutation):
 ## 9. Validation commands
 
 ```bash
+bun --version
 bun install --frozen-lockfile
+bunx prettier --check .
 bun run typecheck
 bun run test:run
 bun run lint
 bun run build
 ```
 
-## 10. Results (Sprint 7.5B-P1 run)
+## 10. Results (Sprint 7.5C-A run — automated quality gate closure)
 
 | Check                       | Result                                                                              |
 | --------------------------- | ----------------------------------------------------------------------------------- |
 | Bun                         | 1.3.3                                                                               |
 | `install --frozen-lockfile` | success, no lockfile change                                                         |
+| `prettier --check .`        | pass — "All matched files use Prettier code style!"                                 |
 | `typecheck`                 | 0 errors                                                                            |
 | `test:run`                  | 348 passed / 348 (22 files)                                                         |
-| `lint`                      | 0 errors, 13 warnings                                                               |
+| `lint`                      | exit code 0 — 0 errors, 13 warnings                                                 |
 | `build`                     | client + SSR + Nitro completed, no Rolldown panic                                   |
 | `bun.lock` SHA-256          | `184c717a13a2b402067877f9689afcd83edf96945a9e94f952c73fcb81805058` before and after |
 | Other lockfiles             | none                                                                                |
 | Dependency changes          | none                                                                                |
 | Database / infra            | unchanged                                                                           |
 
+Formatting-only corrections in this run: `AGENTS.md`,
+`docs/architecture/conventions.md`, `src/routes/README.md`, `src/styles.css`.
+The eight files flagged by the external audit already satisfied the project
+Prettier configuration in the current repository state; no source behavior was
+touched, no lint rule was weakened and no suppression comment was added.
+
 ## 11. Known warnings (non-blocking)
 
 - 13 pre-existing `react-refresh/only-export-components` warnings (UI primitives,
-  i18n, theme, PWA providers).
-- Vite chunk-size advisories on large vendor bundles.
+  i18n, theme, PWA providers). Deferred to the Phase 10 code-quality audit.
+- Vite chunk-size advisories on large vendor bundles (> 500 kB).
+- `vite-tsconfig-paths` migration notice and Nitro `inlineDynamicImports` notice.
 - Console noise emitted deliberately by failure-isolation tests.
 
 ## 12. Explicitly out of scope
@@ -190,7 +200,26 @@ migrations; new dependencies; any Phase 8 feature.
 
 ## 14. Final decision
 
-**PARTIALLY VALIDATED.** Every automated gate passes (typecheck, 348 tests,
-lint, build) and the architectural audit found no violation. The manual browser
-UX and accessibility walkthrough of `/metas` could not be executed because of
-the onboarding gate on the preview account (section 8) and remains open.
+**AUTOMATED GATE VALIDATED — MANUAL WALKTHROUGH PENDING.**
+
+Automated validation (Prettier, typecheck, 348 tests, lint with exit code 0,
+build) passes reproducibly on the current repository state, and the
+architectural audit found no violation. CORE ARCHITECTURE v1.0 remains FROZEN.
+
+Manually confirmed by the user so far:
+
+- Goals Home loads
+- Goal Details opens
+- Delete Goal works
+
+Still pending manual browser validation (none of these may be treated as
+complete): Creation Wizard; every Goal template; custom Goal; invalid-field
+correction; filters with real goals in different statuses; pause; resume;
+cancel; duplicate; manual progress; automatic tracking presentation; goal
+completion; XP/reward presentation; Dashboard Goals widget; loading, error and
+empty states; keyboard-only interaction; reduced motion; Portuguese, English and
+Italian; narrow Android viewport; large phone; tablet/desktop; light and dark
+themes.
+
+Phase 7 is therefore **not** fully validated.
+
