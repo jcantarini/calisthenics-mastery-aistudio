@@ -80,7 +80,8 @@ export function GoalCreationWizard({
   const [showIssues, setShowIssues] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [submitError, setSubmitError] = useState(false);
-  const submitting = useRef(false);
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+  const guard = useRef(createSingleFlightGuard());
   const headingRef = useRef<HTMLHeadingElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const targetInputRef = useRef<HTMLInputElement>(null);
