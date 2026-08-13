@@ -79,6 +79,10 @@
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.88 0.24 130);
+  --success: oklch(0.78 0.18 150);
+  --success-foreground: oklch(0.14 0.015 260);
+  --warning: oklch(0.82 0.15 85);
+  --warning-foreground: oklch(0.14 0.015 260);
 }
 
 .light {
@@ -106,6 +110,10 @@
   --border: oklch(0 0 0 / 10%);
   --input: oklch(0 0 0 / 14%);
   --ring: oklch(0.68 0.22 135);
+  --success: oklch(0.55 0.15 150);
+  --success-foreground: oklch(0.98 0.005 100);
+  --warning: oklch(0.62 0.14 80);
+  --warning-foreground: oklch(0.98 0.005 100);
 }
 
 @layer base {
