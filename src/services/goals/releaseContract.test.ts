@@ -576,8 +576,8 @@ describe("release contract — reward", () => {
       log: () => {},
     });
 
-    const first = await recovery.recoverMissingRewards(USER);
-    const second = await recovery.recoverMissingRewards(USER);
+    const first = await recovery.reconcileCompletedGoalRewards(USER);
+    const second = await recovery.reconcileCompletedGoalRewards(USER);
 
     expect(first.recovered).toBe(1);
     expect(second.recovered).toBe(0);
@@ -599,8 +599,8 @@ describe("release contract — reward", () => {
 
     expect(findGoalRewardEntry([entry], "goal-9")).toBe(entry);
     expect(findGoalRewardEntry([entry], "goal-8")).toBeNull();
-    expect(goalRewardState({ entry, loading: false, error: null })).toBe("confirmed");
-    expect(goalRewardState({ entry: null, loading: true, error: null })).toBe("pending");
+    expect(goalRewardState({ entry, loading: false, error: false })).toBe("confirmed");
+    expect(goalRewardState({ entry: null, loading: true, error: false })).toBe("pending");
   });
 });
 
@@ -656,7 +656,7 @@ describe("release contract — UI contracts", () => {
         min: bounds.min,
         max: bounds.max,
         step: bounds.step,
-        integer: Number.isInteger(bounds.step),
+        allowDecimal: !Number.isInteger(bounds.step),
       });
       expect(result.ok, template.id).toBe(true);
     }
