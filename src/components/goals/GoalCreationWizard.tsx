@@ -30,6 +30,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { createSingleFlightGuard } from "./goalSubmissionGuard";
 import { GoalCategoryCard } from "./GoalCategoryCard";
 import { GoalTemplateCard } from "./GoalTemplateCard";
 import { GoalReviewCard } from "./GoalReviewCard";
@@ -80,7 +81,8 @@ export function GoalCreationWizard({
   const [showIssues, setShowIssues] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [submitError, setSubmitError] = useState(false);
-  const submitting = useRef(false);
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+  const guard = useRef(createSingleFlightGuard());
   const headingRef = useRef<HTMLHeadingElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const targetInputRef = useRef<HTMLInputElement>(null);
@@ -97,6 +99,7 @@ export function GoalCreationWizard({
 
   const input = useMemo(() => buildCreateGoalInput(draft, tg, today), [draft, tg, today]);
   const currentStep = STEP_KEYS[step] as StepKey;
+  const effectivePending = pending || localSubmitting;
 
   // Move focus to the step heading so screen readers announce the new step.
   useEffect(() => {
@@ -111,7 +114,7 @@ export function GoalCreationWizard({
   };
 
   const requestClose = () => {
-    if (pending) return;
+    if (effectivePending) return;
     if (draft.category !== null) {
       setConfirmDiscard(true);
       return;
@@ -145,21 +148,28 @@ export function GoalCreationWizard({
   };
 
   const submit = async () => {
-    if (submitting.current || pending || !input) return;
+    if (effectivePending || !input) return;
     if (issues.length > 0 || !validateCreateGoal(input).valid) {
       setShowIssues(true);
       setStep(2);
       return;
     }
-    submitting.current = true;
+    setLocalSubmitting(true);
     setSubmitError(false);
-    const created = await onCreate(input);
-    submitting.current = false;
-    if (created) {
-      onOpenChange(false);
-      reset();
-    } else {
+    try {
+      const created = await guard.current.run(() => onCreate(input));
+      if (created === undefined) return; // another submission is in flight
+      if (created) {
+        onOpenChange(false);
+        reset();
+      } else {
+        setSubmitError(true);
+      }
+    } catch (error) {
+      console.error("[goals] goal creation failed", error);
       setSubmitError(true);
+    } finally {
+      setLocalSubmitting(false);
     }
   };
 
@@ -480,7 +490,7 @@ export function GoalCreationWizard({
               type="button"
               variant="outline"
               className="min-h-11 flex-1 rounded-full"
-              disabled={pending}
+              disabled={effectivePending}
               onClick={step === 0 ? requestClose : goBack}
             >
               {step === 0 ? tg("gl.close") : tg("gl.wizard.prev")}
@@ -489,17 +499,17 @@ export function GoalCreationWizard({
               <Button
                 type="button"
                 className="min-h-11 flex-1 rounded-full"
-                disabled={pending}
+                disabled={effectivePending}
                 onClick={() => void submit()}
               >
-                {pending ? tg("gl.wizard.creating") : tg("gl.wizard.finish")}
+                {effectivePending ? tg("gl.wizard.creating") : tg("gl.wizard.finish")}
               </Button>
             ) : (
               <Button
                 type="button"
                 className="min-h-11 flex-1 rounded-full"
                 onClick={goNext}
-                disabled={pending}
+                disabled={effectivePending}
               >
                 {tg("gl.wizard.next")}
               </Button>
