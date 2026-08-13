@@ -55,7 +55,7 @@ describe("dynamic goals key families", () => {
       `gl.t.${t.id}.q`,
       `gl.t.${t.id}.goal`,
     ]),
-      ...CUSTOM_KINDS.flatMap((k) => [`gl.ck.${k.id}`, `gl.ck.q.${k.id}`]),
+    ...CUSTOM_KINDS.flatMap((k) => [`gl.ck.${k.id}`, `gl.ck.q.${k.id}`]),
     ...GOAL_CATEGORIES.map((c) => `gl.catDesc.${c}`),
     ...GOAL_DIFFICULTIES.map((d) => `gl.diffHint.${d}`),
     ...WIZARD_STEP_KEYS.flatMap((s) => [`gl.wizard.hint.${s}`, `gl.wizard.${s}`]),

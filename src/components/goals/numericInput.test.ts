@@ -127,5 +127,4 @@ describe("step alignment", () => {
     expect(validateNumericInput("999990", b)).toEqual({ ok: true, value: 999990 });
     expect(isStepAligned(1000000, 10, 10)).toBe(true);
   });
-
 });
