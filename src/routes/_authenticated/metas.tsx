@@ -171,7 +171,7 @@ function GoalsPage() {
           onRetry={() => void reload()}
         />
       ) : (
-        <div aria-busy={refreshing}>
+        <div className="space-y-5" aria-busy={refreshing}>
           <p role="status" aria-live="polite" className="sr-only">
             {refreshing ? tg("gl.list.refreshing") : ""}
           </p>
