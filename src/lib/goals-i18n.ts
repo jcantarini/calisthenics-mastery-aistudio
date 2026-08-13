@@ -76,6 +76,7 @@ const pt: Dict = {
   "gl.lastDay": "Último dia",
   "gl.overdue": "Prazo vencido",
 
+  "gl.activate": "Ativar meta",
   "gl.pause": "Pausar",
   "gl.resume": "Retomar",
   "gl.cancel": "Cancelar meta",
@@ -246,6 +247,7 @@ const en: Dict = {
   "gl.lastDay": "Last day",
   "gl.overdue": "Past due",
 
+  "gl.activate": "Start goal",
   "gl.pause": "Pause",
   "gl.resume": "Resume",
   "gl.cancel": "Cancel goal",
@@ -416,6 +418,7 @@ const it: Dict = {
   "gl.lastDay": "Ultimo giorno",
   "gl.overdue": "Scaduto",
 
+  "gl.activate": "Avvia obiettivo",
   "gl.pause": "Metti in pausa",
   "gl.resume": "Riprendi",
   "gl.cancel": "Annulla obiettivo",
@@ -586,6 +589,7 @@ const es: Dict = {
   "gl.lastDay": "Último día",
   "gl.overdue": "Plazo vencido",
 
+  "gl.activate": "Activar meta",
   "gl.pause": "Pausar",
   "gl.resume": "Reanudar",
   "gl.cancel": "Cancelar meta",
@@ -756,6 +760,7 @@ const fr: Dict = {
   "gl.lastDay": "Dernier jour",
   "gl.overdue": "Échéance dépassée",
 
+  "gl.activate": "Démarrer l'objectif",
   "gl.pause": "Mettre en pause",
   "gl.resume": "Reprendre",
   "gl.cancel": "Annuler l'objectif",
