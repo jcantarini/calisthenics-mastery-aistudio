@@ -326,7 +326,37 @@ describe("release contract — creation and lifecycle", () => {
     expect(copy.metadata["duplicatedFrom"]).toBe(goal.id);
     expect((await GoalService.getGoal(goal.id))!.status).toBe("completed");
   });
+
+  it("cancels an active goal once and stays idempotent", async () => {
+    const events = collectEvents();
+    const goal = await createCountGoal();
+
+    const cancelled = await GoalService.cancelGoal(goal.id);
+    expect(cancelled.status).toBe("cancelled");
+    expect((await GoalService.getGoal(goal.id))!.status).toBe("cancelled");
+    expect(events.filter((e) => e.type === "goal_cancelled")).toHaveLength(1);
+
+    const again = await GoalService.cancelGoal(goal.id);
+    expect(again.status).toBe("cancelled");
+    expect(events.filter((e) => e.type === "goal_cancelled")).toHaveLength(1);
+  });
+
+  it("deletes a goal without reopening, completing or duplicating it", async () => {
+    const events = collectEvents();
+    const goal = await createCountGoal();
+
+    await expect(GoalService.deleteGoal(goal.id)).resolves.toBeUndefined();
+
+    expect(await GoalService.getGoal(goal.id)).toBeNull();
+    expect(await GoalService.getGoals(USER)).toHaveLength(0);
+    expect(
+      events.filter(
+        (e) => e.type === "goal_completed" || e.type === "goal_activated" || e.type === "goal_created",
+      ),
+    ).toHaveLength(1); // only the original creation
+  });
 });
+
 
 /* ================= Manual progress ================= */
 
