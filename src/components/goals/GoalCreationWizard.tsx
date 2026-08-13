@@ -496,7 +496,10 @@ export function GoalCreationWizard({
                         role="alert"
                         className="text-xs text-destructive"
                       >
-                        {tg(issueFor("target")!.messageKey)}
+                        {tg(issueFor("target")!.messageKey).replace(
+                          "{step}",
+                          String(bounds.step ?? 1),
+                        )}
                       </p>
                     ) : null}
                   </div>
