@@ -16,6 +16,8 @@ import { FadeIn } from "@/components/ui/motion";
 import { GoalCard } from "@/components/goals/GoalCard";
 import { GoalCreationWizard } from "@/components/goals/GoalCreationWizard";
 import { GoalDetails } from "@/components/goals/GoalDetails";
+import { GoalCompletionRewardDialog } from "@/components/goals/GoalCompletionRewardDialog";
+import { shouldPresentGoalCompletion } from "@/components/dashboard/goalsDashboard";
 import { GoalsEmptyState } from "@/components/goals/GoalsEmptyState";
 import { GoalsFilters } from "@/components/goals/GoalsFilters";
 import { GoalsSkeleton } from "@/components/goals/GoalsSkeleton";
@@ -75,6 +77,8 @@ function GoalsPage() {
   const [filter, setFilter] = useState<GoalFilter>("active");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  // Goal whose completion reward presentation is open (authoritative XP ledger).
+  const [rewardGoal, setRewardGoal] = useState<Goal | null>(null);
 
   // Canonical progress, computed once per goal by the domain helper.
   const progressById = useMemo(() => {
@@ -121,9 +125,12 @@ function GoalsPage() {
       toast.error(tg("gl.error.action"));
       return false;
     }
-    toast.success(
-      tg(updated.status === "completed" ? "gl.toast.goalCompleted" : "gl.toast.progress"),
-    );
+    if (shouldPresentGoalCompletion(updated)) {
+      // The completion dialog is the feedback here — no redundant toast.
+      setRewardGoal(updated);
+      return true;
+    }
+    toast.success(tg("gl.toast.progress"));
     return true;
   };
 
@@ -209,6 +216,12 @@ function GoalsPage() {
         onOpenChange={(open) => !open && setSelectedId(null)}
         onAction={(action, goal) => void handleAction(action, goal)}
         onLogProgress={handleLogProgress}
+      />
+
+      <GoalCompletionRewardDialog
+        goal={rewardGoal}
+        open={rewardGoal !== null}
+        onOpenChange={(open) => !open && setRewardGoal(null)}
       />
     </div>
   );
