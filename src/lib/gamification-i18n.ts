@@ -4,6 +4,7 @@ type Dict = Record<string, string>;
 
 /** Presentation-only strings for the Player Experience (Sprint 6.5). */
 const pt: Dict = {
+  "g.remaining": "Faltam",
   "g.workoutComplete": "Treino concluído!",
   "g.xpEarned": "XP ganho",
   "g.level": "Nível",
@@ -55,6 +56,7 @@ const pt: Dict = {
 };
 
 const en: Dict = {
+  "g.remaining": "Remaining",
   "g.workoutComplete": "Workout complete!",
   "g.xpEarned": "XP earned",
   "g.level": "Level",
@@ -106,6 +108,7 @@ const en: Dict = {
 };
 
 const es: Dict = {
+  "g.remaining": "Restan",
   ...en,
   "g.workoutComplete": "¡Entrenamiento completado!",
   "g.xpEarned": "XP ganado",
@@ -157,6 +160,7 @@ const es: Dict = {
 };
 
 const it: Dict = {
+  "g.remaining": "Mancano",
   ...en,
   "g.workoutComplete": "Allenamento completato!",
   "g.xpEarned": "XP guadagnati",
@@ -208,6 +212,7 @@ const it: Dict = {
 };
 
 const fr: Dict = {
+  "g.remaining": "Restant",
   ...en,
   "g.workoutComplete": "Séance terminée !",
   "g.xpEarned": "XP gagnés",
