@@ -111,6 +111,20 @@ describe("step alignment", () => {
   it("exposes float-safe alignment directly", () => {
     expect(isStepAligned(0.3, 0.1, 0.1)).toBe(true);
     expect(isStepAligned(0.35, 0.1, 0.1)).toBe(false);
-    expect(isStepAligned(1000000.0000001, 0, 1)).toBe(true);
+    expect(isStepAligned(1000000, 0, 1)).toBe(true);
+  });
+
+  it("rejects values that are only nearly aligned", () => {
+    const b = { min: 1, max: 100000, allowDecimal: true, step: 1 };
+    expect(validateNumericInput("999.0005", b)).toMatchObject({ ok: false, issue: "step" });
+    expect(validateNumericInput("10.000005", b)).toMatchObject({ ok: false, issue: "step" });
+    expect(isStepAligned(999.0005, 1, 1)).toBe(false);
+    expect(isStepAligned(10.000005, 1, 1)).toBe(false);
+  });
+
+  it("keeps large aligned values valid", () => {
+    const b = { min: 10, max: 1000000, allowDecimal: false, step: 10 };
+    expect(validateNumericInput("999990", b)).toEqual({ ok: true, value: 999990 });
+    expect(isStepAligned(1000000, 10, 10)).toBe(true);
   });
 });

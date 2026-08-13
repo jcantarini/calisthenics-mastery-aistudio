@@ -13,6 +13,7 @@ import {
   unitLabelKey,
 } from "@/components/goals/goalPresentation";
 import { NUMERIC_ISSUE_KEY } from "@/components/goals/numericInput";
+import { WIZARD_STEP_KEYS } from "@/components/goals/wizardNavigation";
 
 // Intentionally empty: the boolean unit renders no suffix and the boolean
 // custom kind asks no target question.
@@ -54,7 +55,10 @@ describe("dynamic goals key families", () => {
       `gl.t.${t.id}.q`,
       `gl.t.${t.id}.goal`,
     ]),
-    ...CUSTOM_KINDS.map((k) => `gl.ck.${k.id}`),
+    ...CUSTOM_KINDS.flatMap((k) => [`gl.ck.${k.id}`, `gl.ck.q.${k.id}`]),
+    ...GOAL_CATEGORIES.map((c) => `gl.catDesc.${c}`),
+    ...GOAL_DIFFICULTIES.map((d) => `gl.diffHint.${d}`),
+    ...WIZARD_STEP_KEYS.flatMap((s) => [`gl.wizard.hint.${s}`, `gl.wizard.${s}`]),
     ...GOAL_UNITS.filter((u) => u !== "boolean").map(unitLabelKey),
     ...GOAL_DIFFICULTIES.map(difficultyLabelKey),
     ...GOAL_STATUSES.map(statusLabelKey),

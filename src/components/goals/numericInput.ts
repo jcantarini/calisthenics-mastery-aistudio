@@ -51,7 +51,7 @@ export function isStepAligned(value: number, min: number, step: number): boolean
   if (!Number.isFinite(step) || step <= 0) return true;
   const steps = (value - min) / step;
   const nearest = Math.round(steps);
-  const tolerance = 1e-6 * Math.max(1, Math.abs(steps));
+  const tolerance = Math.min(1e-7, Number.EPSILON * Math.max(1, Math.abs(steps)) * 16);
   return Math.abs(steps - nearest) <= tolerance;
 }
 
