@@ -76,6 +76,7 @@ const pt: Dict = {
   "gl.lastDay": "Último dia",
   "gl.overdue": "Prazo vencido",
 
+  "gl.activate": "Ativar meta",
   "gl.pause": "Pausar",
   "gl.resume": "Retomar",
   "gl.cancel": "Cancelar meta",
@@ -148,9 +149,9 @@ const pt: Dict = {
   "gl.dash.none": "Nenhuma meta ativa",
   "gl.dash.noneDesc": "Defina uma meta e acompanhe aqui.",
 
-  "gl.pending": "Em breve automática",
+  "gl.pending": "Acompanhamento pendente",
   "gl.pendingHint":
-    "Vincule esta meta a um exercício para acompanhar sozinho. Por enquanto, o progresso é seu.",
+    "Esta meta ainda não está ligada a uma fonte de atividade. Enquanto não for configurada, o progresso não é atualizado sozinho.",
   "gl.manualNote": "O progresso desta meta é atualizado por você.",
   "gl.autoNote": "Esta meta avança sozinha com seus treinos.",
   "gl.actions": "Ações",
@@ -164,6 +165,7 @@ const pt: Dict = {
   "gl.confirmDelete.desc": "Esta ação é permanente e apaga o histórico da meta.",
   "gl.confirmYes": "Confirmar",
   "gl.keep": "Manter",
+  "gl.toast.activated": "Meta ativada.",
   "gl.toast.paused": "Meta pausada.",
   "gl.toast.resumed": "Meta retomada.",
   "gl.toast.cancelled": "Meta cancelada.",
@@ -245,6 +247,7 @@ const en: Dict = {
   "gl.lastDay": "Last day",
   "gl.overdue": "Past due",
 
+  "gl.activate": "Start goal",
   "gl.pause": "Pause",
   "gl.resume": "Resume",
   "gl.cancel": "Cancel goal",
@@ -317,9 +320,9 @@ const en: Dict = {
   "gl.dash.none": "No active goals",
   "gl.dash.noneDesc": "Set a goal and follow it here.",
 
-  "gl.pending": "Automatic soon",
+  "gl.pending": "Tracking pending",
   "gl.pendingHint":
-    "Link this goal to an exercise to track it automatically. For now, progress is yours to update.",
+    "This goal is not connected to an activity source yet. Until it is set up, progress will not update automatically.",
   "gl.manualNote": "You update the progress of this goal.",
   "gl.autoNote": "This goal moves forward automatically with your workouts.",
   "gl.actions": "Actions",
@@ -333,6 +336,7 @@ const en: Dict = {
   "gl.confirmDelete.desc": "This is permanent and erases the goal history.",
   "gl.confirmYes": "Confirm",
   "gl.keep": "Keep",
+  "gl.toast.activated": "Goal started.",
   "gl.toast.paused": "Goal paused.",
   "gl.toast.resumed": "Goal resumed.",
   "gl.toast.cancelled": "Goal cancelled.",
@@ -414,6 +418,7 @@ const it: Dict = {
   "gl.lastDay": "Ultimo giorno",
   "gl.overdue": "Scaduto",
 
+  "gl.activate": "Avvia obiettivo",
   "gl.pause": "Metti in pausa",
   "gl.resume": "Riprendi",
   "gl.cancel": "Annulla obiettivo",
@@ -486,9 +491,9 @@ const it: Dict = {
   "gl.dash.none": "Nessun obiettivo attivo",
   "gl.dash.noneDesc": "Fissa un obiettivo e seguilo qui.",
 
-  "gl.pending": "Presto automatico",
+  "gl.pending": "Monitoraggio in sospeso",
   "gl.pendingHint":
-    "Collega questo obiettivo a un esercizio per seguirlo da solo. Per ora aggiorni tu.",
+    "Questo obiettivo non è ancora collegato a una fonte di attività. Finché non viene configurato, i progressi non si aggiornano da soli.",
   "gl.manualNote": "I progressi di questo obiettivo li aggiorni tu.",
   "gl.autoNote": "Questo obiettivo avanza da solo con i tuoi allenamenti.",
   "gl.actions": "Azioni",
@@ -502,6 +507,7 @@ const it: Dict = {
   "gl.confirmDelete.desc": "L'azione è definitiva e cancella lo storico.",
   "gl.confirmYes": "Conferma",
   "gl.keep": "Mantieni",
+  "gl.toast.activated": "Obiettivo avviato.",
   "gl.toast.paused": "Obiettivo in pausa.",
   "gl.toast.resumed": "Obiettivo ripreso.",
   "gl.toast.cancelled": "Obiettivo annullato.",
@@ -583,6 +589,7 @@ const es: Dict = {
   "gl.lastDay": "Último día",
   "gl.overdue": "Plazo vencido",
 
+  "gl.activate": "Activar meta",
   "gl.pause": "Pausar",
   "gl.resume": "Reanudar",
   "gl.cancel": "Cancelar meta",
@@ -655,9 +662,9 @@ const es: Dict = {
   "gl.dash.none": "Sin metas activas",
   "gl.dash.noneDesc": "Fija una meta y síguela aquí.",
 
-  "gl.pending": "Pronto automática",
+  "gl.pending": "Seguimiento pendiente",
   "gl.pendingHint":
-    "Vincula esta meta a un ejercicio para seguirla sola. Por ahora, el progreso lo registras tú.",
+    "Esta meta aún no está conectada a una fuente de actividad. Hasta que se configure, el progreso no se actualiza solo.",
   "gl.manualNote": "El progreso de esta meta lo actualizas tú.",
   "gl.autoNote": "Esta meta avanza sola con tus entrenamientos.",
   "gl.actions": "Acciones",
@@ -671,6 +678,7 @@ const es: Dict = {
   "gl.confirmDelete.desc": "Es permanente y borra el historial de la meta.",
   "gl.confirmYes": "Confirmar",
   "gl.keep": "Mantener",
+  "gl.toast.activated": "Meta activada.",
   "gl.toast.paused": "Meta pausada.",
   "gl.toast.resumed": "Meta reanudada.",
   "gl.toast.cancelled": "Meta cancelada.",
@@ -752,6 +760,7 @@ const fr: Dict = {
   "gl.lastDay": "Dernier jour",
   "gl.overdue": "Échéance dépassée",
 
+  "gl.activate": "Démarrer l'objectif",
   "gl.pause": "Mettre en pause",
   "gl.resume": "Reprendre",
   "gl.cancel": "Annuler l'objectif",
@@ -824,9 +833,9 @@ const fr: Dict = {
   "gl.dash.none": "Aucun objectif actif",
   "gl.dash.noneDesc": "Fixez un objectif et suivez-le ici.",
 
-  "gl.pending": "Bientôt automatique",
+  "gl.pending": "Suivi en attente",
   "gl.pendingHint":
-    "Reliez cet objectif à un exercice pour un suivi automatique. Pour l'instant, c'est vous qui mettez à jour.",
+    "Cet objectif n'est pas encore relié à une source d'activité. Tant qu'il n'est pas configuré, la progression ne se met pas à jour toute seule.",
   "gl.manualNote": "C'est vous qui mettez à jour la progression de cet objectif.",
   "gl.autoNote": "Cet objectif avance tout seul avec vos séances.",
   "gl.actions": "Actions",
@@ -840,6 +849,7 @@ const fr: Dict = {
   "gl.confirmDelete.desc": "Action définitive : l'historique est effacé.",
   "gl.confirmYes": "Confirmer",
   "gl.keep": "Garder",
+  "gl.toast.activated": "Objectif démarré.",
   "gl.toast.paused": "Objectif en pause.",
   "gl.toast.resumed": "Objectif repris.",
   "gl.toast.cancelled": "Objectif annulé.",

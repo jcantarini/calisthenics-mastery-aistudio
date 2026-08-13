@@ -49,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/metas")({
 });
 
 const ACTION_RUNNERS: Record<GoalAction, (goalId: string) => Promise<unknown>> = {
+  activate: (id) => GoalService.activateGoal(id),
   pause: (id) => GoalService.pauseGoal(id),
   resume: (id) => GoalService.resumeGoal(id),
   cancel: (id) => GoalService.cancelGoal(id),
@@ -57,6 +58,7 @@ const ACTION_RUNNERS: Record<GoalAction, (goalId: string) => Promise<unknown>> =
 };
 
 const ACTION_TOASTS: Record<GoalAction, string> = {
+  activate: "gl.toast.activated",
   pause: "gl.toast.paused",
   resume: "gl.toast.resumed",
   cancel: "gl.toast.cancelled",
@@ -158,7 +160,7 @@ function GoalsPage() {
                 <li key={goal.id}>
                   <GoalCard
                     goal={goal}
-                    progress={progressById.get(goal.id) ?? buildGoalProgress(goal)}
+                    progress={progressById.get(goal.id) as GoalProgress}
                     onOpen={(g) => setSelectedId(g.id)}
                   />
                 </li>

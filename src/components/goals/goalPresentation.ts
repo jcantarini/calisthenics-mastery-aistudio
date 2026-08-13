@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { Goal, GoalCategory, GoalStatus, GoalUnit } from "@/services/goals";
 import { validateGoalTransition } from "@/services/goals";
+import { goalTrackingMode } from "@/services/goals/goalTrackingCapability";
 
 /* ---------------- Category ---------------- */
 
@@ -183,7 +184,7 @@ export const DIFFICULTY_ICON = Award;
 
 /* ---------------- Lifecycle actions ---------------- */
 
-export type GoalAction = "pause" | "resume" | "cancel" | "duplicate" | "delete";
+export type GoalAction = "activate" | "pause" | "resume" | "cancel" | "duplicate" | "delete";
 
 /**
  * Which actions may be OFFERED for a goal. Availability is decided by the
@@ -194,7 +195,10 @@ export type GoalAction = "pause" | "resume" | "cancel" | "duplicate" | "delete";
 export function availableGoalActions(goal: Pick<Goal, "status">): GoalAction[] {
   const actions: GoalAction[] = [];
   if (validateGoalTransition(goal.status, "paused")) actions.push("pause");
-  if (validateGoalTransition(goal.status, "active")) actions.push("resume");
+  if (validateGoalTransition(goal.status, "active")) {
+    // A draft has never run: starting it is not the same story as resuming.
+    actions.push(goal.status === "draft" ? "activate" : "resume");
+  }
   if (validateGoalTransition(goal.status, "cancelled")) actions.push("cancel");
   if (goal.status === "completed" || goal.status === "cancelled" || goal.status === "expired") {
     actions.push("duplicate");
@@ -235,4 +239,17 @@ export function buildGoalsSummary(
       ? null
       : Math.round(active.reduce((sum, g) => sum + percentageOf(g), 0) / active.length);
   return { active: active.length, completed: completed.length, averageProgress: average };
+}
+
+/* ---------------- Tracking copy ---------------- */
+
+/**
+ * Sentence version of the tracking badge, used in Goal Details where there is
+ * room to explain. The mode itself is decided by the Goals domain.
+ */
+export function goalTrackingHintKey(goal: Pick<Goal, "type" | "metadata">): string {
+  const mode = goalTrackingMode(goal);
+  if (mode === "auto") return "gl.autoNote";
+  if (mode === "pending") return "gl.pendingHint";
+  return "gl.manualNote";
 }
