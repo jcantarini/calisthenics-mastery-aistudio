@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAppState } from "@/lib/store";
 import { useCurrentProgram, useProgramActions } from "@/hooks/useTrainingProgram";
+import { useGoals } from "@/hooks/useGoals";
 import { FadeIn } from "@/components/ui/motion";
 import { GreetingCard } from "@/components/dashboard/GreetingCard";
 import { TodayWorkoutCard } from "@/components/dashboard/TodayWorkoutCard";
@@ -47,6 +48,9 @@ function DashboardPage() {
   const actions = useProgramActions();
   const [app] = useAppState();
   const navigate = useNavigate();
+  // Single Goals data source for the whole dashboard.
+  const { data: goals, loading: goalsLoading, error: goalsError, reload: reloadGoals } = useGoals();
+  const onRetryGoals = useCallback(() => void reloadGoals(), [reloadGoals]);
 
   // Presentation-only aggregation of locally logged sessions.
   const { trainingMinutes, caloriesBurned } = useMemo(() => {
@@ -123,7 +127,12 @@ function DashboardPage() {
         {/* Goals and gamification live outside the training-plan branch so they
             never disappear when no program exists. */}
         <FadeIn delay={0.03}>
-          <GoalsDashboardCard />
+          <GoalsDashboardCard
+            goals={goals}
+            loading={goalsLoading}
+            error={goalsError !== null}
+            onRetry={onRetryGoals}
+          />
         </FadeIn>
 
         <FadeIn delay={0.06}>
@@ -131,7 +140,7 @@ function DashboardPage() {
         </FadeIn>
 
         <FadeIn delay={0.09}>
-          <RecentGoalRewardsCard />
+          <RecentGoalRewardsCard goals={goals} />
         </FadeIn>
 
         {isLoading ? (

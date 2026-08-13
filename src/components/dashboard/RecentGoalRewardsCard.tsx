@@ -1,20 +1,26 @@
 import { memo, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Trophy, Zap } from "lucide-react";
-import { useGoals } from "@/hooks/useGoals";
 import { useXPHistory } from "@/hooks/useXPHistory";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { useT } from "@/lib/i18n";
 import { formatDate } from "@/components/goals/goalPresentation";
 import { DashCard, SectionTitle, actionClasses } from "./primitives";
 import { buildRecentGoalRewards } from "./goalsDashboard";
+import type { Goal } from "@/services/goals/goalTypes";
+
+export interface RecentGoalRewardsCardProps {
+  /** Goals loaded once by the dashboard route; this card never fetches them. */
+  goals: readonly Goal[];
+}
 
 /** Read-only projection of the XP ledger, restricted to goal rewards. */
-export const RecentGoalRewardsCard = memo(function RecentGoalRewardsCard() {
+export const RecentGoalRewardsCard = memo(function RecentGoalRewardsCard({
+  goals,
+}: RecentGoalRewardsCardProps) {
   const { tg } = useGoalsT();
   const { locale } = useT();
   const { data: entries, loading, error, reload } = useXPHistory(50);
-  const { data: goals } = useGoals();
 
   const rewards = useMemo(() => buildRecentGoalRewards(entries, goals, 3), [entries, goals]);
 

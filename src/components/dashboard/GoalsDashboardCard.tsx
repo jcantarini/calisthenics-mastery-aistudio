@@ -1,7 +1,6 @@
 import { memo, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock, Target } from "lucide-react";
-import { useGoals } from "@/hooks/useGoals";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { useT } from "@/lib/i18n";
 import { GoalProgress } from "@/components/goals/GoalProgress";
@@ -9,16 +8,29 @@ import { GoalStatusBadge } from "@/components/goals/GoalStatusBadge";
 import { GoalTrackingBadge } from "@/components/goals/GoalTrackingBadge";
 import { formatDate } from "@/components/goals/goalPresentation";
 import { DashCard, Pill, SectionTitle, actionClasses } from "./primitives";
-import { buildGoalsDashboardModel } from "./goalsDashboard";
+import { buildGoalsDashboardModel, goalCounterLabelKey } from "./goalsDashboard";
+import type { Goal } from "@/services/goals/goalTypes";
+
+export interface GoalsDashboardCardProps {
+  /** Goals owned by the dashboard route; this card never fetches. */
+  goals: readonly Goal[];
+  loading: boolean;
+  error: boolean;
+  onRetry: () => void;
+}
 
 /**
  * Dashboard entry point for the Goals domain. Reads only through the Goals
  * React access layer and renders values the domain already computed.
  */
-export const GoalsDashboardCard = memo(function GoalsDashboardCard() {
+export const GoalsDashboardCard = memo(function GoalsDashboardCard({
+  goals,
+  loading,
+  error,
+  onRetry,
+}: GoalsDashboardCardProps) {
   const { tg } = useGoalsT();
   const { locale } = useT();
-  const { data: goals, loading, error, reload } = useGoals();
 
   // Canonical progress is built exactly once per loaded goal.
   const model = useMemo(() => buildGoalsDashboardModel(goals), [goals]);
@@ -47,7 +59,7 @@ export const GoalsDashboardCard = memo(function GoalsDashboardCard() {
           <p className="text-xs text-muted-foreground">{tg("gl.dash.errorDesc")}</p>
           <button
             type="button"
-            onClick={() => void reload()}
+            onClick={onRetry}
             className={actionClasses("outline")}
             aria-label={tg("gl.dash.retry")}
           >
@@ -93,19 +105,21 @@ export const GoalsDashboardCard = memo(function GoalsDashboardCard() {
           <ul className="flex flex-wrap gap-2">
             <li>
               <Pill tone="primary">
-                {model.counts.active + model.counts.draft} {tg("gl.dash.countActive")}
+                {model.counts.active + model.counts.draft}{" "}
+                {tg(goalCounterLabelKey("active", model.counts.active + model.counts.draft))}
               </Pill>
             </li>
             {model.counts.paused > 0 ? (
               <li>
                 <Pill>
-                  {model.counts.paused} {tg("gl.dash.countPaused")}
+                  {model.counts.paused} {tg(goalCounterLabelKey("paused", model.counts.paused))}
                 </Pill>
               </li>
             ) : null}
             <li>
               <Pill tone="accent">
-                {model.counts.completed} {tg("gl.dash.countCompleted")}
+                {model.counts.completed}{" "}
+                {tg(goalCounterLabelKey("completed", model.counts.completed))}
               </Pill>
             </li>
           </ul>
