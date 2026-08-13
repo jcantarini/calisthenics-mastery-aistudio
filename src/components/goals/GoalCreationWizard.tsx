@@ -114,7 +114,7 @@ export function GoalCreationWizard({
   };
 
   const requestClose = () => {
-    if (pending) return;
+    if (effectivePending) return;
     if (draft.category !== null) {
       setConfirmDiscard(true);
       return;
