@@ -99,6 +99,7 @@ export function GoalCreationWizard({
 
   const input = useMemo(() => buildCreateGoalInput(draft, tg, today), [draft, tg, today]);
   const currentStep = STEP_KEYS[step] as StepKey;
+  const effectivePending = pending || localSubmitting;
 
   // Move focus to the step heading so screen readers announce the new step.
   useEffect(() => {
