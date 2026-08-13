@@ -14,8 +14,9 @@ import {
 } from "@/components/goals/goalPresentation";
 import { NUMERIC_ISSUE_KEY } from "@/components/goals/numericInput";
 
-// The empty label is intentional: the boolean unit renders no suffix.
-const ALLOWED_EMPTY = new Set(["gl.unit.boolean"]);
+// Intentionally empty: the boolean unit renders no suffix and the boolean
+// custom kind asks no target question.
+const ALLOWED_EMPTY = new Set(["gl.unit.boolean", "gl.ck.q.done"]);
 
 const ACTIONS = ["activate", "pause", "resume", "cancel", "duplicate", "delete"] as const;
 
@@ -42,8 +43,11 @@ describe("goals dictionary parity", () => {
 describe("dynamic goals key families", () => {
   const dynamicKeys = [
     ...GOAL_CATEGORIES.map(categoryLabelKey),
-    ...GOAL_TEMPLATES.flatMap((t) => [`gl.t.${t.id}.title`, `gl.t.${t.id}.q`, `gl.t.${t.id}.goal`]),
-    ...CUSTOM_KINDS.flatMap((k) => [`gl.ck.${k.id}`, `gl.ck.q.${k.id}`]),
+    ...GOAL_TEMPLATES.flatMap((t) => [`gl.t.${t.id}.name`,
+      `gl.t.${t.id}.desc`,
+      `gl.t.${t.id}.q`,
+      `gl.t.${t.id}.goal`,]),
+    ...CUSTOM_KINDS.map((k) => `gl.ck.${k.id}`),
     ...GOAL_UNITS.filter((u) => u !== "boolean").map(unitLabelKey),
     ...GOAL_DIFFICULTIES.map(difficultyLabelKey),
     ...GOAL_STATUSES.map(statusLabelKey),
