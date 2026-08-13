@@ -222,4 +222,3 @@ Italian; narrow Android viewport; large phone; tablet/desktop; light and dark
 themes.
 
 Phase 7 is therefore **not** fully validated.
-
