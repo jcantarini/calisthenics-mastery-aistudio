@@ -273,7 +273,7 @@ export const CUSTOM_KINDS: readonly CustomKind[] = [
     units: ["minutes", "seconds"],
     numericTarget: true,
     defaultTarget: 120,
-    minTarget: 1,
+    minTarget: 10,
     maxTarget: 100000,
     step: 10,
   },

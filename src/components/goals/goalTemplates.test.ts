@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validateCreateGoal } from "@/services/goals/goalValidation";
 import { goalTrackingMode } from "@/services/goals/goalTrackingCapability";
+import { isStepAligned } from "./numericInput";
 import {
   CUSTOM_KINDS,
   GOAL_TEMPLATES,
@@ -13,6 +14,7 @@ import {
   selectCategory,
   selectCustomKind,
   selectTemplate,
+  targetBounds,
   templatesForCategory,
   validateDraft,
   type GoalDraft,
@@ -233,5 +235,63 @@ describe("wizard state resets", () => {
     expect(draft.category).toBeNull();
     expect(draft.templateId).toBeNull();
     expect(buildCreateGoalInput(draft, t, TODAY)).toBeNull();
+  });
+});
+
+describe("preset consistency", () => {
+  it("keeps every numeric template default inside bounds and step-aligned", () => {
+    for (const template of GOAL_TEMPLATES) {
+      if (!template.numericTarget) continue;
+      expect(template.defaultTarget, template.id).toBeGreaterThanOrEqual(template.minTarget);
+      expect(template.defaultTarget, template.id).toBeLessThanOrEqual(template.maxTarget);
+      expect(
+        isStepAligned(template.defaultTarget, template.minTarget, template.step),
+        template.id,
+      ).toBe(true);
+    }
+  });
+
+  it("keeps every numeric custom kind default inside bounds and step-aligned", () => {
+    for (const kind of CUSTOM_KINDS) {
+      if (!kind.numericTarget) continue;
+      expect(kind.defaultTarget, kind.id).toBeGreaterThanOrEqual(kind.minTarget);
+      expect(kind.defaultTarget, kind.id).toBeLessThanOrEqual(kind.maxTarget);
+      expect(isStepAligned(kind.defaultTarget, kind.minTarget, kind.step), kind.id).toBe(true);
+    }
+  });
+
+  it("never produces an initially invalid draft", () => {
+    const drafts: [string, GoalDraft][] = [
+      ...GOAL_TEMPLATES.map(
+        (template) =>
+          [template.id, { ...selectTemplate(template), customTitle: "Minha meta" }] as [
+            string,
+            GoalDraft,
+          ],
+      ),
+      ...CUSTOM_KINDS.map(
+        (kind) =>
+          [
+            `custom/${kind.id}`,
+            selectCustomKind({ ...draftFor("custom"), customTitle: "Minha meta" }, kind),
+          ] as [string, GoalDraft],
+      ),
+    ];
+    for (const [id, draft] of drafts) {
+      const bounds = targetBounds(draft);
+      if (bounds.numeric) {
+        expect(draft.target, id).toBeGreaterThanOrEqual(bounds.min);
+        expect(draft.target, id).toBeLessThanOrEqual(bounds.max);
+        expect(isStepAligned(draft.target, bounds.min, bounds.step), id).toBe(true);
+      }
+      expect(validateDraft(draft, TODAY), id).toEqual([]);
+    }
+  });
+
+  it("keeps the custom time preset on a 10-minute grid", () => {
+    const time = findCustomKind("time")!;
+    expect(time.defaultTarget).toBe(120);
+    expect(time.minTarget).toBe(10);
+    expect(time.step).toBe(10);
   });
 });

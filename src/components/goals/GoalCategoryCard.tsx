@@ -2,25 +2,24 @@ import type { GoalCategory } from "@/services/goals/goalTypes";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { cn } from "@/lib/utils";
 import { categoryIcon, categoryLabelKey } from "./goalPresentation";
+import type { RadioOptionProps } from "./GoalRadioGroup";
 
 /** Selectable category card. Selection is announced, never colour-only. */
 export function GoalCategoryCard({
   category,
   selected,
-  onSelect,
+  radioProps,
 }: {
   category: GoalCategory;
   selected: boolean;
-  onSelect: (category: GoalCategory) => void;
+  radioProps: RadioOptionProps;
 }) {
   const { tg } = useGoalsT();
   const Icon = categoryIcon(category);
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={() => onSelect(category)}
+      {...radioProps}
       className={cn(
         "flex min-h-11 w-full items-start gap-3 rounded-2xl border p-3 text-left transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

@@ -44,7 +44,7 @@ export function GoalCompletionRewardDialog({
           <DialogDescription>{tg("gl.rw.desc")}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-3" aria-busy={loading}>
           <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
             <p className="text-sm font-bold leading-tight">{goal.title}</p>
             <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
@@ -70,7 +70,9 @@ export function GoalCompletionRewardDialog({
                 <Hourglass className="h-4 w-4" aria-hidden />
                 {tg("gl.rw.pending")}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">{tg("gl.rw.pendingDesc")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {loading ? tg("gl.rw.checking") : tg("gl.rw.pendingDesc")}
+              </p>
             </div>
           )}
         </div>

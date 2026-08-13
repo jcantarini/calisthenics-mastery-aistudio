@@ -31,6 +31,7 @@ import {
   previewManualProgress,
   validateManualValue,
 } from "./manualProgress";
+import { parseDecimalInput } from "./numericInput";
 
 function trim(value: number): string {
   return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
@@ -123,7 +124,10 @@ export function GoalManualProgress({
   const previewId = `${fieldId}-preview`;
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-background/40 p-3">
+    <div className="rounded-2xl border border-border/60 bg-background/40 p-3" aria-busy={busy}>
+      <p role="status" aria-live="polite" className="sr-only">
+        {busy ? tg("gl.mp.savingStatus") : ""}
+      </p>
       <p className="text-xs text-muted-foreground">
         {tg(isPending ? "gl.mp.pendingNote" : "gl.mp.manualNote")}
       </p>
@@ -183,7 +187,7 @@ export function GoalManualProgress({
                   aria-label={tg("gl.mp.quickAdd")}
                 >
                   {model.quickAdds.map((amount) => {
-                    const selected = raw !== "" && Number(raw) === amount;
+                    const selected = raw !== "" && parseDecimalInput(raw) === amount;
                     return (
                       <button
                         key={amount}

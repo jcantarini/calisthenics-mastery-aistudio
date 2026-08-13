@@ -1,31 +1,55 @@
 // React access layer for the Goals domain.
 // Thin: no goal rules, no completion logic — that lives in GoalService.
+// Resilience (latest-request-wins, unmount safety, keep-data-on-refresh)
+// is modelled by the pure helpers in `asyncResource.ts`.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GoalService } from "@/services/goals";
 import type { Goal, GoalProgress, GoalQuery } from "@/services/goals";
+import {
+  applyFailure,
+  applySuccess,
+  hasBlockingError,
+  initialAsyncState,
+  isStaleResponse,
+  startLoad,
+  type AsyncResourceState,
+} from "./asyncResource";
+import { runMutationFlow } from "./mutationFlow";
 
-interface AsyncState<T> {
+export interface AsyncResult<T> {
   data: T;
   loading: boolean;
+  refreshing: boolean;
   error: Error | null;
+  reload: () => Promise<void>;
 }
 
-function useAsync<T>(loader: () => Promise<T>, initial: T, deps: unknown[]) {
-  const [state, setState] = useState<AsyncState<T>>({
-    data: initial,
-    loading: true,
-    error: null,
-  });
+function useAsync<T>(loader: () => Promise<T>, initial: T, deps: unknown[]): AsyncResult<T> {
+  const [state, setState] = useState<AsyncResourceState<T>>(() => initialAsyncState(initial));
+  const mounted = useRef(true);
+  const requestId = useRef(0);
+  const fallback = useRef(initial);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const run = useCallback(async () => {
-    setState((s) => ({ ...s, loading: true }));
+    const id = ++requestId.current;
+    setState((s) => startLoad(s));
     try {
       const data = await loader();
-      setState({ data, loading: false, error: null });
+      // Drop the response when unmounted or superseded by a newer request.
+      if (!mounted.current || isStaleResponse(id, requestId.current)) return;
+      setState((s) => applySuccess(s, data));
     } catch (error) {
       console.error("[goals] load failed", error);
-      setState({ data: initial, loading: false, error: error as Error });
+      if (!mounted.current || isStaleResponse(id, requestId.current)) return;
+      setState((s) => applyFailure(s, error as Error, fallback.current));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
@@ -34,7 +58,14 @@ function useAsync<T>(loader: () => Promise<T>, initial: T, deps: unknown[]) {
     void run();
   }, [run]);
 
-  return { ...state, reload: run };
+  return {
+    data: state.data,
+    loading: state.loading,
+    refreshing: state.refreshing,
+    // Only a blocking error replaces the screen; refresh failures keep data.
+    error: hasBlockingError(state) ? state.error : null,
+    reload: run,
+  };
 }
 
 export function useGoals(query: GoalQuery = {}) {
@@ -67,26 +98,18 @@ export function useGoalProgress(goalId: string | null) {
   );
 }
 
-/** Mutation state helper so screens don't hand-roll pending/error flags. */
-export function useGoalMutations(onChanged?: () => void) {
+/**
+ * Mutation state helper so screens don't hand-roll pending/error flags.
+ * `onChanged` may be async: `pending` only clears once the awaited reload
+ * settled, so the screen never shows stale data as "idle".
+ */
+export function useGoalMutations(onChanged?: () => void | Promise<void>) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const run = useCallback(
-    async <T>(action: () => Promise<T>): Promise<T | null> => {
-      setPending(true);
-      setError(null);
-      try {
-        const result = await action();
-        onChanged?.();
-        return result;
-      } catch (e) {
-        setError(e as Error);
-        return null;
-      } finally {
-        setPending(false);
-      }
-    },
+    async <T>(action: () => Promise<T>): Promise<T | null> =>
+      runMutationFlow(action, onChanged, setPending, setError),
     [onChanged],
   );
 
