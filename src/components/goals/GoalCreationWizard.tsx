@@ -490,7 +490,7 @@ export function GoalCreationWizard({
               type="button"
               variant="outline"
               className="min-h-11 flex-1 rounded-full"
-              disabled={pending}
+              disabled={effectivePending}
               onClick={step === 0 ? requestClose : goBack}
             >
               {step === 0 ? tg("gl.close") : tg("gl.wizard.prev")}
@@ -499,17 +499,17 @@ export function GoalCreationWizard({
               <Button
                 type="button"
                 className="min-h-11 flex-1 rounded-full"
-                disabled={pending}
+                disabled={effectivePending}
                 onClick={() => void submit()}
               >
-                {pending ? tg("gl.wizard.creating") : tg("gl.wizard.finish")}
+                {effectivePending ? tg("gl.wizard.creating") : tg("gl.wizard.finish")}
               </Button>
             ) : (
               <Button
                 type="button"
                 className="min-h-11 flex-1 rounded-full"
                 onClick={goNext}
-                disabled={pending}
+                disabled={effectivePending}
               >
                 {tg("gl.wizard.next")}
               </Button>
