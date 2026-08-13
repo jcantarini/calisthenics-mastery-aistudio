@@ -132,3 +132,21 @@ export function buildRecentGoalRewards(
 export function shouldPresentGoalCompletion(updated: Pick<Goal, "status"> | null): boolean {
   return updated?.status === "completed";
 }
+
+/* ---------------- Counter labels (presentation only) ---------------- */
+
+export type GoalCounterCategory = "active" | "paused" | "completed";
+
+const COUNTER_KEY_BASE: Record<GoalCounterCategory, string> = {
+  active: "gl.dash.countActive",
+  paused: "gl.dash.countPaused",
+  completed: "gl.dash.countCompleted",
+};
+
+/**
+ * Deterministic singular/plural key selection. Singular only for exactly 1;
+ * 0 and every other value use the plural form.
+ */
+export function goalCounterLabelKey(category: GoalCounterCategory, count: number): string {
+  return `${COUNTER_KEY_BASE[category]}${count === 1 ? "One" : "Other"}`;
+}

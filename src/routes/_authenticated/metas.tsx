@@ -218,11 +218,15 @@ function GoalsPage() {
         onLogProgress={handleLogProgress}
       />
 
-      <GoalCompletionRewardDialog
-        goal={rewardGoal}
-        open={rewardGoal !== null}
-        onOpenChange={(open) => !open && setRewardGoal(null)}
-      />
+      {rewardGoal ? (
+        <GoalCompletionRewardDialog
+          goal={rewardGoal}
+          open
+          onOpenChange={(open) => {
+            if (!open) setRewardGoal(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
