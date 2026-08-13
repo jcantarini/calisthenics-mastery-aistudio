@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Goal, GoalProgress as GoalProgressData } from "@/services/goals";
+import type { GoalProgressSignal } from "@/services/goals/goalEvents";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import { GoalProgress } from "./GoalProgress";
 import { GoalStatusBadge } from "./GoalStatusBadge";
 import { GoalDifficultyBadge } from "./GoalDifficultyBadge";
 import { GoalTrackingBadge } from "./GoalTrackingBadge";
+import { GoalManualProgress } from "./GoalManualProgress";
 import {
   DESTRUCTIVE_ACTIONS,
   actionLabelKey,
@@ -53,6 +55,7 @@ export function GoalDetails({
   pending,
   onOpenChange,
   onAction,
+  onLogProgress,
 }: {
   goal: Goal | null;
   progress: GoalProgressData | null;
@@ -60,6 +63,8 @@ export function GoalDetails({
   pending: boolean;
   onOpenChange: (open: boolean) => void;
   onAction: (action: GoalAction, goal: Goal) => void;
+  /** Resolves true when the manual progress signal was persisted. */
+  onLogProgress: (goal: Goal, signal: GoalProgressSignal) => Promise<boolean>;
 }) {
   const { tg, locale } = useGoalsT();
   const [confirming, setConfirming] = useState<GoalAction | null>(null);
@@ -81,7 +86,7 @@ export function GoalDetails({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
         <SheetContent
           side="bottom"
           closeLabel={tg("gl.close")}
@@ -104,6 +109,12 @@ export function GoalDetails({
             <p className="rounded-2xl bg-muted/40 p-3 text-xs text-muted-foreground">
               {tg(goalTrackingHintKey(goal))}
             </p>
+
+            <GoalManualProgress
+              goal={goal}
+              pending={pending}
+              onSubmit={(signal) => onLogProgress(goal, signal)}
+            />
 
             {goal.description ? (
               <div className="space-y-1">
