@@ -210,7 +210,13 @@ import {
 import { routeForIssues, stepKeyForField } from "@/components/goals/wizardNavigation";
 import { parseDecimalInput, validateNumericInput } from "@/components/goals/numericInput";
 import { runMutationFlow } from "@/hooks/mutationFlow";
-import { applyFailure, applySuccess, initialAsyncState, startLoad } from "@/hooks/asyncResource";
+import {
+  applyFailure,
+  applySuccess,
+  initialAsyncState,
+  isStaleResponse,
+  startLoad,
+} from "@/hooks/asyncResource";
 import { GOALS_DICTS, GOALS_LOCALES } from "@/lib/goals-i18n";
 import { findGoalRewardEntry, goalRewardState } from "@/components/dashboard/goalsDashboard";
 
@@ -348,7 +354,7 @@ describe("release contract — creation and lifecycle", () => {
     await expect(GoalService.deleteGoal(goal.id)).resolves.toBeUndefined();
 
     expect(await GoalService.getGoal(goal.id)).toBeNull();
-    expect(await GoalService.getGoals({ userId: USER })).toHaveLength(0);
+    expect(await GoalService.getGoals({}, USER)).toHaveLength(0);
     expect(
       events.filter(
         (e) => e.type === "goal_completed" || e.type === "goal_activated" || e.type === "goal_created",
