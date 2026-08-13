@@ -72,7 +72,10 @@ function dayNumber(iso: string): number {
 }
 
 /** Days between today and the target date. `null` when the goal is open-ended. */
-export function deadlineInfo(targetDate: string | null, today: Date = new Date()): DeadlineInfo | null {
+export function deadlineInfo(
+  targetDate: string | null,
+  today: Date = new Date(),
+): DeadlineInfo | null {
   if (!targetDate) return null;
   const todayIso = today.toISOString().slice(0, 10);
   const daysLeft = dayNumber(targetDate) - dayNumber(todayIso);
@@ -83,9 +86,11 @@ export function formatDate(iso: string | null, locale: string): string {
   if (!iso) return "—";
   const date = new Date(iso.length <= 10 ? `${iso}T00:00:00` : iso);
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", year: "numeric" }).format(
-    date,
-  );
+  return new Intl.DateTimeFormat(locale, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 /* ---------------- Values ---------------- */

@@ -149,7 +149,8 @@ const pt: Dict = {
   "gl.dash.noneDesc": "Defina uma meta e acompanhe aqui.",
 
   "gl.pending": "Em breve automática",
-  "gl.pendingHint": "Vincule esta meta a um exercício para acompanhar sozinho. Por enquanto, o progresso é seu.",
+  "gl.pendingHint":
+    "Vincule esta meta a um exercício para acompanhar sozinho. Por enquanto, o progresso é seu.",
   "gl.manualNote": "O progresso desta meta é atualizado por você.",
   "gl.autoNote": "Esta meta avança sozinha com seus treinos.",
   "gl.actions": "Ações",
@@ -317,7 +318,8 @@ const en: Dict = {
   "gl.dash.noneDesc": "Set a goal and follow it here.",
 
   "gl.pending": "Automatic soon",
-  "gl.pendingHint": "Link this goal to an exercise to track it automatically. For now, progress is yours to update.",
+  "gl.pendingHint":
+    "Link this goal to an exercise to track it automatically. For now, progress is yours to update.",
   "gl.manualNote": "You update the progress of this goal.",
   "gl.autoNote": "This goal moves forward automatically with your workouts.",
   "gl.actions": "Actions",
@@ -485,7 +487,8 @@ const it: Dict = {
   "gl.dash.noneDesc": "Fissa un obiettivo e seguilo qui.",
 
   "gl.pending": "Presto automatico",
-  "gl.pendingHint": "Collega questo obiettivo a un esercizio per seguirlo da solo. Per ora aggiorni tu.",
+  "gl.pendingHint":
+    "Collega questo obiettivo a un esercizio per seguirlo da solo. Per ora aggiorni tu.",
   "gl.manualNote": "I progressi di questo obiettivo li aggiorni tu.",
   "gl.autoNote": "Questo obiettivo avanza da solo con i tuoi allenamenti.",
   "gl.actions": "Azioni",
@@ -653,7 +656,8 @@ const es: Dict = {
   "gl.dash.noneDesc": "Fija una meta y síguela aquí.",
 
   "gl.pending": "Pronto automática",
-  "gl.pendingHint": "Vincula esta meta a un ejercicio para seguirla sola. Por ahora, el progreso lo registras tú.",
+  "gl.pendingHint":
+    "Vincula esta meta a un ejercicio para seguirla sola. Por ahora, el progreso lo registras tú.",
   "gl.manualNote": "El progreso de esta meta lo actualizas tú.",
   "gl.autoNote": "Esta meta avanza sola con tus entrenamientos.",
   "gl.actions": "Acciones",
@@ -821,7 +825,8 @@ const fr: Dict = {
   "gl.dash.noneDesc": "Fixez un objectif et suivez-le ici.",
 
   "gl.pending": "Bientôt automatique",
-  "gl.pendingHint": "Reliez cet objectif à un exercice pour un suivi automatique. Pour l'instant, c'est vous qui mettez à jour.",
+  "gl.pendingHint":
+    "Reliez cet objectif à un exercice pour un suivi automatique. Pour l'instant, c'est vous qui mettez à jour.",
   "gl.manualNote": "C'est vous qui mettez à jour la progression de cet objectif.",
   "gl.autoNote": "Cet objectif avance tout seul avec vos séances.",
   "gl.actions": "Actions",

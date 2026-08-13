@@ -41,9 +41,7 @@ export function GoalsFilters({
             )}
           >
             {tg(filterLabelKey(filter))}
-            {counts ? (
-              <span className="tabular-nums opacity-80">{counts[filter]}</span>
-            ) : null}
+            {counts ? <span className="tabular-nums opacity-80">{counts[filter]}</span> : null}
           </button>
         );
       })}

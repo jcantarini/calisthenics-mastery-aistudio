@@ -28,7 +28,6 @@ export function GoalCard({
   const deadline = deadlineInfo(goal.targetDate);
   const completed = goal.status === "completed";
 
-
   const deadlineText = (() => {
     if (completed) return `${tg("gl.completedAt")} ${formatDate(goal.completedAt, locale)}`;
     if (!deadline) return tg("gl.noDeadline");

@@ -3,15 +3,7 @@ import { useGoalsT } from "@/lib/goals-i18n";
 import { DashCard } from "@/components/dashboard/primitives";
 import type { GoalsSummaryData } from "./goalPresentation";
 
-function Tile({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-}) {
+function Tile({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
     <div className="min-w-0 flex-1 text-center">
       <div className="mx-auto mb-1 grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary">

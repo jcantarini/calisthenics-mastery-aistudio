@@ -121,6 +121,8 @@ describe("buildGoalsSummary", () => {
   });
 
   it("omits the average when nothing is active", () => {
-    expect(buildGoalsSummary([goal({ status: "completed" })], () => 100).averageProgress).toBeNull();
+    expect(
+      buildGoalsSummary([goal({ status: "completed" })], () => 100).averageProgress,
+    ).toBeNull();
   });
 });

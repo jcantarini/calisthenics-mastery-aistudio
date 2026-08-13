@@ -12,7 +12,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { GoalProgress } from "./GoalProgress";
 import { GoalStatusBadge } from "./GoalStatusBadge";
 import { GoalDifficultyBadge } from "./GoalDifficultyBadge";
@@ -107,10 +113,7 @@ export function GoalDetails({
             ) : null}
 
             <dl>
-              <Row
-                label={tg("gl.target")}
-                value={`${goal.targetValue}${unit ? ` ${unit}` : ""}`}
-              />
+              <Row label={tg("gl.target")} value={`${goal.targetValue}${unit ? ` ${unit}` : ""}`} />
               <Row label={tg("gl.startDate")} value={formatDate(goal.startDate, locale)} />
               <Row
                 label={tg("gl.targetDate")}
@@ -145,10 +148,7 @@ export function GoalDetails({
         </SheetContent>
       </Sheet>
 
-      <AlertDialog
-        open={confirming !== null}
-        onOpenChange={(next) => !next && setConfirming(null)}
-      >
+      <AlertDialog open={confirming !== null} onOpenChange={(next) => !next && setConfirming(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{tg(`${confirmKey}.title`)}</AlertDialogTitle>
