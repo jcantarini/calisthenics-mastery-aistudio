@@ -357,12 +357,12 @@ describe("release contract — creation and lifecycle", () => {
     expect(await GoalService.getGoals({}, USER)).toHaveLength(0);
     expect(
       events.filter(
-        (e) => e.type === "goal_completed" || e.type === "goal_activated" || e.type === "goal_created",
+        (e) =>
+          e.type === "goal_completed" || e.type === "goal_activated" || e.type === "goal_created",
       ),
     ).toHaveLength(1); // only the original creation
   });
 });
-
 
 /* ================= Manual progress ================= */
 
@@ -761,9 +761,7 @@ describe("release contract — UI contracts", () => {
     const requestA = ++latestId; // superseded
     const requestB = ++latestId; // current
 
-    const slowOld = new Promise<string[]>((resolve) =>
-      setTimeout(() => resolve(["stale-a"]), 10),
-    );
+    const slowOld = new Promise<string[]>((resolve) => setTimeout(() => resolve(["stale-a"]), 10));
     const fastCurrent = Promise.resolve(["fresh-b"]);
 
     const apply = (id: number, data: string[]) => {
@@ -779,7 +777,6 @@ describe("release contract — UI contracts", () => {
     expect(isStaleResponse(requestB, latestId)).toBe(false);
     expect(state.data).toEqual(["fresh-b"]);
   });
-
 
   it("exposes a truthful tracking mode for every goal type used by templates", () => {
     for (const template of GOAL_TEMPLATES) {
