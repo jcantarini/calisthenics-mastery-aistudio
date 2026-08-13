@@ -61,7 +61,6 @@ export function SectionTitle({
   );
 }
 
-
 /** Rounded icon tile — one size, one radius, used by every card header. */
 export function CardIcon({
   children,

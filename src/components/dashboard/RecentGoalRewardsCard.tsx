@@ -38,7 +38,6 @@ export const RecentGoalRewardsCard = memo(function RecentGoalRewardsCard({
         {tg("gl.rw.recent")}
       </SectionTitle>
 
-
       {loading ? (
         <div className="mt-4 space-y-2" role="status" aria-live="polite">
           <span className="sr-only">{tg("gl.rw.loading")}</span>
