@@ -30,6 +30,18 @@ bun install
 bun run dev        # http://localhost:8080
 ```
 
+## Dependency management
+
+- **Bun is the required package manager** for this repository (`packageManager: bun@1.3.3`).
+- `bun.lock` is the **sole authoritative lockfile**.
+- Install dependencies with `bun install --frozen-lockfile`.
+- Add, remove or upgrade dependencies with Bun (`bun add`, `bun remove`) only.
+- npm, Yarn and pnpm must **not** be used to install or update dependencies here; no
+  `package-lock.json`, `yarn.lock` or `pnpm-lock.yaml` may be committed.
+- `npm run <script>` may technically invoke an existing script, but validation and all
+  documented workflows use `bun run`.
+
+
 ## Environment configuration
 
 Client-side configuration is read from `import.meta.env` and must use the
