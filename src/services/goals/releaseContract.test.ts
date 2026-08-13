@@ -348,7 +348,7 @@ describe("release contract — creation and lifecycle", () => {
     await expect(GoalService.deleteGoal(goal.id)).resolves.toBeUndefined();
 
     expect(await GoalService.getGoal(goal.id)).toBeNull();
-    expect(await GoalService.getGoals(USER)).toHaveLength(0);
+    expect(await GoalService.getGoals({ userId: USER })).toHaveLength(0);
     expect(
       events.filter(
         (e) => e.type === "goal_completed" || e.type === "goal_activated" || e.type === "goal_created",
@@ -511,7 +511,7 @@ describe("release contract — automatic tracking", () => {
     expect((await GoalService.getGoal(goal.id))!.currentValue).toBe(1);
   });
 
-  it("a tracking failure never breaks workout completion", async () => {
+  it("a ledger failure is contained in the typed tracking result", async () => {
     await createCountGoal();
     const broken: GoalTrackingLedgerPort = {
       async claim() {
