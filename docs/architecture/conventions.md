@@ -60,7 +60,6 @@ Reviewed in Sprint 6.6B. Not every query needs a service.
   lockfile, installs use `bun install --frozen-lockfile`, and dependency changes are
   made with Bun. npm, Yarn and pnpm must not install or update dependencies here.
 
-
 ## Commands
 
 ```bash
