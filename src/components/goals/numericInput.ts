@@ -16,7 +16,7 @@ export function parseDecimalInput(raw: string | number): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-export type NumericIssue = "required" | "invalid" | "integer" | "min" | "max";
+export type NumericIssue = "required" | "invalid" | "integer" | "min" | "max" | "step";
 
 export const NUMERIC_ISSUE_KEY: Record<NumericIssue, string> = {
   required: "gl.err.num.required",
@@ -24,12 +24,15 @@ export const NUMERIC_ISSUE_KEY: Record<NumericIssue, string> = {
   integer: "gl.err.num.integer",
   min: "gl.err.num.min",
   max: "gl.err.num.max",
+  step: "gl.err.num.step",
 };
 
 export interface NumericBounds {
   min: number;
   max: number;
   allowDecimal: boolean;
+  /** Optional increment: values must sit on `min + k * step`. */
+  step?: number;
 }
 
 export type NumericValidation =
@@ -38,6 +41,18 @@ export type NumericValidation =
 
 function fail(issue: NumericIssue): NumericValidation {
   return { ok: false, issue, messageKey: NUMERIC_ISSUE_KEY[issue] };
+}
+
+/**
+ * Step alignment with float-safe tolerance: decimal steps such as 0.1 cannot
+ * be checked with a naive modulo (0.3 % 0.1 !== 0 in IEEE-754).
+ */
+export function isStepAligned(value: number, min: number, step: number): boolean {
+  if (!Number.isFinite(step) || step <= 0) return true;
+  const steps = (value - min) / step;
+  const nearest = Math.round(steps);
+  const tolerance = 1e-6 * Math.max(1, Math.abs(steps));
+  return Math.abs(steps - nearest) <= tolerance;
 }
 
 /** Validates a raw target/progress value against presentation bounds. */
@@ -51,6 +66,9 @@ export function validateNumericInput(
   if (!bounds.allowDecimal && !Number.isInteger(value)) return fail("integer");
   if (value < bounds.min) return fail("min");
   if (value > bounds.max) return fail("max");
+  if (bounds.step !== undefined && !isStepAligned(value, bounds.min, bounds.step)) {
+    return fail("step");
+  }
   return { ok: true, value };
 }
 

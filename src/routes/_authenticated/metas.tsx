@@ -72,7 +72,7 @@ const ACTION_TOASTS: Record<GoalAction, string> = {
 
 function GoalsPage() {
   const { tg } = useGoalsT();
-  const { data: goals, loading, error, reload } = useGoals();
+  const { data: goals, loading, refreshing, error, reload } = useGoals();
   const { pending, run } = useGoalMutations(reload);
   const [filter, setFilter] = useState<GoalFilter>("active");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -171,7 +171,10 @@ function GoalsPage() {
           onRetry={() => void reload()}
         />
       ) : (
-        <>
+        <div className="space-y-5" aria-busy={refreshing}>
+          <p role="status" aria-live="polite" className="sr-only">
+            {refreshing ? tg("gl.list.refreshing") : ""}
+          </p>
           {goals.length > 0 ? (
             <FadeIn>
               <GoalsSummary summary={summary} />
@@ -198,7 +201,7 @@ function GoalsPage() {
               ))}
             </ul>
           )}
-        </>
+        </div>
       )}
 
       <GoalCreationWizard

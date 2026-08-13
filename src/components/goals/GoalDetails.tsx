@@ -97,7 +97,10 @@ export function GoalDetails({
             <SheetDescription>{tg(categoryLabelKey(goal.category))}</SheetDescription>
           </SheetHeader>
 
-          <div className="mt-4 space-y-5">
+          <div className="mt-4 space-y-5" aria-busy={pending}>
+            <p role="status" aria-live="polite" className="sr-only">
+              {pending ? tg("gl.details.working") : ""}
+            </p>
             <div className="flex flex-wrap items-center gap-2">
               <GoalStatusBadge status={goal.status} />
               <GoalTrackingBadge goal={goal} />

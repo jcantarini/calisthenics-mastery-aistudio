@@ -1,9 +1,7 @@
 import { useT, type Locale } from "@/lib/i18n";
 
-type Dict = Record<string, string>;
-
 /** Presentation-only strings for the Goals experience (Sprint 7.4). */
-const pt: Dict = {
+const pt = {
   "gl.title": "Metas",
   "gl.subtitle": "Defina alvos claros e acompanhe sua evolução.",
   "gl.create": "Criar meta",
@@ -323,9 +321,20 @@ const pt: Dict = {
   "gl.rw.recentError": "N\u00e3o foi poss\u00edvel carregar as recompensas.",
   "gl.rw.generic": "Recompensa de meta",
   "gl.rw.loading": "Carregando recompensas\u2026",
+
+  "gl.err.num.step": "Use um valor em passos de {step}.",
+  "gl.list.refreshing": "Atualizando metas…",
+  "gl.mp.savingStatus": "Salvando progresso…",
+  "gl.details.working": "Processando ação…",
+  "gl.rw.checking": "Verificando recompensa…",
 };
 
-const en: Dict = {
+/** Canonical Goals key set: the PT dictionary is the source of truth. */
+export type GoalsKey = keyof typeof pt;
+
+export const GOALS_LOCALES = ["pt", "en", "it", "es", "fr"] as const;
+
+const en = {
   "gl.title": "Goals",
   "gl.subtitle": "Set clear targets and track your progress.",
   "gl.create": "Create goal",
@@ -643,9 +652,15 @@ const en: Dict = {
   "gl.rw.recentError": "We could not load the rewards.",
   "gl.rw.generic": "Goal reward",
   "gl.rw.loading": "Loading rewards\u2026",
-};
 
-const it: Dict = {
+  "gl.err.num.step": "Use a value in steps of {step}.",
+  "gl.list.refreshing": "Updating goals…",
+  "gl.mp.savingStatus": "Saving progress…",
+  "gl.details.working": "Processing action…",
+  "gl.rw.checking": "Checking reward…",
+} satisfies Record<GoalsKey, string>;
+
+const it = {
   "gl.title": "Obiettivi",
   "gl.subtitle": "Fissa traguardi chiari e segui i progressi.",
   "gl.create": "Crea obiettivo",
@@ -964,9 +979,15 @@ const it: Dict = {
   "gl.rw.recentError": "Non \u00e8 stato possibile caricare le ricompense.",
   "gl.rw.generic": "Ricompensa obiettivo",
   "gl.rw.loading": "Caricamento ricompense\u2026",
-};
 
-const es: Dict = {
+  "gl.err.num.step": "Usa un valore a passi di {step}.",
+  "gl.list.refreshing": "Aggiornamento obiettivi…",
+  "gl.mp.savingStatus": "Salvataggio progressi…",
+  "gl.details.working": "Elaborazione azione…",
+  "gl.rw.checking": "Verifica ricompensa…",
+} satisfies Record<GoalsKey, string>;
+
+const es = {
   "gl.title": "Metas",
   "gl.subtitle": "Fija objetivos claros y sigue tu evolución.",
   "gl.create": "Crear meta",
@@ -1285,9 +1306,15 @@ const es: Dict = {
   "gl.rw.recentError": "No se pudieron cargar las recompensas.",
   "gl.rw.generic": "Recompensa de meta",
   "gl.rw.loading": "Cargando recompensas\u2026",
-};
 
-const fr: Dict = {
+  "gl.err.num.step": "Usa un valor en pasos de {step}.",
+  "gl.list.refreshing": "Actualizando metas…",
+  "gl.mp.savingStatus": "Guardando progreso…",
+  "gl.details.working": "Procesando acción…",
+  "gl.rw.checking": "Verificando recompensa…",
+} satisfies Record<GoalsKey, string>;
+
+const fr = {
   "gl.title": "Objectifs",
   "gl.subtitle": "Fixez des cibles claires et suivez vos progrès.",
   "gl.create": "Créer un objectif",
@@ -1606,12 +1633,21 @@ const fr: Dict = {
   "gl.rw.recentError": "Impossible de charger les r\u00e9compenses.",
   "gl.rw.generic": "R\u00e9compense d'objectif",
   "gl.rw.loading": "Chargement des r\u00e9compenses\u2026",
-};
 
-const DICTS: Record<Locale, Dict> = { pt, en, it, es, fr };
+  "gl.err.num.step": "Utilisez une valeur par pas de {step}.",
+  "gl.list.refreshing": "Mise à jour des objectifs…",
+  "gl.mp.savingStatus": "Enregistrement en cours…",
+  "gl.details.working": "Action en cours…",
+  "gl.rw.checking": "Vérification de la récompense…",
+} satisfies Record<GoalsKey, string>;
+
+const DICTS: Record<Locale, Record<GoalsKey, string>> = { pt, en, it, es, fr };
+
+export const GOALS_DICTS = DICTS;
 
 export function tGoals(locale: Locale, key: string): string {
-  return DICTS[locale]?.[key] ?? pt[key] ?? key;
+  const dict = DICTS[locale] as Record<string, string> | undefined;
+  return dict?.[key] ?? (pt as Record<string, string>)[key] ?? key;
 }
 
 /** Hook wrapper so components never import dictionaries directly. */
