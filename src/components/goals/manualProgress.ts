@@ -8,6 +8,7 @@ import type { GoalProgressSignal } from "@/services/goals/goalEvents";
 import { foldProgress, isGoalCompleted } from "@/services/goals/goalRules";
 import { goalTrackingMode } from "@/services/goals/goalTrackingCapability";
 import type { Goal, GoalProgressType, GoalUnit } from "@/services/goals/goalTypes";
+import { parseDecimalInput } from "./numericInput";
 
 export type ManualSignalMode = "increment" | "set";
 export type ManualInputKind = "numeric" | "boolean";
