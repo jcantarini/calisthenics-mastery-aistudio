@@ -56,6 +56,10 @@ Reviewed in Sprint 6.6B. Not every query needs a service.
 - Server-only code lives in `*.server.ts` (bundler-enforced) or inside a
   `createServerFn` handler. Never import `client.server.ts` from client code.
 - Formatting is enforced by Prettier through ESLint (`bun run lint`).
+- Bun is the only canonical package manager: `bun.lock` is the sole authoritative
+  lockfile, installs use `bun install --frozen-lockfile`, and dependency changes are
+  made with Bun. npm, Yarn and pnpm must not install or update dependencies here.
+
 
 ## Commands
 
