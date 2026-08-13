@@ -360,11 +360,19 @@ describe("release contract — manual progress", () => {
   });
 
   it("does not offer manual progress for non-eligible goals", async () => {
-    const goal = await createCountGoal();
-    const completed = await GoalService.completeGoal(goal.id);
+    // Auto-tracked goals never expose manual controls.
+    const auto = await createCountGoal();
+    expect(isManualProgressEligible(auto)).toBe(false);
+
+    const manual = await createCountGoal({
+      type: "custom",
+      category: "custom",
+      title: "Meditar 10 vezes",
+    });
+    expect(isManualProgressEligible(manual)).toBe(true);
+    expect(isManualProgressEligible({ ...manual, status: "paused" })).toBe(false);
+    const completed = await GoalService.completeGoal(manual.id);
     expect(isManualProgressEligible(completed)).toBe(false);
-    expect(isManualProgressEligible({ ...goal, status: "paused" })).toBe(false);
-    expect(isManualProgressEligible(goal)).toBe(true);
   });
 
   it("a completed goal refuses further progress", async () => {
@@ -633,14 +641,21 @@ describe("release contract — UI contracts", () => {
   });
 
   it("wizard routes each invalid field to its own step", () => {
-    expect(stepKeyForField("title")).toBe("tune");
+    // Title and target are edited on the target step; the deadline on tune.
+    expect(stepKeyForField("title")).toBe("target");
     expect(stepKeyForField("target")).toBe("target");
     expect(stepKeyForField("deadline")).toBe("tune");
+    expect(routeForIssues([])).toBeNull();
+
+    // Field priority: title first, then target, then deadline.
     const route = routeForIssues([
       { field: "deadline", messageKey: "gl.err.deadline" },
-      { field: "target", messageKey: "gl.err.target" },
+      { field: "title", messageKey: "gl.err.title" },
     ]);
-    expect(route?.field).toBe("deadline");
+    expect(route).toEqual({ step: 2, field: "title" });
+    expect(
+      routeForIssues([{ field: "deadline", messageKey: "gl.err.deadline" }]),
+    ).toEqual({ step: 3, field: "deadline" });
   });
 
   it("the numeric parser accepts comma and period and enforces the preset grid", () => {
