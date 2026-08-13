@@ -183,7 +183,7 @@ export function GoalManualProgress({
                   aria-label={tg("gl.mp.quickAdd")}
                 >
                   {model.quickAdds.map((amount) => {
-                    const selected = raw !== "" && Number(raw) === amount;
+                    const selected = raw !== "" && parseDecimalInput(raw) === amount;
                     return (
                       <button
                         key={amount}
