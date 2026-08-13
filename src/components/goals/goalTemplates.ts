@@ -358,7 +358,7 @@ export function selectCategory(draft: GoalDraft, category: GoalCategory): GoalDr
 }
 
 /** Selecting a template resets the target/difficulty to that template's defaults. */
-export function selectTemplate(draft: GoalDraft, template: GoalTemplate): GoalDraft {
+export function selectTemplate(template: GoalTemplate): GoalDraft {
   const base = emptyDraft();
   return {
     ...base,
