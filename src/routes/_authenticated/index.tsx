@@ -11,6 +11,8 @@ import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingWorkoutCard } from "@/components/dashboard/UpcomingWorkoutCard";
 import { StatisticsCard, MotivationCard } from "@/components/dashboard/StatisticsCard";
 import { PlayerLevelCard } from "@/components/dashboard/PlayerLevelCard";
+import { GoalsDashboardCard } from "@/components/dashboard/GoalsDashboardCard";
+import { RecentGoalRewardsCard } from "@/components/dashboard/RecentGoalRewardsCard";
 
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import {
@@ -118,6 +120,20 @@ function DashboardPage() {
           />
         </FadeIn>
 
+        {/* Goals and gamification live outside the training-plan branch so they
+            never disappear when no program exists. */}
+        <FadeIn delay={0.03}>
+          <GoalsDashboardCard />
+        </FadeIn>
+
+        <FadeIn delay={0.06}>
+          <PlayerLevelCard />
+        </FadeIn>
+
+        <FadeIn delay={0.09}>
+          <RecentGoalRewardsCard />
+        </FadeIn>
+
         {isLoading ? (
           <DashboardSkeleton />
         ) : !state ? (
@@ -172,10 +188,6 @@ function DashboardPage() {
 
             <FadeIn delay={0.15}>
               <UpcomingWorkoutCard workout={state.nextWorkout} />
-            </FadeIn>
-
-            <FadeIn delay={0.18}>
-              <PlayerLevelCard />
             </FadeIn>
 
             <FadeIn delay={0.21}>
