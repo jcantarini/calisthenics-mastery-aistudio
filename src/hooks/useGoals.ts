@@ -97,28 +97,21 @@ export function useGoalProgress(goalId: string | null) {
   );
 }
 
-/** Mutation state helper so screens don't hand-roll pending/error flags. */
-export function useGoalMutations(onChanged?: () => void) {
+/**
+ * Mutation state helper so screens don't hand-roll pending/error flags.
+ * `onChanged` may be async: `pending` only clears once the awaited reload
+ * settled, so the screen never shows stale data as "idle".
+ */
+export function useGoalMutations(onChanged?: () => void | Promise<void>) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const run = useCallback(
-    async <T>(action: () => Promise<T>): Promise<T | null> => {
-      setPending(true);
-      setError(null);
-      try {
-        const result = await action();
-        onChanged?.();
-        return result;
-      } catch (e) {
-        setError(e as Error);
-        return null;
-      } finally {
-        setPending(false);
-      }
-    },
+    async <T>(action: () => Promise<T>): Promise<T | null> =>
+      runMutationFlow(action, onChanged, setPending, setError),
     [onChanged],
   );
 
   return { pending, error, run };
 }
+
