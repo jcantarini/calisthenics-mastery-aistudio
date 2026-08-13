@@ -62,7 +62,7 @@ describe("createSingleFlightGuard", () => {
   it("allows a legitimate retry after a failed submission", async () => {
     const guard = createSingleFlightGuard();
     const action = vi
-      .fn<[], Promise<boolean>>()
+      .fn(async (): Promise<boolean> => false)
       .mockResolvedValueOnce(false)
       .mockResolvedValueOnce(true);
 
