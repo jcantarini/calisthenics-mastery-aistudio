@@ -1,5 +1,12 @@
 import { Hand, Hourglass, Radio } from "lucide-react";
-import { goalTrackingMode, type Goal, type GoalTrackingMode } from "@/services/goals";
+// Direct domain imports: the Goals public barrel has a registration side effect
+// (registerGoalGamification) and re-exporting tracking capability through it
+// breaks the production chunk graph. See Sprint 7.4A-3.
+import {
+  goalTrackingMode,
+  type GoalTrackingMode,
+} from "@/services/goals/goalTrackingCapability";
+import type { Goal } from "@/services/goals/goalTypes";
 import { useGoalsT } from "@/lib/goals-i18n";
 import type { BadgeTone } from "./goalPresentation";
 import { Chip } from "./chip";
@@ -25,12 +32,4 @@ export function GoalTrackingBadge({ goal }: { goal: Pick<Goal, "type" | "metadat
       {tg(meta.label)}
     </Chip>
   );
-}
-
-/** Sentence version used in Goal Details, where there is room to explain. */
-export function goalTrackingHintKey(goal: Pick<Goal, "type" | "metadata">): string {
-  const mode = goalTrackingMode(goal);
-  if (mode === "auto") return "gl.autoNote";
-  if (mode === "pending") return "gl.pendingHint";
-  return "gl.manualNote";
 }
