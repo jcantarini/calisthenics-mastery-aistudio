@@ -210,7 +210,13 @@ import {
 import { routeForIssues, stepKeyForField } from "@/components/goals/wizardNavigation";
 import { parseDecimalInput, validateNumericInput } from "@/components/goals/numericInput";
 import { runMutationFlow } from "@/hooks/mutationFlow";
-import { applyFailure, applySuccess, initialAsyncState, startLoad } from "@/hooks/asyncResource";
+import {
+  applyFailure,
+  applySuccess,
+  initialAsyncState,
+  isStaleResponse,
+  startLoad,
+} from "@/hooks/asyncResource";
 import { GOALS_DICTS, GOALS_LOCALES } from "@/lib/goals-i18n";
 import { findGoalRewardEntry, goalRewardState } from "@/components/dashboard/goalsDashboard";
 
@@ -325,6 +331,36 @@ describe("release contract — creation and lifecycle", () => {
     expect(copy.currentValue).toBe(0);
     expect(copy.metadata["duplicatedFrom"]).toBe(goal.id);
     expect((await GoalService.getGoal(goal.id))!.status).toBe("completed");
+  });
+
+  it("cancels an active goal once and stays idempotent", async () => {
+    const events = collectEvents();
+    const goal = await createCountGoal();
+
+    const cancelled = await GoalService.cancelGoal(goal.id);
+    expect(cancelled.status).toBe("cancelled");
+    expect((await GoalService.getGoal(goal.id))!.status).toBe("cancelled");
+    expect(events.filter((e) => e.type === "goal_cancelled")).toHaveLength(1);
+
+    const again = await GoalService.cancelGoal(goal.id);
+    expect(again.status).toBe("cancelled");
+    expect(events.filter((e) => e.type === "goal_cancelled")).toHaveLength(1);
+  });
+
+  it("deletes a goal without reopening, completing or duplicating it", async () => {
+    const events = collectEvents();
+    const goal = await createCountGoal();
+
+    await expect(GoalService.deleteGoal(goal.id)).resolves.toBeUndefined();
+
+    expect(await GoalService.getGoal(goal.id)).toBeNull();
+    expect(await GoalService.getGoals({}, USER)).toHaveLength(0);
+    expect(
+      events.filter(
+        (e) =>
+          e.type === "goal_completed" || e.type === "goal_activated" || e.type === "goal_created",
+      ),
+    ).toHaveLength(1); // only the original creation
   });
 });
 
@@ -481,7 +517,7 @@ describe("release contract — automatic tracking", () => {
     expect((await GoalService.getGoal(goal.id))!.currentValue).toBe(1);
   });
 
-  it("a tracking failure never breaks workout completion", async () => {
+  it("a ledger failure is contained in the typed tracking result", async () => {
     await createCountGoal();
     const broken: GoalTrackingLedgerPort = {
       async claim() {
@@ -715,6 +751,31 @@ describe("release contract — UI contracts", () => {
     const failed = applyFailure(refreshing, new Error("offline"), []);
     expect(failed.data).toEqual([1, 2]);
     expect(failed.loaded).toBe(true);
+  });
+
+  it("discards a late response from a superseded request (latest-request-wins)", async () => {
+    // Two in-flight loads with distinct ids; the older one resolves last.
+    let latestId = 0;
+    let state = applySuccess(initialAsyncState<string[]>([]), []);
+
+    const requestA = ++latestId; // superseded
+    const requestB = ++latestId; // current
+
+    const slowOld = new Promise<string[]>((resolve) => setTimeout(() => resolve(["stale-a"]), 10));
+    const fastCurrent = Promise.resolve(["fresh-b"]);
+
+    const apply = (id: number, data: string[]) => {
+      if (isStaleResponse(id, latestId)) return;
+      state = applySuccess(state, data);
+    };
+
+    apply(requestB, await fastCurrent);
+    expect(state.data).toEqual(["fresh-b"]);
+
+    apply(requestA, await slowOld);
+    expect(isStaleResponse(requestA, latestId)).toBe(true);
+    expect(isStaleResponse(requestB, latestId)).toBe(false);
+    expect(state.data).toEqual(["fresh-b"]);
   });
 
   it("exposes a truthful tracking mode for every goal type used by templates", () => {

@@ -45,8 +45,26 @@ production code change was required.
 
 ## 3. Integrated flows covered
 
+Everything listed here is exercised by executable tests through the real public
+service methods, not by source inspection.
+
 - Creation from a template and from a custom kind.
-- Lifecycle: draft → active → paused → active; cancel, delete, duplicate.
+- Lifecycle: draft → active → paused → active; duplicate.
+- Cancellation through `GoalService.cancelGoal`: status becomes `cancelled`,
+  exactly one `goal_cancelled` event is emitted, and a second call produces no
+  further transition and no duplicate event.
+- Deletion through `GoalService.deleteGoal`: resolves with `void`,
+  `GoalService.getGoal(id)` then returns `null`, the goal disappears from
+  `getGoals`, and deletion never reopens, completes or duplicates it.
+- Training × Goals failure isolation, exercised through the real
+  `TrainingPlanService.completeWorkout(plannedWorkoutId, userId)` with
+  `GoalTrackingService.trackSafely` forced to throw
+  (`src/services/training-plan/trainingPlanGoalsIntegration.test.ts`): the call
+  resolves, the planned workout stays persisted as completed, the matching
+  training day stays completed, the returned state reports the workout as
+  completed, the tracking error is not propagated and no second completion runs.
+- Latest-request-wins: a superseded request id is rejected by `isStaleResponse`
+  when its response arrives late, and the current data is preserved.
 - Manual progress: validation, preview, single application, completion.
 - Automatic tracking: matching, ignoring, duplicate suppression, concurrency.
 - Completion → `goal_completed` → gamification bridge → orchestrator.
@@ -105,6 +123,7 @@ Automated (covered by the release contract tests and pure unit tests):
 - [x] Wizard routes each invalid field to the step that owns it and focuses it.
 - [x] Numeric parser accepts comma and period; presets are bounds/step valid.
 - [x] Async `onChanged` is awaited before `pending` clears.
+- [x] A late response from a superseded request never overwrites current data.
 - [x] A failed refresh preserves usable data.
 - [x] Selection state is conveyed by `aria-pressed`/`aria-checked`, not colour only.
 - [x] Five-locale key parity, no unexpected empty strings.
@@ -132,14 +151,14 @@ bun run lint
 bun run build
 ```
 
-## 10. Results (Sprint 7.5B run)
+## 10. Results (Sprint 7.5B-P1 run)
 
 | Check                       | Result                                                                              |
 | --------------------------- | ----------------------------------------------------------------------------------- |
 | Bun                         | 1.3.3                                                                               |
 | `install --frozen-lockfile` | success, no lockfile change                                                         |
 | `typecheck`                 | 0 errors                                                                            |
-| `test:run`                  | 343 passed / 343 (21 files)                                                         |
+| `test:run`                  | 348 passed / 348 (22 files)                                                         |
 | `lint`                      | 0 errors, 13 warnings                                                               |
 | `build`                     | client + SSR + Nitro completed, no Rolldown panic                                   |
 | `bun.lock` SHA-256          | `184c717a13a2b402067877f9689afcd83edf96945a9e94f952c73fcb81805058` before and after |
@@ -171,7 +190,7 @@ migrations; new dependencies; any Phase 8 feature.
 
 ## 14. Final decision
 
-**PARTIALLY VALIDATED.** Every automated gate passes (typecheck, 343 tests,
+**PARTIALLY VALIDATED.** Every automated gate passes (typecheck, 348 tests,
 lint, build) and the architectural audit found no violation. The manual browser
 UX and accessibility walkthrough of `/metas` could not be executed because of
 the onboarding gate on the preview account (section 8) and remains open.
