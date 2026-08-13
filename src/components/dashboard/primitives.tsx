@@ -35,21 +35,32 @@ export function SectionTitle({
   children,
   action,
   icon,
+  stack = false,
 }: {
   children: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
+  /** Stacks title and action on narrow screens and lets the title wrap. */
+  stack?: boolean;
 }) {
   return (
-    <div className="flex min-h-6 items-center justify-between gap-3">
+    <div
+      className={cn(
+        "flex min-h-6 gap-3",
+        stack
+          ? "flex-col items-start sm:flex-row sm:items-center sm:justify-between"
+          : "items-center justify-between",
+      )}
+    >
       <h2 className="flex min-w-0 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {icon ? <span className="shrink-0 text-primary">{icon}</span> : null}
-        <span className="truncate">{children}</span>
+        <span className={stack ? "min-w-0 break-words" : "truncate"}>{children}</span>
       </h2>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }
+
 
 /** Rounded icon tile — one size, one radius, used by every card header. */
 export function CardIcon({
@@ -205,12 +216,13 @@ export function StatTile({
   const Value = as === "dl" ? "dd" : "p";
   return (
     <div className="rounded-2xl border border-border/60 bg-background/40 p-3">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        {icon ? <span className="shrink-0">{icon}</span> : null}
-        <Label className="truncate text-[10px] font-semibold uppercase tracking-widest">
+      <div className="flex items-start gap-1.5 text-muted-foreground">
+        {icon ? <span className="mt-px shrink-0">{icon}</span> : null}
+        <Label className="min-w-0 break-words text-[10px] font-semibold uppercase leading-tight tracking-widest">
           {label}
         </Label>
       </div>
+
       <Value className="mt-1.5 text-display text-xl leading-none tabular-nums">{value}</Value>
     </div>
   );

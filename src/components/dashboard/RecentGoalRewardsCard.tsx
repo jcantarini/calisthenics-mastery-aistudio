@@ -27,15 +27,17 @@ export const RecentGoalRewardsCard = memo(function RecentGoalRewardsCard({
   return (
     <DashCard aria-label={tg("gl.rw.recent")}>
       <SectionTitle
+        stack
         icon={<Trophy size={14} />}
         action={
           <Link to="/metas" className={actionClasses("outline")}>
-            {tg("gl.dash.viewAll")}
+            {tg("gl.viewGoals")}
           </Link>
         }
       >
         {tg("gl.rw.recent")}
       </SectionTitle>
+
 
       {loading ? (
         <div className="mt-4 space-y-2" role="status" aria-live="polite">
