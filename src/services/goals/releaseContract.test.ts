@@ -747,6 +747,34 @@ describe("release contract — UI contracts", () => {
     expect(failed.loaded).toBe(true);
   });
 
+  it("discards a late response from a superseded request (latest-request-wins)", async () => {
+    // Two in-flight loads with distinct ids; the older one resolves last.
+    let latestId = 0;
+    let state = applySuccess(initialAsyncState<string[]>([]), []);
+
+    const requestA = ++latestId; // superseded
+    const requestB = ++latestId; // current
+
+    const slowOld = new Promise<string[]>((resolve) =>
+      setTimeout(() => resolve(["stale-a"]), 10),
+    );
+    const fastCurrent = Promise.resolve(["fresh-b"]);
+
+    const apply = (id: number, data: string[]) => {
+      if (isStaleResponse(id, latestId)) return;
+      state = applySuccess(state, data);
+    };
+
+    apply(requestB, await fastCurrent);
+    expect(state.data).toEqual(["fresh-b"]);
+
+    apply(requestA, await slowOld);
+    expect(isStaleResponse(requestA, latestId)).toBe(true);
+    expect(isStaleResponse(requestB, latestId)).toBe(false);
+    expect(state.data).toEqual(["fresh-b"]);
+  });
+
+
   it("exposes a truthful tracking mode for every goal type used by templates", () => {
     for (const template of GOAL_TEMPLATES) {
       const mode = goalTrackingMode({ type: template.type, metadata: template.metadata });
