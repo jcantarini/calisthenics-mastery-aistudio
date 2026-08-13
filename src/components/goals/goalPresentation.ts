@@ -14,7 +14,8 @@ import {
   Target,
   type LucideIcon,
 } from "lucide-react";
-import type { Goal, GoalCategory, GoalStatus, GoalType, GoalUnit } from "@/services/goals";
+import type { Goal, GoalCategory, GoalStatus, GoalUnit } from "@/services/goals";
+import { validateGoalTransition } from "@/services/goals";
 
 /* ---------------- Category ---------------- */
 
@@ -34,27 +35,6 @@ export function categoryIcon(category: GoalCategory): LucideIcon {
 
 export function categoryLabelKey(category: GoalCategory): string {
   return `gl.cat.${category}`;
-}
-
-/* ---------------- Tracking mode ---------------- */
-
-export type TrackingMode = "auto" | "manual";
-
-/**
- * Goal types the app already feeds with real activity events. Everything else
- * is updated by the user. This mirrors the activity events currently emitted
- * by the training runtime — it does not change tracking behaviour.
- */
-const AUTO_TRACKED_TYPES: ReadonlySet<GoalType> = new Set<GoalType>([
-  "workout_frequency",
-  "workout_count",
-  "training_time",
-  "streak",
-  "program",
-]);
-
-export function trackingMode(goal: Pick<Goal, "type">): TrackingMode {
-  return AUTO_TRACKED_TYPES.has(goal.type) ? "auto" : "manual";
 }
 
 /* ---------------- Status ---------------- */
@@ -195,3 +175,59 @@ export function difficultyLabelKey(difficulty: string): string {
 }
 
 export const DIFFICULTY_ICON = Award;
+
+/* ---------------- Lifecycle actions ---------------- */
+
+export type GoalAction = "pause" | "resume" | "cancel" | "duplicate" | "delete";
+
+/**
+ * Which actions may be OFFERED for a goal. Availability is decided by the
+ * domain (`validateGoalTransition`) — this helper only maps a legal
+ * transition to a button. Deleting and duplicating are not transitions and
+ * are always available.
+ */
+export function availableGoalActions(goal: Pick<Goal, "status">): GoalAction[] {
+  const actions: GoalAction[] = [];
+  if (validateGoalTransition(goal.status, "paused")) actions.push("pause");
+  if (validateGoalTransition(goal.status, "active")) actions.push("resume");
+  if (validateGoalTransition(goal.status, "cancelled")) actions.push("cancel");
+  if (goal.status === "completed" || goal.status === "cancelled" || goal.status === "expired") {
+    actions.push("duplicate");
+  }
+  actions.push("delete");
+  return actions;
+}
+
+export function actionLabelKey(action: GoalAction): string {
+  return `gl.${action}`;
+}
+
+export const DESTRUCTIVE_ACTIONS: ReadonlySet<GoalAction> = new Set<GoalAction>([
+  "cancel",
+  "delete",
+]);
+
+/* ---------------- Summary ---------------- */
+
+export interface GoalsSummaryData {
+  active: number;
+  completed: number;
+  averageProgress: number | null;
+}
+
+/**
+ * Counts come from the loaded goals; the average uses ONLY percentages that
+ * the domain already calculated (never a formula re-implemented here).
+ */
+export function buildGoalsSummary(
+  goals: readonly Goal[],
+  percentageOf: (goal: Goal) => number,
+): GoalsSummaryData {
+  const active = goals.filter((g) => g.status === "active" || g.status === "draft");
+  const completed = goals.filter((g) => g.status === "completed");
+  const average =
+    active.length === 0
+      ? null
+      : Math.round(active.reduce((sum, g) => sum + percentageOf(g), 0) / active.length);
+  return { active: active.length, completed: completed.length, averageProgress: average };
+}
