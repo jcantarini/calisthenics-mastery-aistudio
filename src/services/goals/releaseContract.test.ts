@@ -9,7 +9,7 @@
 // These tests assert BEHAVIOUR through public contracts. They never grep the
 // source for strings.
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /* ---------------- In-memory persistence ---------------- */
 
@@ -168,7 +168,7 @@ import { GoalService } from "./GoalService";
 import { createGoalTrackingService } from "./GoalTrackingService";
 import { createGoalGamificationBridge, registerGoalGamification } from "./goalGamification";
 import { createGoalRewardRecovery } from "./GoalRewardRecovery";
-import { clearGoalListeners, onGoalEvent, type GoalEvent } from "./goalEvents";
+import { onGoalEvent, type GoalEvent } from "./goalEvents";
 import { GOAL_TRANSITIONS, buildGoalProgress, validateGoalTransition } from "./goalRules";
 import { goalTrackingMode } from "./goalTrackingCapability";
 import type { Goal } from "./goalTypes";
@@ -221,14 +221,24 @@ beforeEach(() => {
   store.user = USER;
   store.failNext = null;
   orchestrator.processGoalCompleted.mockClear();
-  clearGoalListeners();
+});
+
+// Importing the Goals barrel is what registers the Goals -> Gamification wire
+// exactly once; the release contract exercises that real registration.
+import "./index";
+
+const subscriptions: Array<() => void> = [];
+afterEach(() => {
+  while (subscriptions.length) subscriptions.pop()?.();
 });
 
 function collectEvents(): GoalEvent[] {
   const events: GoalEvent[] = [];
-  onGoalEvent((event) => {
-    events.push(event);
-  });
+  subscriptions.push(
+    onGoalEvent((event) => {
+      events.push(event);
+    }),
+  );
   return events;
 }
 
@@ -523,23 +533,18 @@ describe("release contract — reward", () => {
   });
 
   it("registers the gamification wire once and forwards a completion once", async () => {
-    const off1 = registerGoalGamification();
-    const off2 = registerGoalGamification();
-    try {
-      const goal = await createCountGoal({ targetValue: 1 });
-      // eslint-disable-next-line no-console
-      console.log("DBG completing", goal.id, goal.status);
-      await GoalService.completeGoal(goal.id);
-      expect(orchestrator.processGoalCompleted).toHaveBeenCalledTimes(1);
+    // The barrel already registered the wire; a second call must be a no-op
+    // so one completion can never be forwarded twice.
+    const extra = registerGoalGamification();
+    const goal = await createCountGoal({ targetValue: 1 });
+    await GoalService.completeGoal(goal.id);
+    expect(orchestrator.processGoalCompleted).toHaveBeenCalledTimes(1);
 
-      // Duplicate delivery of the same completion is a no-op on the goal.
-      const again = await GoalService.completeGoal(goal.id);
-      expect(again.status).toBe("completed");
-      expect(orchestrator.processGoalCompleted).toHaveBeenCalledTimes(1);
-    } finally {
-      off2();
-      off1();
-    }
+    // Duplicate delivery of the same completion is a no-op on the goal.
+    const again = await GoalService.completeGoal(goal.id);
+    expect(again.status).toBe("completed");
+    expect(orchestrator.processGoalCompleted).toHaveBeenCalledTimes(1);
+    extra();
   });
 
   it("a gamification failure never undoes the goal completion", async () => {
