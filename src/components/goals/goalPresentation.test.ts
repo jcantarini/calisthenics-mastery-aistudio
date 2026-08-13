@@ -5,6 +5,7 @@ import {
   buildGoalsSummary,
   deadlineInfo,
   formatGoalValue,
+  goalTrackingHintKey,
   matchesFilter,
   sortGoalsForDisplay,
 } from "./goalPresentation";
@@ -103,6 +104,26 @@ describe("availableGoalActions", () => {
     expect(actions).toEqual(["duplicate", "delete"]);
   });
 
+  it("offers activate for drafts, never resume", () => {
+    const actions = availableGoalActions({ status: "draft" });
+    expect(actions).toContain("activate");
+    expect(actions).not.toContain("resume");
+    expect(actions).toContain("cancel");
+    expect(actions).toContain("delete");
+  });
+
+  it("offers resume, not activate, for paused goals", () => {
+    const actions = availableGoalActions({ status: "paused" });
+    expect(actions).toContain("resume");
+    expect(actions).not.toContain("activate");
+  });
+
+  it("offers neither activate nor resume for completed goals", () => {
+    const actions = availableGoalActions({ status: "completed" });
+    expect(actions).not.toContain("activate");
+    expect(actions).not.toContain("resume");
+  });
+
   it("offers duplicate for expired and cancelled goals", () => {
     expect(availableGoalActions({ status: "expired" })).toContain("duplicate");
     expect(availableGoalActions({ status: "cancelled" })).toContain("duplicate");
@@ -124,5 +145,19 @@ describe("buildGoalsSummary", () => {
     expect(
       buildGoalsSummary([goal({ status: "completed" })], () => 100).averageProgress,
     ).toBeNull();
+  });
+});
+
+describe("goalTrackingHintKey", () => {
+  it("uses the pending hint when the goal has no activity source", () => {
+    expect(goalTrackingHintKey({ type: "strength", metadata: {} })).toBe("gl.pendingHint");
+  });
+
+  it("uses the auto note for goals the engine already listens to", () => {
+    expect(goalTrackingHintKey({ type: "workout_count", metadata: {} })).toBe("gl.autoNote");
+  });
+
+  it("uses the manual note for custom goals", () => {
+    expect(goalTrackingHintKey({ type: "custom", metadata: {} })).toBe("gl.manualNote");
   });
 });

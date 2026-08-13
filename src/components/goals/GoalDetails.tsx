@@ -22,13 +22,14 @@ import {
 import { GoalProgress } from "./GoalProgress";
 import { GoalStatusBadge } from "./GoalStatusBadge";
 import { GoalDifficultyBadge } from "./GoalDifficultyBadge";
-import { GoalTrackingBadge, goalTrackingHintKey } from "./GoalTrackingBadge";
+import { GoalTrackingBadge } from "./GoalTrackingBadge";
 import {
   DESTRUCTIVE_ACTIONS,
   actionLabelKey,
   availableGoalActions,
   categoryLabelKey,
   formatDate,
+  goalTrackingHintKey,
   type GoalAction,
 } from "./goalPresentation";
 
@@ -83,6 +84,7 @@ export function GoalDetails({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
+          closeLabel={tg("gl.close")}
           className="max-h-[92dvh] overflow-y-auto rounded-t-3xl pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         >
           <SheetHeader className="text-left">
@@ -148,16 +150,21 @@ export function GoalDetails({
         </SheetContent>
       </Sheet>
 
-      <AlertDialog open={confirming !== null} onOpenChange={(next) => !next && setConfirming(null)}>
+      <AlertDialog
+        open={confirming !== null}
+        onOpenChange={(next) => !next && !pending && setConfirming(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{tg(`${confirmKey}.title`)}</AlertDialogTitle>
             <AlertDialogDescription>{tg(`${confirmKey}.desc`)}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{tg("gl.keep")}</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{tg("gl.keep")}</AlertDialogCancel>
             <AlertDialogAction
+              disabled={pending}
               onClick={() => {
+                if (pending) return;
                 const action = confirming;
                 setConfirming(null);
                 if (action) onAction(action, goal);
