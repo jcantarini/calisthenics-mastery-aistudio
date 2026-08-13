@@ -48,10 +48,12 @@ describe("goals dictionary parity", () => {
 describe("dynamic goals key families", () => {
   const dynamicKeys = [
     ...GOAL_CATEGORIES.map(categoryLabelKey),
-    ...GOAL_TEMPLATES.flatMap((t) => [`gl.t.${t.id}.name`,
+    ...GOAL_TEMPLATES.flatMap((t) => [
+      `gl.t.${t.id}.name`,
       `gl.t.${t.id}.desc`,
       `gl.t.${t.id}.q`,
-      `gl.t.${t.id}.goal`,]),
+      `gl.t.${t.id}.goal`,
+    ]),
     ...CUSTOM_KINDS.map((k) => `gl.ck.${k.id}`),
     ...GOAL_UNITS.filter((u) => u !== "boolean").map(unitLabelKey),
     ...GOAL_DIFFICULTIES.map(difficultyLabelKey),

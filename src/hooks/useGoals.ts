@@ -17,7 +17,6 @@ import {
 } from "./asyncResource";
 import { runMutationFlow } from "./mutationFlow";
 
-
 export interface AsyncResult<T> {
   data: T;
   loading: boolean;
@@ -116,4 +115,3 @@ export function useGoalMutations(onChanged?: () => void | Promise<void>) {
 
   return { pending, error, run };
 }
-

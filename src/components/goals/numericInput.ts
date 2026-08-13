@@ -72,7 +72,6 @@ export function validateNumericInput(
   return { ok: true, value };
 }
 
-
 /** Renders a number back into an editable string without trailing noise. */
 export function formatNumericInput(value: number): string {
   if (!Number.isFinite(value)) return "";
