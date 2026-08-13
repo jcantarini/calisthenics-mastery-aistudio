@@ -146,21 +146,28 @@ export function GoalCreationWizard({
   };
 
   const submit = async () => {
-    if (submitting.current || pending || !input) return;
+    if (effectivePending || !input) return;
     if (issues.length > 0 || !validateCreateGoal(input).valid) {
       setShowIssues(true);
       setStep(2);
       return;
     }
-    submitting.current = true;
+    setLocalSubmitting(true);
     setSubmitError(false);
-    const created = await onCreate(input);
-    submitting.current = false;
-    if (created) {
-      onOpenChange(false);
-      reset();
-    } else {
+    try {
+      const created = await guard.current.run(() => onCreate(input));
+      if (created === undefined) return; // another submission is in flight
+      if (created) {
+        onOpenChange(false);
+        reset();
+      } else {
+        setSubmitError(true);
+      }
+    } catch (error) {
+      console.error("[goals] goal creation failed", error);
       setSubmitError(true);
+    } finally {
+      setLocalSubmitting(false);
     }
   };
 
