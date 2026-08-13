@@ -527,6 +527,8 @@ describe("release contract — reward", () => {
     const off2 = registerGoalGamification();
     try {
       const goal = await createCountGoal({ targetValue: 1 });
+      // eslint-disable-next-line no-console
+      console.log("DBG completing", goal.id, goal.status);
       await GoalService.completeGoal(goal.id);
       expect(orchestrator.processGoalCompleted).toHaveBeenCalledTimes(1);
 
