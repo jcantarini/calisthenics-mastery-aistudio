@@ -4,7 +4,12 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
-import type { CreateGoalInput, GoalCategory, GoalDifficulty, GoalUnit } from "@/services/goals/goalTypes";
+import type {
+  CreateGoalInput,
+  GoalCategory,
+  GoalDifficulty,
+  GoalUnit,
+} from "@/services/goals/goalTypes";
 import { GOAL_DIFFICULTIES } from "@/services/goals/goalTypes";
 import { validateCreateGoal } from "@/services/goals/goalValidation";
 import { useGoalsT } from "@/lib/goals-i18n";
@@ -527,9 +532,7 @@ export function GoalCreationWizard({
                         className={cn(
                           "min-h-11 rounded-2xl border p-3 text-left transition-colors",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          selected
-                            ? "border-primary bg-primary/10"
-                            : "border-border/60 bg-card/40",
+                          selected ? "border-primary bg-primary/10" : "border-border/60 bg-card/40",
                         )}
                       >
                         <span className="block text-sm font-semibold">

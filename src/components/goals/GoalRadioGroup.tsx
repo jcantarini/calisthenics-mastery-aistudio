@@ -80,7 +80,11 @@ export function GoalRadioGroup<T>({
             if (target !== undefined) move(next, target);
           },
         };
-        return <span key={getKey(option)} className="contents">{renderOption(option, props, selected)}</span>;
+        return (
+          <span key={getKey(option)} className="contents">
+            {renderOption(option, props, selected)}
+          </span>
+        );
       })}
     </div>
   );

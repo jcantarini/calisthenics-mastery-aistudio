@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  formatNumericInput,
-  parseDecimalInput,
-  validateNumericInput,
-} from "./numericInput";
+import { formatNumericInput, parseDecimalInput, validateNumericInput } from "./numericInput";
 
 const bounds = { min: 1, max: 100, allowDecimal: false };
 
