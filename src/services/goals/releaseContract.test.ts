@@ -158,7 +158,9 @@ vi.mock("@/integrations/supabase/client", () => {
   };
 });
 
-const orchestrator = vi.hoisted(() => ({ processGoalCompleted: vi.fn(async () => ({ ok: true })) }));
+const orchestrator = vi.hoisted(() => ({
+  processGoalCompleted: vi.fn(async () => ({ ok: true })),
+}));
 
 vi.mock("@/services/gamification/GamificationOrchestrator", () => ({
   GamificationOrchestrator: orchestrator,
@@ -660,9 +662,10 @@ describe("release contract — UI contracts", () => {
       { field: "title", messageKey: "gl.err.title" },
     ]);
     expect(route).toEqual({ step: 2, field: "title" });
-    expect(
-      routeForIssues([{ field: "deadline", messageKey: "gl.err.deadline" }]),
-    ).toEqual({ step: 3, field: "deadline" });
+    expect(routeForIssues([{ field: "deadline", messageKey: "gl.err.deadline" }])).toEqual({
+      step: 3,
+      field: "deadline",
+    });
   });
 
   it("the numeric parser accepts comma and period and enforces the preset grid", () => {

@@ -46,15 +46,15 @@ Categories: `fitness`, `strength`, `consistency`, `skill`, `program`, `body`,
 
 Behaviour is driven by `progressType`, never by the title:
 
-| progressType   | Fold rule       | Allowed units                                        |
-| -------------- | --------------- | ---------------------------------------------------- |
-| `count`        | accumulate      | workouts, repetitions, days                          |
+| progressType   | Fold rule       | Allowed units                                            |
+| -------------- | --------------- | -------------------------------------------------------- |
+| `count`        | accumulate      | workouts, repetitions, days                              |
 | `threshold`    | best value wins | repetitions, seconds, kilograms, centimeters, percentage |
-| `duration`     | accumulate      | seconds, minutes                                     |
-| `cumulative`   | accumulate      | minutes, seconds, workouts, repetitions              |
-| `streak`       | best value wins | days                                                 |
-| `target_value` | best value wins | kilograms, centimeters, percentage, repetitions      |
-| `boolean`      | 0 or 1          | boolean                                              |
+| `duration`     | accumulate      | seconds, minutes                                         |
+| `cumulative`   | accumulate      | minutes, seconds, workouts, repetitions                  |
+| `streak`       | best value wins | days                                                     |
+| `target_value` | best value wins | kilograms, centimeters, percentage, repetitions          |
+| `boolean`      | 0 or 1          | boolean                                                  |
 
 **Normalization is deliberate:** `percentage` is clamped to 0–100 and
 `currentValue` in a `GoalProgress` is clamped to the target, while `rawValue`
@@ -155,14 +155,14 @@ src/services/goals/
 
 ## Supported events and matching
 
-| Activity event               | Goal types updated                          |
-| ---------------------------- | ------------------------------------------- |
-| `workout_completed`          | `workout_count`, `workout_frequency`, `training_time` |
-| `exercise_completed`         | `strength`, `duration` (matched by `metadata.exerciseId`) |
-| `training_week_completed`    | `program` with `metadata.scope = "week"`    |
-| `training_program_completed` | `program` (default scope)                   |
-| `streak_updated`             | `streak`                                    |
-| `skill_achieved`             | `skill` (matched by `metadata.skillId`)     |
+| Activity event               | Goal types updated                                                       |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| `workout_completed`          | `workout_count`, `workout_frequency`, `training_time`                    |
+| `exercise_completed`         | `strength`, `duration` (matched by `metadata.exerciseId`)                |
+| `training_week_completed`    | `program` with `metadata.scope = "week"`                                 |
+| `training_program_completed` | `program` (default scope)                                                |
+| `streak_updated`             | `streak`                                                                 |
+| `skill_achieved`             | `skill` (matched by `metadata.skillId`)                                  |
 | `body_measurement_recorded`  | `body_weight`, `body_measurement` (matched by `metadata.measurementKey`) |
 
 Matching lives in `matchGoalToEvent(goal, event)` — one typed rule per event
@@ -177,7 +177,7 @@ The goal's `progressType` — not its title — decides the fold:
 
 - `threshold` / `target_value` / `streak` / `boolean`: **best value wins**.
   A 9-rep session after a 7-rep best stores 9; a later 6-rep session keeps 9.
-  Tracking feeds the *best single set* (`repetitions`, `seconds`).
+  Tracking feeds the _best single set_ (`repetitions`, `seconds`).
 - `count` / `cumulative` / `duration`: **accumulate**. Tracking feeds workout
   totals (`totalRepetitions`, `totalSeconds`), so 50 + 70 = 120.
 
@@ -239,14 +239,14 @@ Two layers prevent lost updates:
 
 ## Automatic, manual and pending
 
-| Goal type            | Mode                                                    |
-| -------------------- | ------------------------------------------------------- |
-| `workout_count`, `workout_frequency`, `training_time` | automatic |
-| `program` (program and week scope), `streak`          | automatic |
+| Goal type                                             | Mode                                                                                                     |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `workout_count`, `workout_frequency`, `training_time` | automatic                                                                                                |
+| `program` (program and week scope), `streak`          | automatic                                                                                                |
 | `strength`, `duration`                                | hybrid — automatic once per-exercise performance events are emitted by the workout runtime; manual today |
-| `skill`                                               | hybrid — pending a `skill_achieved` producer |
-| `body_weight`, `body_measurement`                     | pending — typed integration point ready, no authoritative measurement store yet |
-| `custom`                                              | manual |
+| `skill`                                               | hybrid — pending a `skill_achieved` producer                                                             |
+| `body_weight`, `body_measurement`                     | pending — typed integration point ready, no authoritative measurement store yet                          |
+| `custom`                                              | manual                                                                                                   |
 
 Manual progress remains available. Automatic tracking is preferred whenever
 authoritative data exists; the ledger prevents an automatic update from
@@ -399,7 +399,6 @@ logged only. The method is reconnect-safe and can also be called manually.
 
 Logs reconciliation start and the final counters (scanned / recovered /
 already processed / skipped / failed). No secrets, no database internals.
-
 
 ---
 
