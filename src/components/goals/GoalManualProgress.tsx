@@ -31,6 +31,7 @@ import {
   previewManualProgress,
   validateManualValue,
 } from "./manualProgress";
+import { parseDecimalInput } from "./numericInput";
 
 function trim(value: number): string {
   return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
