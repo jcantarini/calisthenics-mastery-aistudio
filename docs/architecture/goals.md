@@ -1,4 +1,10 @@
-# Goals Domain (Sprint 7.1)
+# Goals Domain (Sprints 7.1–7.5)
+
+> Status: implemented and released through Sprint 7.5B. This document
+> describes the code as it exists, not planned work. Release evidence lives in
+> [goals-release-gate.md](./goals-release-gate.md).
+
+## Goals Core (Sprint 7.1)
 
 New domain added **after** Core Architecture v1.0 was frozen. Goals extends the
 architecture; it changes no existing domain.
@@ -20,9 +26,12 @@ src/services/goals/
   goalValidation.ts   // pure input validation, typed results
   goalEvents.ts       // typed event contracts + local bus
   goalTypes.ts        // domain model, unions, GoalError
-  goals.test.ts       // 25+ pure domain tests
-src/hooks/useGoals.ts // thin React access layer
-src/routes/_authenticated/metas.tsx // minimal validation UI (final UI = Sprint 7.4)
+  goals.test.ts       // pure domain tests
+  releaseContract.test.ts // integrated release contract tests (Sprint 7.5B)
+src/hooks/useGoals.ts // thin React access layer (async resilience)
+src/hooks/asyncResource.ts // pure async state model
+src/hooks/mutationFlow.ts  // pure mutation + awaited refresh model
+src/routes/_authenticated/metas.tsx // Goals Home (final product UI)
 ```
 
 ## Goal types
@@ -99,21 +108,21 @@ always resolved server-side from the session, never taken from client input.
 `goal_created`, `goal_activated`, `goal_progress_updated`, `goal_completed`,
 `goal_paused`, `goal_resumed`, `goal_cancelled`, `goal_expired`.
 
-`GoalCompletedEvent` carries a `sourceId` so Sprint 7.3 can attach idempotent
-rewards. **Sprint 7.1 defines contracts only** — nothing subscribes yet.
+`GoalCompletedEvent` carries a `sourceId` used for idempotent rewards. The
+Goals → Gamification bridge subscribes to this bus exactly once, at the moment
+the Goals barrel (`src/services/goals/index.ts`) is first imported.
 
-## Integration boundaries (future work)
+## Integration boundaries (implemented)
 
-- **Sprint 7.2 — automatic tracking:** producers will emit `GoalProgressSignal`
-  (`workout_completed`, `exercise_completed`, `training_week_completed`,
-  `training_program_completed`, `streak_updated`, `skill_achieved`,
-  `body_measurement_recorded`). The contract already exists in `goalEvents.ts`;
-  no listeners are registered.
-- **Sprint 7.3 — gamification:** `goal_completed` → GamificationOrchestrator →
-  XPService → ProgressionService → AchievementService. GoalService must never
-  award XP or unlock achievements directly.
-- **Sprint 7.4 — final UI + Dashboard widget.** The current `/metas` screen is a
-  validation surface only; the Dashboard was not modified.
+- **Automatic tracking (7.2):** producers emit `GoalProgressSignal` through
+  `GoalTrackingService`; goals are updated only via `GoalService`.
+- **Gamification (7.3):** `goal_completed` → GamificationOrchestrator →
+  XPService → ProgressionService → AchievementService. GoalService never awards
+  XP and never unlocks achievements.
+- **Reward recovery (7.3B):** missing pipeline executions are reconciled from
+  the deterministic XP source reference.
+- **UI + Dashboard (7.4–7.5):** `/metas` is the product Goals experience and the
+  Dashboard shows a spotlight card plus authoritative recent goal rewards.
 
 ---
 
@@ -309,8 +318,11 @@ manual completion and automatic tracking travel the same single pipeline.
 ### UI
 
 `GamificationHost` reuses the shared celebrations for goal completions
-(level-up modal and achievement modals); the dedicated Goals reward screen is
-deferred.
+(level-up modal and achievement modals). In addition,
+`GoalCompletionRewardDialog` presents the completion reward and reads the XP
+amount **only** from the persisted XP ledger entry
+(`goal_completed:<goalId>`); when the entry is not readable yet it shows a
+pending state instead of inventing a value.
 
 ---
 
@@ -387,3 +399,124 @@ logged only. The method is reconnect-safe and can also be called manually.
 
 Logs reconciliation start and the final counters (scanned / recovered /
 already processed / skipped / failed). No secrets, no database internals.
+
+
+---
+
+# Goals UI (Sprints 7.4A–7.4B)
+
+The Goals experience is a product surface, not a validation page. All UI is
+presentation only: no percentage, completion rule or lifecycle decision is
+recomputed in a component.
+
+## Goals Home — `src/routes/_authenticated/metas.tsx`
+
+Orchestration only: loading/refreshing state from `useGoals`, mutations through
+`useGoalMutations` → `GoalService`, and canonical progress from
+`buildGoalProgress`. Composition:
+
+```
+GoalsSummary      aggregate counters (singular/plural aware)
+GoalsFilters      active | paused | completed | all
+GoalCard          per-goal summary + progress
+GoalDetails       lifecycle actions + manual progress
+GoalCreationWizard    creation
+GoalCompletionRewardDialog   authoritative reward presentation
+GoalsSkeleton / GoalsEmptyState / ErrorState
+```
+
+Filters are a **button group** (`role="group"` + `aria-pressed`), not a tablist:
+no tab panel exists, so tab semantics would be a lie to assistive technology.
+
+## Creation wizard
+
+`GoalCreationWizard.tsx` + pure modules:
+
+- `goalTemplates.ts` — 11 templates, custom kinds, `GoalDraft`, bounds,
+  `validateDraft`, and `buildCreateGoalInput` (the only draft → domain adapter).
+- `wizardNavigation.ts` — maps an invalid field to the step that owns it and to
+  the element that must receive focus.
+- `numericInput.ts` — locale-tolerant decimal parsing (comma or period), bounds,
+  integer and `min + k * step` grid validation.
+- `radioNavigation.ts` — roving tabindex: arrows, Home, End, Enter and Space,
+  exactly one tabbable option per group.
+- `goalSubmissionGuard.ts` — single-flight guard: a second submit while one is
+  in flight is dropped, so no duplicate goal is ever created.
+
+Every template and custom-kind preset is proven valid and step-aligned by test,
+so selecting a preset can never produce an initially invalid draft.
+
+## Manual progress
+
+`manualProgress.ts` + `GoalManualProgress.tsx`. Manual controls appear only for
+active goals whose tracking mode is `manual` or `pending`. Values are validated,
+previewed with the canonical `foldProgress`, and submitted as a single
+`GoalProgressSignal` through `GoalService.updateGoalProgress`, which is also the
+only path that can complete a goal. There is no parallel completion path.
+
+## Dashboard integration
+
+`goalsDashboard.ts` (pure) + `GoalsDashboardCard.tsx` and
+`RecentGoalRewardsCard.tsx`. The Dashboard route loads goals once and passes
+them down as props; recent rewards are read from the XP ledger and matched to
+goals by the deterministic source reference.
+
+## Tracking capability presentation
+
+`goalTrackingCapability.ts` returns `auto | manual | pending` for a goal, and
+`GoalTrackingBadge` renders that truth. A goal type without an authoritative
+producer is labelled `pending`, never "automatic".
+
+---
+
+# Resilience, localization and accessibility (Sprint 7.5A)
+
+## Async resilience
+
+`asyncResource.ts` and `mutationFlow.ts` are pure models used by `useGoals`:
+
+- latest-request-wins: a superseded response is dropped;
+- unmount safety: no state update after unmount;
+- initial load vs background refresh are distinct states;
+- a failed refresh keeps the previously loaded data usable;
+- `pending` stays true until the awaited post-mutation reload settles, and a
+  failing reload never re-runs the mutation.
+
+## Localization
+
+`src/lib/goals-i18n.ts` ships Portuguese, English, Italian, Spanish and French.
+Parity is enforced twice: at compile time with `satisfies Record<GoalsKey,
+string>` and at test time for every dynamic key family (templates, custom kinds,
+categories, difficulties, units, statuses, filters, actions, wizard hints and
+numeric issues), including the two documented intentionally empty strings.
+
+## Accessibility semantics
+
+- Button-group filters with `aria-pressed`; selection is never colour-only.
+- Roving tabindex radio groups with full keyboard support.
+- `aria-busy` plus polite live regions for refresh and pending states.
+- Validation moves the wizard to the owning step and focuses the field.
+- Dialogs expose a localized close control and cannot be dismissed while a
+  critical mutation is in flight.
+
+---
+
+# Release guarantees (Sprint 7.5B)
+
+Proven by `src/services/goals/releaseContract.test.ts`, which drives the real
+services and rules against an in-memory persistence layer:
+
+1. Every template and custom kind produces a domain-valid `CreateGoalInput`.
+2. Lifecycle transitions follow `GOAL_TRANSITIONS`; terminal states offer none.
+3. Duplication creates a new goal and never reopens the original.
+4. Manual progress applies once, completes once, and is refused after completion.
+5. Concurrent identical submissions produce exactly one completion event.
+6. Automatic tracking updates only matching goals and ignores the rest.
+7. The same source event is never processed twice.
+8. A tracking or gamification failure never rolls back goal state.
+9. Manual and automatic completion emit the same `goal_completed` contract.
+10. `goalCompletionSourceId` is deterministic; reward recovery is idempotent and
+    never mutates goals.
+11. Reward presentation reads only persisted ledger values.
+12. UI contracts (filters, keyboard, wizard routing, parser, presets, async
+    behaviour) and five-locale key parity hold.
