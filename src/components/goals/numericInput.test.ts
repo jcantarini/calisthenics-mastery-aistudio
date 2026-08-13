@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatNumericInput, parseDecimalInput, validateNumericInput } from "./numericInput";
+import {
+  formatNumericInput,
+  isStepAligned,
+  parseDecimalInput,
+  validateNumericInput,
+} from "./numericInput";
 
 const bounds = { min: 1, max: 100, allowDecimal: false };
 
@@ -66,5 +71,46 @@ describe("formatNumericInput", () => {
 
   it("renders an empty string for non-finite values", () => {
     expect(formatNumericInput(Number.NaN)).toBe("");
+  });
+});
+
+describe("step alignment", () => {
+  it("enforces an integer step from the minimum", () => {
+    const b = { min: 10, max: 100, allowDecimal: false, step: 10 };
+    expect(validateNumericInput("10", b)).toEqual({ ok: true, value: 10 });
+    expect(validateNumericInput("20", b)).toEqual({ ok: true, value: 20 });
+    expect(validateNumericInput("30", b)).toEqual({ ok: true, value: 30 });
+    expect(validateNumericInput("15", b)).toMatchObject({
+      ok: false,
+      issue: "step",
+      messageKey: "gl.err.num.step",
+    });
+  });
+
+  it("handles decimal steps without floating point noise", () => {
+    const b = { min: 0.1, max: 5, allowDecimal: true, step: 0.1 };
+    for (const raw of ["0.2", "0.3", "0.7", "1.1", "2.9"]) {
+      expect(validateNumericInput(raw, b), raw).toEqual({ ok: true, value: Number(raw) });
+    }
+    expect(validateNumericInput("0.25", b)).toMatchObject({ ok: false, issue: "step" });
+  });
+
+  it("keeps comma and period accepted with step validation on", () => {
+    const b = { min: 0, max: 10, allowDecimal: true, step: 0.5 };
+    expect(validateNumericInput("2,5", b)).toEqual({ ok: true, value: 2.5 });
+    expect(validateNumericInput("2.5", b)).toEqual({ ok: true, value: 2.5 });
+  });
+
+  it("skips the check when no step is declared", () => {
+    expect(validateNumericInput("15", { min: 10, max: 100, allowDecimal: false })).toEqual({
+      ok: true,
+      value: 15,
+    });
+  });
+
+  it("exposes float-safe alignment directly", () => {
+    expect(isStepAligned(0.3, 0.1, 0.1)).toBe(true);
+    expect(isStepAligned(0.35, 0.1, 0.1)).toBe(false);
+    expect(isStepAligned(1000000.0000001, 0, 1)).toBe(true);
   });
 });
