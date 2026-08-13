@@ -139,7 +139,7 @@ bun run build
 | Bun                         | 1.3.3                                                                               |
 | `install --frozen-lockfile` | success, no lockfile change                                                         |
 | `typecheck`                 | 0 errors                                                                            |
-| `test:run`                  | 343 passed / 343 (22 files)                                                         |
+| `test:run`                  | 343 passed / 343 (21 files)                                                         |
 | `lint`                      | 0 errors, 13 warnings                                                               |
 | `build`                     | client + SSR + Nitro completed, no Rolldown panic                                   |
 | `bun.lock` SHA-256          | `184c717a13a2b402067877f9689afcd83edf96945a9e94f952c73fcb81805058` before and after |
