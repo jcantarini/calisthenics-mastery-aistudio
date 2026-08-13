@@ -10,7 +10,9 @@ import {
   goalRewardState,
   isGoalRewardEntry,
   shouldPresentGoalCompletion,
+  goalCounterLabelKey,
 } from "./goalsDashboard";
+import { tGoals } from "@/lib/goals-i18n";
 
 function goal(over: Partial<Goal> = {}): Goal {
   return {
@@ -175,5 +177,35 @@ describe("shouldPresentGoalCompletion", () => {
   it("does not open it for a non-completing manual update", () => {
     expect(shouldPresentGoalCompletion(goal({ status: "active" }))).toBe(false);
     expect(shouldPresentGoalCompletion(null)).toBe(false);
+  });
+});
+
+describe("goalCounterLabelKey", () => {
+  it("uses the plural key for 0", () => {
+    expect(goalCounterLabelKey("active", 0)).toBe("gl.dash.countActiveOther");
+  });
+
+  it("uses the singular key for exactly 1", () => {
+    expect(goalCounterLabelKey("active", 1)).toBe("gl.dash.countActiveOne");
+    expect(goalCounterLabelKey("paused", 1)).toBe("gl.dash.countPausedOne");
+    expect(goalCounterLabelKey("completed", 1)).toBe("gl.dash.countCompletedOne");
+  });
+
+  it("uses the plural key for 2 and above", () => {
+    expect(goalCounterLabelKey("paused", 2)).toBe("gl.dash.countPausedOther");
+    expect(goalCounterLabelKey("completed", 7)).toBe("gl.dash.countCompletedOther");
+  });
+
+  it("resolves correct Portuguese singular and plural labels", () => {
+    expect(tGoals("pt", goalCounterLabelKey("paused", 1))).toBe("pausada");
+    expect(tGoals("pt", goalCounterLabelKey("paused", 2))).toBe("pausadas");
+    expect(tGoals("pt", goalCounterLabelKey("completed", 1))).toBe("concluída");
+    expect(tGoals("pt", goalCounterLabelKey("completed", 0))).toBe("concluídas");
+  });
+
+  it("is deterministic for repeated calls", () => {
+    for (const n of [0, 1, 2, 3]) {
+      expect(goalCounterLabelKey("completed", n)).toBe(goalCounterLabelKey("completed", n));
+    }
   });
 });
