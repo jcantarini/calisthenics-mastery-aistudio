@@ -108,8 +108,8 @@ const en: Dict = {
 };
 
 const es: Dict = {
-  "g.remaining": "Restan",
   ...en,
+  "g.remaining": "Restan",
   "g.workoutComplete": "¡Entrenamiento completado!",
   "g.xpEarned": "XP ganado",
   "g.level": "Nivel",
@@ -160,8 +160,8 @@ const es: Dict = {
 };
 
 const it: Dict = {
-  "g.remaining": "Mancano",
   ...en,
+  "g.remaining": "Mancano",
   "g.workoutComplete": "Allenamento completato!",
   "g.xpEarned": "XP guadagnati",
   "g.level": "Livello",
@@ -212,8 +212,8 @@ const it: Dict = {
 };
 
 const fr: Dict = {
-  "g.remaining": "Restant",
   ...en,
+  "g.remaining": "Restant",
   "g.workoutComplete": "Séance terminée !",
   "g.xpEarned": "XP gagnés",
   "g.level": "Niveau",
