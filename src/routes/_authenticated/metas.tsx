@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { GoalService, buildGoalProgress } from "@/services/goals";
 import type { CreateGoalInput, Goal, GoalProgress } from "@/services/goals";
+import type { GoalProgressSignal } from "@/services/goals/goalEvents";
 import { useGoalMutations, useGoals } from "@/hooks/useGoals";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { Button } from "@/components/ui/button";
@@ -111,6 +112,21 @@ function GoalsPage() {
     if (action === "delete" || action === "cancel") setSelectedId(null);
   };
 
+  // Manual progress goes through the canonical progress mutation only.
+  // updateGoalProgress already evaluates completion — no parallel path here.
+  const handleLogProgress = async (goal: Goal, signal: GoalProgressSignal): Promise<boolean> => {
+    if (pending) return false;
+    const updated = await run(() => GoalService.updateGoalProgress(goal.id, signal));
+    if (!updated) {
+      toast.error(tg("gl.error.action"));
+      return false;
+    }
+    toast.success(
+      tg(updated.status === "completed" ? "gl.toast.goalCompleted" : "gl.toast.progress"),
+    );
+    return true;
+  };
+
   // Creation goes through GoalService only; the wizard never touches the backend.
   const handleCreate = async (input: CreateGoalInput): Promise<boolean> => {
     if (pending) return false;
@@ -192,6 +208,7 @@ function GoalsPage() {
         pending={pending}
         onOpenChange={(open) => !open && setSelectedId(null)}
         onAction={(action, goal) => void handleAction(action, goal)}
+        onLogProgress={handleLogProgress}
       />
     </div>
   );
