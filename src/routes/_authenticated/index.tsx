@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAppState } from "@/lib/store";
 import { useCurrentProgram, useProgramActions } from "@/hooks/useTrainingProgram";
+import { useGoals } from "@/hooks/useGoals";
 import { FadeIn } from "@/components/ui/motion";
 import { GreetingCard } from "@/components/dashboard/GreetingCard";
 import { TodayWorkoutCard } from "@/components/dashboard/TodayWorkoutCard";
@@ -11,6 +12,8 @@ import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingWorkoutCard } from "@/components/dashboard/UpcomingWorkoutCard";
 import { StatisticsCard, MotivationCard } from "@/components/dashboard/StatisticsCard";
 import { PlayerLevelCard } from "@/components/dashboard/PlayerLevelCard";
+import { GoalsDashboardCard } from "@/components/dashboard/GoalsDashboardCard";
+import { RecentGoalRewardsCard } from "@/components/dashboard/RecentGoalRewardsCard";
 
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import {
@@ -45,6 +48,9 @@ function DashboardPage() {
   const actions = useProgramActions();
   const [app] = useAppState();
   const navigate = useNavigate();
+  // Single Goals data source for the whole dashboard.
+  const { data: goals, loading: goalsLoading, error: goalsError, reload: reloadGoals } = useGoals();
+  const onRetryGoals = useCallback(() => void reloadGoals(), [reloadGoals]);
 
   // Presentation-only aggregation of locally logged sessions.
   const { trainingMinutes, caloriesBurned } = useMemo(() => {
@@ -118,6 +124,25 @@ function DashboardPage() {
           />
         </FadeIn>
 
+        {/* Goals and gamification live outside the training-plan branch so they
+            never disappear when no program exists. */}
+        <FadeIn delay={0.03}>
+          <GoalsDashboardCard
+            goals={goals}
+            loading={goalsLoading}
+            error={goalsError !== null}
+            onRetry={onRetryGoals}
+          />
+        </FadeIn>
+
+        <FadeIn delay={0.06}>
+          <PlayerLevelCard />
+        </FadeIn>
+
+        <FadeIn delay={0.09}>
+          <RecentGoalRewardsCard goals={goals} />
+        </FadeIn>
+
         {isLoading ? (
           <DashboardSkeleton />
         ) : !state ? (
@@ -172,10 +197,6 @@ function DashboardPage() {
 
             <FadeIn delay={0.15}>
               <UpcomingWorkoutCard workout={state.nextWorkout} />
-            </FadeIn>
-
-            <FadeIn delay={0.18}>
-              <PlayerLevelCard />
             </FadeIn>
 
             <FadeIn delay={0.21}>
