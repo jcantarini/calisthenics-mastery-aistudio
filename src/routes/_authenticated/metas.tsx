@@ -1,14 +1,31 @@
-// Minimal validation surface for the Goals domain (Sprint 7.1).
-// The polished Goals experience belongs to Sprint 7.4 — this screen only
-// proves create / load / progress / complete / pause / resume end to end.
+// Goals Home. Orchestration only: loading, filtering, selection and
+// mutations all go through the existing Goals hooks and services.
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { GoalService } from "@/services/goals";
-import type { CreateGoalInput, Goal } from "@/services/goals";
-import { buildGoalProgress } from "@/services/goals";
+import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import { GoalService, buildGoalProgress } from "@/services/goals";
+import type { Goal, GoalProgress } from "@/services/goals";
 import { useGoalMutations, useGoals } from "@/hooks/useGoals";
+import { useGoalsT } from "@/lib/goals-i18n";
+import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
 import { FadeIn } from "@/components/ui/motion";
+import { GoalCard } from "@/components/goals/GoalCard";
+import { GoalDetails } from "@/components/goals/GoalDetails";
+import { GoalsEmptyState } from "@/components/goals/GoalsEmptyState";
+import { GoalsFilters } from "@/components/goals/GoalsFilters";
+import { GoalsSkeleton } from "@/components/goals/GoalsSkeleton";
+import { GoalsSummary } from "@/components/goals/GoalsSummary";
+import {
+  GOAL_FILTERS,
+  buildGoalsSummary,
+  matchesFilter,
+  sortGoalsForDisplay,
+  type GoalAction,
+  type GoalFilter,
+} from "@/components/goals/goalPresentation";
 
 export const Route = createFileRoute("/_authenticated/metas")({
   head: () => ({
@@ -31,220 +48,134 @@ export const Route = createFileRoute("/_authenticated/metas")({
   component: GoalsPage,
 });
 
-const PRESETS: { label: string; input: CreateGoalInput }[] = [
-  {
-    label: "20 treinos",
-    input: {
-      type: "workout_count",
-      category: "fitness",
-      progressType: "count",
-      title: "Completar 20 treinos",
-      targetValue: 20,
-      unit: "workouts",
-    },
-  },
-  {
-    label: "10 barras",
-    input: {
-      type: "strength",
-      category: "strength",
-      progressType: "threshold",
-      title: "Fazer 10 barras fixas",
-      targetValue: 10,
-      unit: "repetitions",
-    },
-  },
-  {
-    label: "Prancha 120s",
-    input: {
-      type: "duration",
-      category: "fitness",
-      progressType: "duration",
-      title: "Segurar prancha por 120 segundos",
-      targetValue: 120,
-      unit: "seconds",
-    },
-  },
-  {
-    label: "Sequência 7 dias",
-    input: {
-      type: "streak",
-      category: "consistency",
-      progressType: "streak",
-      title: "Manter 7 dias seguidos de treino",
-      targetValue: 7,
-      unit: "days",
-    },
-  },
-  {
-    label: "Parada de mão",
-    input: {
-      type: "skill",
-      category: "skill",
-      progressType: "boolean",
-      title: "Conquistar a parada de mão",
-      targetValue: 1,
-      unit: "boolean",
-    },
-  },
-];
+const ACTION_RUNNERS: Record<GoalAction, (goalId: string) => Promise<unknown>> = {
+  pause: (id) => GoalService.pauseGoal(id),
+  resume: (id) => GoalService.resumeGoal(id),
+  cancel: (id) => GoalService.cancelGoal(id),
+  duplicate: (id) => GoalService.duplicateGoal(id),
+  delete: (id) => GoalService.deleteGoal(id),
+};
+
+const ACTION_TOASTS: Record<GoalAction, string> = {
+  pause: "gl.toast.paused",
+  resume: "gl.toast.resumed",
+  cancel: "gl.toast.cancelled",
+  duplicate: "gl.toast.duplicated",
+  delete: "gl.toast.deleted",
+};
 
 function GoalsPage() {
-  const { data: goals, loading, reload } = useGoals();
-  const { pending, error, run } = useGoalMutations(reload);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const { tg } = useGoalsT();
+  const { data: goals, loading, error, reload } = useGoals();
+  const { pending, run } = useGoalMutations(reload);
+  const [filter, setFilter] = useState<GoalFilter>("active");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const act = async (label: string, action: () => Promise<unknown>) => {
-    const result = await run(action);
-    setFeedback(result ? label : null);
+  // Canonical progress, computed once per goal by the domain helper.
+  const progressById = useMemo(() => {
+    const map = new Map<string, GoalProgress>();
+    for (const goal of goals) map.set(goal.id, buildGoalProgress(goal));
+    return map;
+  }, [goals]);
+
+  const summary = useMemo(
+    () => buildGoalsSummary(goals, (goal) => progressById.get(goal.id)?.percentage ?? 0),
+    [goals, progressById],
+  );
+
+  const counts = useMemo(() => {
+    const result = {} as Record<GoalFilter, number>;
+    for (const key of GOAL_FILTERS) result[key] = goals.filter((g) => matchesFilter(g, key)).length;
+    return result;
+  }, [goals]);
+
+  const visible = useMemo(
+    () => sortGoalsForDisplay(goals.filter((goal) => matchesFilter(goal, filter))),
+    [goals, filter],
+  );
+
+  const selected = goals.find((goal) => goal.id === selectedId) ?? null;
+
+  const handleAction = async (action: GoalAction, goal: Goal) => {
+    if (pending) return;
+    const result = await run(() => ACTION_RUNNERS[action](goal.id));
+    if (result === null) {
+      toast.error(tg("gl.error.action"));
+      return;
+    }
+    toast.success(tg(ACTION_TOASTS[action]));
+    if (action === "delete" || action === "cancel") setSelectedId(null);
   };
 
+  const createCta = (
+    <Button
+      type="button"
+      className="min-h-11 rounded-full"
+      onClick={() => toast.info(tg("gl.createSoon"))}
+    >
+      <Plus className="h-4 w-4" aria-hidden />
+      {tg("gl.create")}
+    </Button>
+  );
+
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-10 pb-24 sm:px-6 sm:pt-12">
-      <header className="space-y-1">
-        <h1 className="text-display text-2xl">Minhas metas</h1>
-        <p className="text-muted-foreground text-sm">
-          Crie metas e acompanhe o progresso. Experiência completa chega no próximo sprint.
-        </p>
+    <div className="mx-auto w-full max-w-3xl space-y-5 px-4 pt-10 pb-28 sm:px-6 sm:pt-12">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-display text-2xl">{tg("gl.title")}</h1>
+          <p className="text-sm text-muted-foreground">{tg("gl.subtitle")}</p>
+        </div>
+        {createCta}
       </header>
 
-      <FadeIn>
-        <section className="border-border/60 bg-card/60 space-y-3 rounded-2xl border p-4">
-          <h2 className="text-sm font-semibold">Criar meta</h2>
-          <div className="flex flex-wrap gap-2">
-            {PRESETS.map((preset) => (
-              <button
-                key={preset.label}
-                type="button"
-                disabled={pending}
-                onClick={() => act("Meta criada.", () => GoalService.createGoal(preset.input))}
-                className="border-border/60 bg-background/60 hover:bg-accent/40 rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-              >
-                + {preset.label}
-              </button>
-            ))}
-          </div>
-        </section>
-      </FadeIn>
-
-      {error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {error.message}
-        </p>
-      ) : null}
-      {feedback ? <p className="text-muted-foreground text-sm">{feedback}</p> : null}
-
       {loading ? (
-        <p className="text-muted-foreground text-sm">Carregando metas…</p>
-      ) : goals.length === 0 ? (
-        <p className="text-muted-foreground text-sm">Nenhuma meta ainda. Crie a primeira acima.</p>
-      ) : (
-        <ul className="space-y-3">
-          {goals.map((goal) => (
-            <GoalRow key={goal.id} goal={goal} pending={pending} onAction={act} />
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function GoalRow({
-  goal,
-  pending,
-  onAction,
-}: {
-  goal: Goal;
-  pending: boolean;
-  onAction: (label: string, action: () => Promise<unknown>) => void;
-}) {
-  const progress = buildGoalProgress(goal);
-  const step = goal.progressType === "duration" ? 30 : 1;
-
-  return (
-    <li className="border-border/60 bg-card/60 space-y-3 rounded-2xl border p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold">{goal.title}</p>
-          <p className="text-muted-foreground text-xs">
-            {progress.rawValue} / {goal.targetValue} {goal.unit} · {goal.status}
-          </p>
-        </div>
-        <span className="text-primary text-sm font-semibold">{progress.percentage}%</span>
-      </div>
-
-      <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-        <div
-          className="bg-primary h-full rounded-full transition-all"
-          style={{ width: `${progress.percentage}%` }}
+        <GoalsSkeleton />
+      ) : error ? (
+        <ErrorState
+          title={tg("gl.error.load")}
+          description={tg("gl.error.desc")}
+          retryLabel={tg("gl.error.retry")}
+          onRetry={() => void reload()}
         />
-      </div>
+      ) : (
+        <>
+          {goals.length > 0 ? (
+            <FadeIn>
+              <GoalsSummary summary={summary} />
+            </FadeIn>
+          ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        {(goal.status === "active" || goal.status === "draft") && (
-          <>
-            <ActionButton
-              disabled={pending}
-              onClick={() =>
-                onAction("Progresso registrado.", () =>
-                  GoalService.updateGoalProgress(goal.id, {
-                    source: "manual",
-                    value: goal.progressType === "boolean" ? 1 : step,
-                  }),
-                )
-              }
-            >
-              {goal.progressType === "boolean" ? "Conquistei" : `+${step}`}
-            </ActionButton>
-            <ActionButton
-              disabled={pending}
-              onClick={() => onAction("Meta concluída.", () => GoalService.completeGoal(goal.id))}
-            >
-              Concluir
-            </ActionButton>
-            <ActionButton
-              disabled={pending}
-              onClick={() => onAction("Meta pausada.", () => GoalService.pauseGoal(goal.id))}
-            >
-              Pausar
-            </ActionButton>
-          </>
-        )}
-        {goal.status === "paused" && (
-          <ActionButton
-            disabled={pending}
-            onClick={() => onAction("Meta retomada.", () => GoalService.resumeGoal(goal.id))}
-          >
-            Retomar
-          </ActionButton>
-        )}
-        {goal.status === "completed" && (
-          <ActionButton
-            disabled={pending}
-            onClick={() => onAction("Meta duplicada.", () => GoalService.duplicateGoal(goal.id))}
-          >
-            Repetir meta
-          </ActionButton>
-        )}
-        <ActionButton
-          disabled={pending}
-          onClick={() => onAction("Meta removida.", () => GoalService.deleteGoal(goal.id))}
-        >
-          Excluir
-        </ActionButton>
-      </div>
-    </li>
-  );
-}
+          <GoalsFilters value={filter} onChange={setFilter} counts={counts} />
 
-function ActionButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      type="button"
-      {...props}
-      className="border-border/60 bg-background/60 hover:bg-accent/40 rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-    >
-      {children}
-    </button>
+          {visible.length === 0 ? (
+            <GoalsEmptyState
+              filter={goals.length === 0 ? "all" : filter}
+              action={goals.length === 0 ? createCta : undefined}
+            />
+          ) : (
+            <ul className="space-y-3">
+              {visible.map((goal) => (
+                <li key={goal.id}>
+                  <GoalCard
+                    goal={goal}
+                    progress={progressById.get(goal.id) ?? buildGoalProgress(goal)}
+                    onOpen={(g) => setSelectedId(g.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+
+      <GoalDetails
+        goal={selected}
+        progress={selected ? (progressById.get(selected.id) ?? null) : null}
+        open={selected !== null}
+        pending={pending}
+        onOpenChange={(open) => !open && setSelectedId(null)}
+        onAction={(action, goal) => void handleAction(action, goal)}
+      />
+    </div>
   );
 }

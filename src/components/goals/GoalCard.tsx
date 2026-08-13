@@ -1,5 +1,5 @@
 import { CalendarClock, ChevronRight, Trophy } from "lucide-react";
-import { buildGoalProgress, type Goal } from "@/services/goals";
+import type { Goal, GoalProgress as GoalProgressData } from "@/services/goals";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { cn } from "@/lib/utils";
 import { CardIcon } from "@/components/dashboard/primitives";
@@ -11,12 +11,19 @@ import { GoalTrackingBadge } from "./GoalTrackingBadge";
 import { categoryIcon, categoryLabelKey, deadlineInfo, formatDate } from "./goalPresentation";
 
 /**
- * One goal, at a glance. Reads progress from the domain helper — the card
- * itself owns no goal rules.
+ * One goal, at a glance. Progress arrives already calculated by the Goals
+ * domain — the card itself owns no goal rules.
  */
-export function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: (goal: Goal) => void }) {
+export function GoalCard({
+  goal,
+  progress,
+  onOpen,
+}: {
+  goal: Goal;
+  progress: GoalProgressData;
+  onOpen: (goal: Goal) => void;
+}) {
   const { tg, locale } = useGoalsT();
-  const progress = buildGoalProgress(goal);
   const Icon = categoryIcon(goal.category);
   const deadline = deadlineInfo(goal.targetDate);
   const completed = goal.status === "completed";

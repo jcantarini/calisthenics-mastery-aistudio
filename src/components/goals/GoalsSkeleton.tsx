@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { useGoalsT } from "@/lib/goals-i18n";
 
 /** Matches the real GoalCard layout so nothing shifts when data lands. */
 export function GoalCardSkeleton() {
@@ -24,9 +25,10 @@ export function GoalCardSkeleton() {
 }
 
 export function GoalsSkeleton({ count = 3 }: { count?: number }) {
+  const { tg } = useGoalsT();
   return (
     <div className="space-y-3" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading</span>
+      <span className="sr-only">{tg("gl.loading")}</span>
       {Array.from({ length: count }, (_, i) => (
         <GoalCardSkeleton key={i} />
       ))}

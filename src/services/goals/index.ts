@@ -27,6 +27,8 @@ export {
 } from "./goalGamification";
 export type { GoalGamificationBridge, GoalGamificationPorts } from "./goalGamification";
 export { GoalTrackingService, createGoalTrackingService } from "./GoalTrackingService";
+export { goalTrackingMode, requiresManualProgress } from "./goalTrackingCapability";
+export type { GoalTrackingMode } from "./goalTrackingCapability";
 export type { GoalTrackingServiceInstance } from "./GoalTrackingService";
 export {
   activitySourceId,

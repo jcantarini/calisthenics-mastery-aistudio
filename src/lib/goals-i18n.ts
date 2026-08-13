@@ -147,6 +147,29 @@ const pt: Dict = {
   "gl.dash.primary": "Meta principal",
   "gl.dash.none": "Nenhuma meta ativa",
   "gl.dash.noneDesc": "Defina uma meta e acompanhe aqui.",
+
+  "gl.pending": "Em breve automática",
+  "gl.pendingHint":
+    "Vincule esta meta a um exercício para acompanhar sozinho. Por enquanto, o progresso é seu.",
+  "gl.manualNote": "O progresso desta meta é atualizado por você.",
+  "gl.autoNote": "Esta meta avança sozinha com seus treinos.",
+  "gl.actions": "Ações",
+  "gl.summary": "Resumo",
+  "gl.filters": "Filtrar metas",
+  "gl.goalDetails": "Detalhes da meta",
+  "gl.createSoon": "A criação de metas chega já já.",
+  "gl.confirmCancel.title": "Cancelar esta meta?",
+  "gl.confirmCancel.desc": "Ela sai da sua lista de metas ativas e não pode voltar.",
+  "gl.confirmDelete.title": "Excluir esta meta?",
+  "gl.confirmDelete.desc": "Esta ação é permanente e apaga o histórico da meta.",
+  "gl.confirmYes": "Confirmar",
+  "gl.keep": "Manter",
+  "gl.toast.paused": "Meta pausada.",
+  "gl.toast.resumed": "Meta retomada.",
+  "gl.toast.cancelled": "Meta cancelada.",
+  "gl.toast.deleted": "Meta excluída.",
+  "gl.toast.duplicated": "Meta recriada.",
+  "gl.error.action": "Não foi possível concluir essa ação. Tente novamente.",
 };
 
 const en: Dict = {
@@ -293,6 +316,29 @@ const en: Dict = {
   "gl.dash.primary": "Primary goal",
   "gl.dash.none": "No active goals",
   "gl.dash.noneDesc": "Set a goal and follow it here.",
+
+  "gl.pending": "Automatic soon",
+  "gl.pendingHint":
+    "Link this goal to an exercise to track it automatically. For now, progress is yours to update.",
+  "gl.manualNote": "You update the progress of this goal.",
+  "gl.autoNote": "This goal moves forward automatically with your workouts.",
+  "gl.actions": "Actions",
+  "gl.summary": "Summary",
+  "gl.filters": "Filter goals",
+  "gl.goalDetails": "Goal details",
+  "gl.createSoon": "Goal creation is coming very soon.",
+  "gl.confirmCancel.title": "Cancel this goal?",
+  "gl.confirmCancel.desc": "It leaves your active goals and cannot be reactivated.",
+  "gl.confirmDelete.title": "Delete this goal?",
+  "gl.confirmDelete.desc": "This is permanent and erases the goal history.",
+  "gl.confirmYes": "Confirm",
+  "gl.keep": "Keep",
+  "gl.toast.paused": "Goal paused.",
+  "gl.toast.resumed": "Goal resumed.",
+  "gl.toast.cancelled": "Goal cancelled.",
+  "gl.toast.deleted": "Goal deleted.",
+  "gl.toast.duplicated": "Goal recreated.",
+  "gl.error.action": "We couldn't finish that action. Please try again.",
 };
 
 const it: Dict = {
@@ -439,6 +485,29 @@ const it: Dict = {
   "gl.dash.primary": "Obiettivo principale",
   "gl.dash.none": "Nessun obiettivo attivo",
   "gl.dash.noneDesc": "Fissa un obiettivo e seguilo qui.",
+
+  "gl.pending": "Presto automatico",
+  "gl.pendingHint":
+    "Collega questo obiettivo a un esercizio per seguirlo da solo. Per ora aggiorni tu.",
+  "gl.manualNote": "I progressi di questo obiettivo li aggiorni tu.",
+  "gl.autoNote": "Questo obiettivo avanza da solo con i tuoi allenamenti.",
+  "gl.actions": "Azioni",
+  "gl.summary": "Riepilogo",
+  "gl.filters": "Filtra obiettivi",
+  "gl.goalDetails": "Dettagli obiettivo",
+  "gl.createSoon": "La creazione di obiettivi arriva prestissimo.",
+  "gl.confirmCancel.title": "Annullare questo obiettivo?",
+  "gl.confirmCancel.desc": "Esce dagli obiettivi attivi e non può essere riattivato.",
+  "gl.confirmDelete.title": "Eliminare questo obiettivo?",
+  "gl.confirmDelete.desc": "L'azione è definitiva e cancella lo storico.",
+  "gl.confirmYes": "Conferma",
+  "gl.keep": "Mantieni",
+  "gl.toast.paused": "Obiettivo in pausa.",
+  "gl.toast.resumed": "Obiettivo ripreso.",
+  "gl.toast.cancelled": "Obiettivo annullato.",
+  "gl.toast.deleted": "Obiettivo eliminato.",
+  "gl.toast.duplicated": "Obiettivo ricreato.",
+  "gl.error.action": "Non siamo riusciti a completare l'azione. Riprova.",
 };
 
 const es: Dict = {
@@ -585,6 +654,29 @@ const es: Dict = {
   "gl.dash.primary": "Meta principal",
   "gl.dash.none": "Sin metas activas",
   "gl.dash.noneDesc": "Fija una meta y síguela aquí.",
+
+  "gl.pending": "Pronto automática",
+  "gl.pendingHint":
+    "Vincula esta meta a un ejercicio para seguirla sola. Por ahora, el progreso lo registras tú.",
+  "gl.manualNote": "El progreso de esta meta lo actualizas tú.",
+  "gl.autoNote": "Esta meta avanza sola con tus entrenamientos.",
+  "gl.actions": "Acciones",
+  "gl.summary": "Resumen",
+  "gl.filters": "Filtrar metas",
+  "gl.goalDetails": "Detalles de la meta",
+  "gl.createSoon": "La creación de metas llega muy pronto.",
+  "gl.confirmCancel.title": "¿Cancelar esta meta?",
+  "gl.confirmCancel.desc": "Sale de tus metas activas y no se puede reactivar.",
+  "gl.confirmDelete.title": "¿Eliminar esta meta?",
+  "gl.confirmDelete.desc": "Es permanente y borra el historial de la meta.",
+  "gl.confirmYes": "Confirmar",
+  "gl.keep": "Mantener",
+  "gl.toast.paused": "Meta pausada.",
+  "gl.toast.resumed": "Meta reanudada.",
+  "gl.toast.cancelled": "Meta cancelada.",
+  "gl.toast.deleted": "Meta eliminada.",
+  "gl.toast.duplicated": "Meta recreada.",
+  "gl.error.action": "No pudimos completar esa acción. Inténtalo de nuevo.",
 };
 
 const fr: Dict = {
@@ -731,6 +823,29 @@ const fr: Dict = {
   "gl.dash.primary": "Objectif principal",
   "gl.dash.none": "Aucun objectif actif",
   "gl.dash.noneDesc": "Fixez un objectif et suivez-le ici.",
+
+  "gl.pending": "Bientôt automatique",
+  "gl.pendingHint":
+    "Reliez cet objectif à un exercice pour un suivi automatique. Pour l'instant, c'est vous qui mettez à jour.",
+  "gl.manualNote": "C'est vous qui mettez à jour la progression de cet objectif.",
+  "gl.autoNote": "Cet objectif avance tout seul avec vos séances.",
+  "gl.actions": "Actions",
+  "gl.summary": "Résumé",
+  "gl.filters": "Filtrer les objectifs",
+  "gl.goalDetails": "Détails de l'objectif",
+  "gl.createSoon": "La création d'objectifs arrive très bientôt.",
+  "gl.confirmCancel.title": "Annuler cet objectif ?",
+  "gl.confirmCancel.desc": "Il quitte vos objectifs actifs et ne peut pas être réactivé.",
+  "gl.confirmDelete.title": "Supprimer cet objectif ?",
+  "gl.confirmDelete.desc": "Action définitive : l'historique est effacé.",
+  "gl.confirmYes": "Confirmer",
+  "gl.keep": "Garder",
+  "gl.toast.paused": "Objectif en pause.",
+  "gl.toast.resumed": "Objectif repris.",
+  "gl.toast.cancelled": "Objectif annulé.",
+  "gl.toast.deleted": "Objectif supprimé.",
+  "gl.toast.duplicated": "Objectif recréé.",
+  "gl.error.action": "Impossible de terminer cette action. Réessayez.",
 };
 
 const DICTS: Record<Locale, Dict> = { pt, en, it, es, fr };
