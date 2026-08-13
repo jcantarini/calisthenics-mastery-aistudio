@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Goal, GoalProgress as GoalProgressData } from "@/services/goals";
+import type { GoalProgressSignal } from "@/services/goals/goalEvents";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { Button } from "@/components/ui/button";
 import {
