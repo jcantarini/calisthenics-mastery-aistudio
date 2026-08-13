@@ -206,9 +206,7 @@ export function GoalCreationWizard({
               >
                 {tg(STEP_TITLE[currentStep])}
               </h2>
-              <p className="text-xs text-muted-foreground">
-                {tg(`gl.wizard.hint.${currentStep}`)}
-              </p>
+              <p className="text-xs text-muted-foreground">{tg(`gl.wizard.hint.${currentStep}`)}</p>
             </div>
 
             {/* STEP 1 — category */}
@@ -252,9 +250,7 @@ export function GoalCreationWizard({
                         value={draft.customTitle}
                         placeholder={tg("gl.wizard.customTitlePh")}
                         aria-invalid={Boolean(issueFor("title"))}
-                        aria-describedby={
-                          issueFor("title") ? `${fieldId}-title-error` : undefined
-                        }
+                        aria-describedby={issueFor("title") ? `${fieldId}-title-error` : undefined}
                         onChange={(e) => setDraft((d) => ({ ...d, customTitle: e.target.value }))}
                         className="min-h-11"
                       />
@@ -343,9 +339,7 @@ export function GoalCreationWizard({
                         size="icon"
                         aria-label={tg("gl.wizard.less")}
                         className="min-h-11 min-w-11 rounded-full"
-                        onClick={() =>
-                          setTarget(Math.max(bounds.min, draft.target - bounds.step))
-                        }
+                        onClick={() => setTarget(Math.max(bounds.min, draft.target - bounds.step))}
                       >
                         <Minus className="h-4 w-4" aria-hidden />
                       </Button>
@@ -371,9 +365,7 @@ export function GoalCreationWizard({
                         size="icon"
                         aria-label={tg("gl.wizard.more")}
                         className="min-h-11 min-w-11 rounded-full"
-                        onClick={() =>
-                          setTarget(Math.min(bounds.max, draft.target + bounds.step))
-                        }
+                        onClick={() => setTarget(Math.min(bounds.max, draft.target + bounds.step))}
                       >
                         <Plus className="h-4 w-4" aria-hidden />
                       </Button>

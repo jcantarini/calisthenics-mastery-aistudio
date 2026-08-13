@@ -1,5 +1,4 @@
 import { Check } from "lucide-react";
-import { goalTrackingMode } from "@/services/goals/goalTrackingCapability";
 import { useGoalsT } from "@/lib/goals-i18n";
 import { cn } from "@/lib/utils";
 import type { GoalTemplate } from "./goalTemplates";
@@ -16,8 +15,6 @@ export function GoalTemplateCard({
   onSelect: (template: GoalTemplate) => void;
 }) {
   const { tg } = useGoalsT();
-  // Truthful preview: derived from the canonical capability selector.
-  void goalTrackingMode({ type: template.type, metadata: template.metadata });
   return (
     <button
       type="button"
