@@ -112,10 +112,14 @@ export type ManualValidation =
   | { ok: true; value: number }
   | { ok: false; errorKey: "gl.mp.err.required" | "gl.mp.err.positive" | "gl.mp.err.integer" };
 
-export function validateManualValue(model: ManualProgressModel, raw: string | number): ManualValidation {
+export function validateManualValue(
+  model: ManualProgressModel,
+  raw: string | number,
+): ManualValidation {
   if (model.input === "boolean") return { ok: true, value: 1 };
   const value = typeof raw === "number" ? raw : Number(String(raw).replace(",", "."));
-  if (typeof raw === "string" && raw.trim() === "") return { ok: false, errorKey: "gl.mp.err.required" };
+  if (typeof raw === "string" && raw.trim() === "")
+    return { ok: false, errorKey: "gl.mp.err.required" };
   if (!Number.isFinite(value)) return { ok: false, errorKey: "gl.mp.err.required" };
   if (model.mode === "increment" ? value <= 0 : value < 0) {
     return { ok: false, errorKey: "gl.mp.err.positive" };

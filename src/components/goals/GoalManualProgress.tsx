@@ -177,7 +177,11 @@ export function GoalManualProgress({
               </div>
 
               {model.quickAdds.length > 0 ? (
-                <div className="flex flex-wrap gap-2" role="group" aria-label={tg("gl.mp.quickAdd")}>
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="group"
+                  aria-label={tg("gl.mp.quickAdd")}
+                >
                   {model.quickAdds.map((amount) => {
                     const selected = raw !== "" && Number(raw) === amount;
                     return (
@@ -245,7 +249,10 @@ export function GoalManualProgress({
         </div>
       )}
 
-      <AlertDialog open={confirming} onOpenChange={(next) => !next && !busy && setConfirming(false)}>
+      <AlertDialog
+        open={confirming}
+        onOpenChange={(next) => !next && !busy && setConfirming(false)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle ref={confirmTitleRef} tabIndex={-1}>

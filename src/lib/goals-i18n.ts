@@ -265,7 +265,8 @@ const pt: Dict = {
   "gl.mp.cancel": "Cancelar",
   "gl.mp.saving": "Salvando\u2026",
   "gl.mp.manualNote": "Voc\u00ea registra o progresso desta meta.",
-  "gl.mp.pendingNote": "O acompanhamento autom\u00e1tico ainda n\u00e3o est\u00e1 ligado, mas voc\u00ea pode registrar o progresso manualmente.",
+  "gl.mp.pendingNote":
+    "O acompanhamento autom\u00e1tico ainda n\u00e3o est\u00e1 ligado, mas voc\u00ea pode registrar o progresso manualmente.",
   "gl.mp.booleanHint": "Isso marca a meta como conquistada.",
   "gl.mp.err.required": "Informe um valor.",
   "gl.mp.err.positive": "Use um valor v\u00e1lido.",
@@ -541,7 +542,8 @@ const en: Dict = {
   "gl.mp.cancel": "Cancel",
   "gl.mp.saving": "Saving\u2026",
   "gl.mp.manualNote": "You record the progress of this goal.",
-  "gl.mp.pendingNote": "Automatic tracking is not connected yet, but you can record progress manually.",
+  "gl.mp.pendingNote":
+    "Automatic tracking is not connected yet, but you can record progress manually.",
   "gl.mp.booleanHint": "This marks the goal as achieved.",
   "gl.mp.err.required": "Enter a value.",
   "gl.mp.err.positive": "Use a valid value.",
@@ -817,7 +819,8 @@ const it: Dict = {
   "gl.mp.cancel": "Annulla",
   "gl.mp.saving": "Salvataggio\u2026",
   "gl.mp.manualNote": "Sei tu a registrare il progresso di questo obiettivo.",
-  "gl.mp.pendingNote": "Il monitoraggio automatico non \u00e8 ancora collegato, ma puoi registrare i progressi manualmente.",
+  "gl.mp.pendingNote":
+    "Il monitoraggio automatico non \u00e8 ancora collegato, ma puoi registrare i progressi manualmente.",
   "gl.mp.booleanHint": "Questo segna l'obiettivo come raggiunto.",
   "gl.mp.err.required": "Inserisci un valore.",
   "gl.mp.err.positive": "Usa un valore valido.",
@@ -1093,7 +1096,8 @@ const es: Dict = {
   "gl.mp.cancel": "Cancelar",
   "gl.mp.saving": "Guardando\u2026",
   "gl.mp.manualNote": "T\u00fa registras el progreso de esta meta.",
-  "gl.mp.pendingNote": "El seguimiento autom\u00e1tico a\u00fan no est\u00e1 conectado, pero puedes registrar el progreso manualmente.",
+  "gl.mp.pendingNote":
+    "El seguimiento autom\u00e1tico a\u00fan no est\u00e1 conectado, pero puedes registrar el progreso manualmente.",
   "gl.mp.booleanHint": "Esto marca la meta como lograda.",
   "gl.mp.err.required": "Introduce un valor.",
   "gl.mp.err.positive": "Usa un valor v\u00e1lido.",
@@ -1369,7 +1373,8 @@ const fr: Dict = {
   "gl.mp.cancel": "Annuler",
   "gl.mp.saving": "Enregistrement\u2026",
   "gl.mp.manualNote": "C'est vous qui enregistrez la progression de cet objectif.",
-  "gl.mp.pendingNote": "Le suivi automatique n'est pas encore connect\u00e9, mais vous pouvez enregistrer la progression manuellement.",
+  "gl.mp.pendingNote":
+    "Le suivi automatique n'est pas encore connect\u00e9, mais vous pouvez enregistrer la progression manuellement.",
   "gl.mp.booleanHint": "Cela marque l'objectif comme r\u00e9ussi.",
   "gl.mp.err.required": "Saisissez une valeur.",
   "gl.mp.err.positive": "Utilisez une valeur valide.",
