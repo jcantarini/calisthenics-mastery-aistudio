@@ -30,6 +30,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { createSingleFlightGuard } from "./goalSubmissionGuard";
 import { GoalCategoryCard } from "./GoalCategoryCard";
 import { GoalTemplateCard } from "./GoalTemplateCard";
 import { GoalReviewCard } from "./GoalReviewCard";
