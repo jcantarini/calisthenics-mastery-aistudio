@@ -16,7 +16,12 @@ import { NUMERIC_ISSUE_KEY } from "@/components/goals/numericInput";
 
 // Intentionally empty: the boolean unit renders no suffix and the boolean
 // custom kind asks no target question.
-const ALLOWED_EMPTY = new Set(["gl.unit.boolean", "gl.ck.q.done"]);
+const ALLOWED_EMPTY = new Set<string>([
+  "gl.unit.boolean",
+  "gl.ck.q.done",
+  // Boolean templates ask no numeric target question.
+  ...GOAL_TEMPLATES.filter((t) => !t.numericTarget).map((t) => `gl.t.${t.id}.q`),
+]);
 
 const ACTIONS = ["activate", "pause", "resume", "cancel", "duplicate", "delete"] as const;
 
@@ -61,7 +66,7 @@ describe("dynamic goals key families", () => {
       for (const key of dynamicKeys) {
         const value = tGoals(locale, key);
         expect(value, `${locale}:${key}`).not.toBe(key);
-        expect(value.trim(), `${locale}:${key}`).not.toBe("");
+        if (!ALLOWED_EMPTY.has(key)) expect(value.trim(), `${locale}:${key}`).not.toBe("");
       }
     }
   });
