@@ -119,8 +119,9 @@ export function GoalCreationWizard({
         min: bounds.min,
         max: bounds.max,
         allowDecimal,
+        step: bounds.step,
       }),
-    [targetText, bounds.min, bounds.max, allowDecimal],
+    [targetText, bounds.min, bounds.max, bounds.step, allowDecimal],
   );
 
   // Canonical issue list: domain-shaped draft checks + the localized numeric
@@ -468,6 +469,7 @@ export function GoalCreationWizard({
                             min: bounds.min,
                             max: bounds.max,
                             allowDecimal,
+                            step: bounds.step,
                           });
                           // The draft only ever holds a finite number.
                           if (check.ok) setDraft((d) => ({ ...d, target: check.value }));

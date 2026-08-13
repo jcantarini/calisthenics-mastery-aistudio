@@ -124,7 +124,10 @@ export function GoalManualProgress({
   const previewId = `${fieldId}-preview`;
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-background/40 p-3">
+    <div className="rounded-2xl border border-border/60 bg-background/40 p-3" aria-busy={busy}>
+      <p role="status" aria-live="polite" className="sr-only">
+        {busy ? tg("gl.mp.savingStatus") : ""}
+      </p>
       <p className="text-xs text-muted-foreground">
         {tg(isPending ? "gl.mp.pendingNote" : "gl.mp.manualNote")}
       </p>

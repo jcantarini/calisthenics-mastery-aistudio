@@ -44,7 +44,10 @@ export function GoalCompletionRewardDialog({
           <DialogDescription>{tg("gl.rw.desc")}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-3" aria-busy={loading}>
+          <p role="status" aria-live="polite" className="sr-only">
+            {loading ? tg("gl.rw.checking") : ""}
+          </p>
           <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
             <p className="text-sm font-bold leading-tight">{goal.title}</p>
             <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
