@@ -1,10 +1,15 @@
-// Goal Creation Wizard (Sprint 7.4B-1).
+// Goal Creation Wizard (Sprint 7.4B-1, hardened in 7.5A).
 // Presentation + explicit wizard state only. Every domain decision (validation,
 // persistence, events) stays inside GoalService and the pure template adapter.
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
-import type { CreateGoalInput, GoalCategory, GoalDifficulty } from "@/services/goals/goalTypes";
+import type {
+  CreateGoalInput,
+  GoalCategory,
+  GoalDifficulty,
+  GoalUnit,
+} from "@/services/goals/goalTypes";
 import { GOAL_DIFFICULTIES } from "@/services/goals/goalTypes";
 import { validateCreateGoal } from "@/services/goals/goalValidation";
 import { useGoalsT } from "@/lib/goals-i18n";
@@ -33,8 +38,17 @@ import {
 import { createSingleFlightGuard } from "./goalSubmissionGuard";
 import { GoalCategoryCard } from "./GoalCategoryCard";
 import { GoalTemplateCard } from "./GoalTemplateCard";
+import { GoalRadioGroup } from "./GoalRadioGroup";
 import { GoalReviewCard } from "./GoalReviewCard";
 import { difficultyLabelKey, unitLabelKey } from "./goalPresentation";
+import { isDecimalUnit } from "./manualProgress";
+import { formatNumericInput, validateNumericInput } from "./numericInput";
+import {
+  WIZARD_STEP_KEYS,
+  routeForIssues,
+  stepIndexForField,
+  type WizardStepKey,
+} from "./wizardNavigation";
 import {
   CUSTOM_KINDS,
   WIZARD_CATEGORIES,
@@ -49,13 +63,12 @@ import {
   templatesForCategory,
   todayKey,
   validateDraft,
+  type DraftErrorField,
+  type DraftIssue,
   type GoalDraft,
 } from "./goalTemplates";
 
-const STEP_KEYS = ["category", "goal", "target", "tune", "review"] as const;
-type StepKey = (typeof STEP_KEYS)[number];
-
-const STEP_TITLE: Record<StepKey, string> = {
+const STEP_TITLE: Record<WizardStepKey, string> = {
   category: "gl.wizard.category",
   goal: "gl.wizard.goal",
   target: "gl.wizard.target",
@@ -78,7 +91,9 @@ export function GoalCreationWizard({
   const { tg } = useGoalsT();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<GoalDraft>(emptyDraft);
+  const [targetText, setTargetText] = useState("");
   const [showIssues, setShowIssues] = useState(false);
+  const [focusRequest, setFocusRequest] = useState<DraftErrorField | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [localSubmitting, setLocalSubmitting] = useState(false);
@@ -86,6 +101,7 @@ export function GoalCreationWizard({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const targetInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const fieldId = useId();
 
   const today = todayKey();
@@ -93,23 +109,70 @@ export function GoalCreationWizard({
   const customKind = findCustomKind(draft.customKindId);
   const isCustom = template?.id === "custom";
   const bounds = targetBounds(draft);
-  const issues = useMemo(() => validateDraft(draft, today), [draft, today]);
-  const issueFor = (field: "title" | "target" | "deadline") =>
+  const input = useMemo(() => buildCreateGoalInput(draft, tg, today), [draft, tg, today]);
+  const resolvedUnit: GoalUnit = input?.unit ?? draft.customUnit;
+  const allowDecimal = isDecimalUnit(resolvedUnit);
+
+  const targetCheck = useMemo(
+    () =>
+      validateNumericInput(targetText, {
+        min: bounds.min,
+        max: bounds.max,
+        allowDecimal,
+      }),
+    [targetText, bounds.min, bounds.max, allowDecimal],
+  );
+
+  // Canonical issue list: domain-shaped draft checks + the localized numeric
+  // check for the raw target text (the draft never stores NaN).
+  const issues: DraftIssue[] = useMemo(() => {
+    const base = validateDraft(draft, today).filter(
+      (issue) => !(bounds.numeric && issue.field === "target"),
+    );
+    if (bounds.numeric && !targetCheck.ok) {
+      base.push({ field: "target", messageKey: targetCheck.messageKey });
+    }
+    return base;
+  }, [draft, today, bounds.numeric, targetCheck]);
+
+  const issueFor = (field: DraftErrorField) =>
     showIssues ? issues.find((i) => i.field === field) : undefined;
 
-  const input = useMemo(() => buildCreateGoalInput(draft, tg, today), [draft, tg, today]);
-  const currentStep = STEP_KEYS[step] as StepKey;
+  const currentStep = WIZARD_STEP_KEYS[step] as WizardStepKey;
   const effectivePending = pending || localSubmitting;
 
-  // Move focus to the step heading so screen readers announce the new step.
+  // Focus: the requested invalid field once its step has mounted, otherwise
+  // the step heading so screen readers announce the new step.
   useEffect(() => {
-    if (open) headingRef.current?.focus();
-  }, [step, open]);
+    if (!open) return;
+    if (focusRequest && stepIndexForField(focusRequest) === step) {
+      const target =
+        focusRequest === "title"
+          ? titleInputRef.current
+          : focusRequest === "target"
+            ? targetInputRef.current
+            : dateInputRef.current;
+      if (target) {
+        target.focus();
+        setFocusRequest(null);
+        return;
+      }
+    }
+    headingRef.current?.focus();
+  }, [step, open, focusRequest]);
 
   const reset = () => {
     setStep(0);
     setDraft(emptyDraft());
+    setTargetText("");
     setShowIssues(false);
+    setFocusRequest(null);
+    setSubmitError(false);
+  };
+
+  const applyDraft = (next: GoalDraft) => {
+    setDraft(next);
+    setTargetText(targetBounds(next).numeric ? formatNumericInput(next.target) : "");
     setSubmitError(false);
   };
 
@@ -130,16 +193,23 @@ export function GoalCreationWizard({
     return true;
   };
 
+  /** Routes to the step that actually owns the first invalid field. */
+  const routeToFirstIssue = () => {
+    setShowIssues(true);
+    const route = routeForIssues(issues);
+    if (!route) return;
+    setStep(route.step);
+    setFocusRequest(route.field);
+  };
+
   const goNext = () => {
     if (!canContinue()) {
-      setShowIssues(true);
-      const first = issues[0];
-      if (first?.field === "title") titleInputRef.current?.focus();
-      else if (first?.field === "target") targetInputRef.current?.focus();
+      routeToFirstIssue();
       return;
     }
     setShowIssues(false);
-    setStep((s) => Math.min(s + 1, STEP_KEYS.length - 1));
+    setSubmitError(false);
+    setStep((s) => Math.min(s + 1, WIZARD_STEP_KEYS.length - 1));
   };
 
   const goBack = () => {
@@ -148,10 +218,9 @@ export function GoalCreationWizard({
   };
 
   const submit = async () => {
-    if (effectivePending || !input) return;
-    if (issues.length > 0 || !validateCreateGoal(input).valid) {
-      setShowIssues(true);
-      setStep(2);
+    if (effectivePending) return;
+    if (!input || issues.length > 0 || !validateCreateGoal(input).valid) {
+      routeToFirstIssue();
       return;
     }
     setLocalSubmitting(true);
@@ -174,7 +243,11 @@ export function GoalCreationWizard({
   };
 
   const setTarget = (value: number) => {
-    setDraft((d) => ({ ...d, target: value }));
+    const clamped = Math.min(bounds.max, Math.max(bounds.min, value));
+    const rounded = allowDecimal ? Math.round(clamped * 10) / 10 : Math.round(clamped);
+    setDraft((d) => ({ ...d, target: rounded }));
+    setTargetText(formatNumericInput(rounded));
+    setSubmitError(false);
   };
 
   const questionKey = isCustom
@@ -193,11 +266,18 @@ export function GoalCreationWizard({
         <SheetContent
           side="bottom"
           closeLabel={tg("gl.close")}
+          onEscapeKeyDown={(event) => {
+            if (effectivePending) event.preventDefault();
+          }}
+          onInteractOutside={(event) => {
+            if (effectivePending) event.preventDefault();
+          }}
+          aria-busy={effectivePending}
           className="flex max-h-[92dvh] flex-col rounded-t-3xl pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:mx-auto sm:max-w-lg"
         >
           <SheetHeader className="text-left">
             <p className="text-xs font-medium text-muted-foreground" aria-live="polite">
-              {tg("gl.wizard.step")} {step + 1} {tg("gl.wizard.of")} {STEP_KEYS.length}
+              {tg("gl.wizard.step")} {step + 1} {tg("gl.wizard.of")} {WIZARD_STEP_KEYS.length}
             </p>
             <SheetTitle className="text-lg leading-tight">{tg("gl.wizard.title")}</SheetTitle>
             <SheetDescription>{tg("gl.wizard.desc")}</SheetDescription>
@@ -221,30 +301,32 @@ export function GoalCreationWizard({
 
             {/* STEP 1 — category */}
             {currentStep === "category" ? (
-              <div role="radiogroup" aria-label={tg("gl.wizard.category")} className="grid gap-2">
-                {WIZARD_CATEGORIES.map((category: GoalCategory) => (
-                  <GoalCategoryCard
-                    key={category}
-                    category={category}
-                    selected={draft.category === category}
-                    onSelect={(next) => setDraft((d) => selectCategory(d, next))}
-                  />
-                ))}
-              </div>
+              <GoalRadioGroup
+                label={tg("gl.wizard.category")}
+                className="grid gap-2"
+                options={WIZARD_CATEGORIES}
+                getKey={(category: GoalCategory) => category}
+                isSelected={(category) => draft.category === category}
+                onSelect={(category) => applyDraft(selectCategory(draft, category))}
+                renderOption={(category, props, selected) => (
+                  <GoalCategoryCard category={category} selected={selected} radioProps={props} />
+                )}
+              />
             ) : null}
 
             {/* STEP 2 — template */}
             {currentStep === "goal" && draft.category ? (
-              <div role="radiogroup" aria-label={tg("gl.wizard.goal")} className="grid gap-2">
-                {templatesForCategory(draft.category).map((item) => (
-                  <GoalTemplateCard
-                    key={item.id}
-                    template={item}
-                    selected={draft.templateId === item.id}
-                    onSelect={(next) => setDraft(selectTemplate(next))}
-                  />
-                ))}
-              </div>
+              <GoalRadioGroup
+                label={tg("gl.wizard.goal")}
+                className="grid gap-2"
+                options={templatesForCategory(draft.category)}
+                getKey={(item) => item.id}
+                isSelected={(item) => draft.templateId === item.id}
+                onSelect={(item) => applyDraft(selectTemplate(item))}
+                renderOption={(item, props, selected) => (
+                  <GoalTemplateCard template={item} selected={selected} radioProps={props} />
+                )}
+              />
             ) : null}
 
             {/* STEP 3 — target */}
@@ -261,7 +343,10 @@ export function GoalCreationWizard({
                         placeholder={tg("gl.wizard.customTitlePh")}
                         aria-invalid={Boolean(issueFor("title"))}
                         aria-describedby={issueFor("title") ? `${fieldId}-title-error` : undefined}
-                        onChange={(e) => setDraft((d) => ({ ...d, customTitle: e.target.value }))}
+                        onChange={(e) => {
+                          setDraft((d) => ({ ...d, customTitle: e.target.value }));
+                          setSubmitError(false);
+                        }}
                         className="min-h-11"
                       />
                       {issueFor("title") ? (
@@ -289,25 +374,29 @@ export function GoalCreationWizard({
 
                     <fieldset className="space-y-2">
                       <legend className="text-sm font-medium">{tg("gl.wizard.customKind")}</legend>
-                      <div className="flex flex-wrap gap-2">
-                        {CUSTOM_KINDS.map((kind) => (
+                      <GoalRadioGroup
+                        label={tg("gl.wizard.customKind")}
+                        className="flex flex-wrap gap-2"
+                        options={CUSTOM_KINDS}
+                        getKey={(kind) => kind.id}
+                        isSelected={(kind) => draft.customKindId === kind.id}
+                        onSelect={(kind) => applyDraft(selectCustomKind(draft, kind))}
+                        renderOption={(kind, props, selected) => (
                           <button
-                            key={kind.id}
                             type="button"
-                            role="radio"
-                            aria-checked={draft.customKindId === kind.id}
-                            onClick={() => setDraft((d) => selectCustomKind(d, kind))}
+                            {...props}
                             className={cn(
                               "min-h-11 rounded-full border px-4 text-sm transition-colors",
-                              draft.customKindId === kind.id
-                                ? "border-primary bg-primary/10 text-primary"
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                              selected
+                                ? "border-primary bg-primary/10 font-semibold text-primary underline underline-offset-4"
                                 : "border-border/60 text-muted-foreground",
                             )}
                           >
                             {tg(`gl.ck.${kind.id}`)}
                           </button>
-                        ))}
-                      </div>
+                        )}
+                      />
                     </fieldset>
 
                     {customKind && customKind.units.length > 1 ? (
@@ -315,25 +404,32 @@ export function GoalCreationWizard({
                         <legend className="text-sm font-medium">
                           {tg("gl.wizard.customUnit")}
                         </legend>
-                        <div className="flex flex-wrap gap-2">
-                          {customKind.units.map((unit) => (
+                        <GoalRadioGroup
+                          label={tg("gl.wizard.customUnit")}
+                          className="flex flex-wrap gap-2"
+                          options={customKind.units}
+                          getKey={(unit) => unit}
+                          isSelected={(unit) => draft.customUnit === unit}
+                          onSelect={(unit) => {
+                            setDraft((d) => ({ ...d, customUnit: unit }));
+                            setSubmitError(false);
+                          }}
+                          renderOption={(unit, props, selected) => (
                             <button
-                              key={unit}
                               type="button"
-                              role="radio"
-                              aria-checked={draft.customUnit === unit}
-                              onClick={() => setDraft((d) => ({ ...d, customUnit: unit }))}
+                              {...props}
                               className={cn(
                                 "min-h-11 rounded-full border px-4 text-sm transition-colors",
-                                draft.customUnit === unit
-                                  ? "border-primary bg-primary/10 text-primary"
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                selected
+                                  ? "border-primary bg-primary/10 font-semibold text-primary underline underline-offset-4"
                                   : "border-border/60 text-muted-foreground",
                               )}
                             >
                               {tg(unitLabelKey(unit))}
                             </button>
-                          ))}
-                        </div>
+                          )}
+                        />
                       </fieldset>
                     ) : null}
                   </>
@@ -349,24 +445,33 @@ export function GoalCreationWizard({
                         size="icon"
                         aria-label={tg("gl.wizard.less")}
                         className="min-h-11 min-w-11 rounded-full"
-                        onClick={() => setTarget(Math.max(bounds.min, draft.target - bounds.step))}
+                        onClick={() => setTarget(draft.target - bounds.step)}
                       >
                         <Minus className="h-4 w-4" aria-hidden />
                       </Button>
                       <Input
                         id={`${fieldId}-target`}
                         ref={targetInputRef}
-                        type="number"
-                        inputMode="numeric"
-                        min={bounds.min}
-                        max={bounds.max}
-                        step={bounds.step}
-                        value={String(draft.target)}
+                        type="text"
+                        inputMode={allowDecimal ? "decimal" : "numeric"}
+                        autoComplete="off"
+                        value={targetText}
                         aria-invalid={Boolean(issueFor("target"))}
                         aria-describedby={
-                          issueFor("target") ? `${fieldId}-target-error` : undefined
+                          issueFor("target") ? `${fieldId}-target-error` : `${fieldId}-target-hint`
                         }
-                        onChange={(e) => setTarget(Number(e.target.value))}
+                        onChange={(e) => {
+                          const text = e.target.value;
+                          setTargetText(text);
+                          setSubmitError(false);
+                          const check = validateNumericInput(text, {
+                            min: bounds.min,
+                            max: bounds.max,
+                            allowDecimal,
+                          });
+                          // The draft only ever holds a finite number.
+                          if (check.ok) setDraft((d) => ({ ...d, target: check.value }));
+                        }}
                         className="min-h-11 text-center text-lg font-semibold"
                       />
                       <Button
@@ -375,13 +480,13 @@ export function GoalCreationWizard({
                         size="icon"
                         aria-label={tg("gl.wizard.more")}
                         className="min-h-11 min-w-11 rounded-full"
-                        onClick={() => setTarget(Math.min(bounds.max, draft.target + bounds.step))}
+                        onClick={() => setTarget(draft.target + bounds.step)}
                       >
                         <Plus className="h-4 w-4" aria-hidden />
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {tg(unitLabelKey(input?.unit ?? "workouts"))} · {bounds.min}–{bounds.max}
+                    <p id={`${fieldId}-target-hint`} className="text-xs text-muted-foreground">
+                      {tg(unitLabelKey(resolvedUnit))} · {bounds.min}–{bounds.max}
                     </p>
                     {issueFor("target") ? (
                       <p
@@ -410,30 +515,36 @@ export function GoalCreationWizard({
               <div className="space-y-5">
                 <fieldset className="space-y-2">
                   <legend className="text-sm font-medium">{tg("gl.difficulty")}</legend>
-                  <div className="grid gap-2">
-                    {GOAL_DIFFICULTIES.map((difficulty: GoalDifficulty) => (
+                  <GoalRadioGroup
+                    label={tg("gl.difficulty")}
+                    className="grid gap-2"
+                    options={GOAL_DIFFICULTIES}
+                    getKey={(difficulty: GoalDifficulty) => difficulty}
+                    isSelected={(difficulty) => draft.difficulty === difficulty}
+                    onSelect={(difficulty) => {
+                      setDraft((d) => ({ ...d, difficulty }));
+                      setSubmitError(false);
+                    }}
+                    renderOption={(difficulty, props, selected) => (
                       <button
-                        key={difficulty}
                         type="button"
-                        role="radio"
-                        aria-checked={draft.difficulty === difficulty}
-                        onClick={() => setDraft((d) => ({ ...d, difficulty }))}
+                        {...props}
                         className={cn(
                           "min-h-11 rounded-2xl border p-3 text-left transition-colors",
-                          draft.difficulty === difficulty
-                            ? "border-primary bg-primary/10"
-                            : "border-border/60 bg-card/40",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          selected ? "border-primary bg-primary/10" : "border-border/60 bg-card/40",
                         )}
                       >
                         <span className="block text-sm font-semibold">
                           {tg(difficultyLabelKey(difficulty))}
+                          {selected ? " ✓" : ""}
                         </span>
                         <span className="block text-xs text-muted-foreground">
                           {tg(`gl.diffHint.${difficulty}`)}
                         </span>
                       </button>
-                    ))}
-                  </div>
+                    )}
+                  />
                 </fieldset>
 
                 {template.allowDeadline ? (
@@ -441,6 +552,7 @@ export function GoalCreationWizard({
                     <Label htmlFor={`${fieldId}-date`}>{tg("gl.wizard.deadline")}</Label>
                     <Input
                       id={`${fieldId}-date`}
+                      ref={dateInputRef}
                       type="date"
                       min={today}
                       value={draft.targetDate ?? ""}
@@ -448,9 +560,10 @@ export function GoalCreationWizard({
                       aria-describedby={
                         issueFor("deadline") ? `${fieldId}-date-error` : `${fieldId}-date-hint`
                       }
-                      onChange={(e) =>
-                        setDraft((d) => ({ ...d, targetDate: e.target.value || null }))
-                      }
+                      onChange={(e) => {
+                        setDraft((d) => ({ ...d, targetDate: e.target.value || null }));
+                        setSubmitError(false);
+                      }}
                       className="min-h-11"
                     />
                     <p id={`${fieldId}-date-hint`} className="text-xs text-muted-foreground">
@@ -476,6 +589,11 @@ export function GoalCreationWizard({
             {currentStep === "review" && input ? (
               <div className="space-y-3">
                 <GoalReviewCard input={input} />
+                {effectivePending ? (
+                  <p role="status" aria-live="polite" className="text-xs text-muted-foreground">
+                    {tg("gl.wizard.creating")}
+                  </p>
+                ) : null}
                 {submitError ? (
                   <p role="alert" className="text-xs text-destructive">
                     {tg("gl.wizard.error")}

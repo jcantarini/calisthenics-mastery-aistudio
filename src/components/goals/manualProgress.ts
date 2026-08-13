@@ -8,6 +8,7 @@ import type { GoalProgressSignal } from "@/services/goals/goalEvents";
 import { foldProgress, isGoalCompleted } from "@/services/goals/goalRules";
 import { goalTrackingMode } from "@/services/goals/goalTrackingCapability";
 import type { Goal, GoalProgressType, GoalUnit } from "@/services/goals/goalTypes";
+import { parseDecimalInput } from "./numericInput";
 
 export type ManualSignalMode = "increment" | "set";
 export type ManualInputKind = "numeric" | "boolean";
@@ -117,10 +118,9 @@ export function validateManualValue(
   raw: string | number,
 ): ManualValidation {
   if (model.input === "boolean") return { ok: true, value: 1 };
-  const value = typeof raw === "number" ? raw : Number(String(raw).replace(",", "."));
-  if (typeof raw === "string" && raw.trim() === "")
-    return { ok: false, errorKey: "gl.mp.err.required" };
-  if (!Number.isFinite(value)) return { ok: false, errorKey: "gl.mp.err.required" };
+  // Locale-neutral parsing (comma or period) shared with the creation wizard.
+  const value = parseDecimalInput(raw);
+  if (value === null) return { ok: false, errorKey: "gl.mp.err.required" };
   if (model.mode === "increment" ? value <= 0 : value < 0) {
     return { ok: false, errorKey: "gl.mp.err.positive" };
   }

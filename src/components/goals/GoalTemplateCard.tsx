@@ -3,24 +3,23 @@ import { useGoalsT } from "@/lib/goals-i18n";
 import { cn } from "@/lib/utils";
 import type { GoalTemplate } from "./goalTemplates";
 import { GoalTrackingBadge } from "./GoalTrackingBadge";
+import type { RadioOptionProps } from "./GoalRadioGroup";
 
 /** Selectable goal template. The tracking badge always tells the truth. */
 export function GoalTemplateCard({
   template,
   selected,
-  onSelect,
+  radioProps,
 }: {
   template: GoalTemplate;
   selected: boolean;
-  onSelect: (template: GoalTemplate) => void;
+  radioProps: RadioOptionProps;
 }) {
   const { tg } = useGoalsT();
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={() => onSelect(template)}
+      {...radioProps}
       className={cn(
         "flex w-full min-h-11 items-start justify-between gap-3 rounded-2xl border p-3 text-left transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

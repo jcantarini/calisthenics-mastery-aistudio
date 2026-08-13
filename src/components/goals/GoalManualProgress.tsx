@@ -31,6 +31,7 @@ import {
   previewManualProgress,
   validateManualValue,
 } from "./manualProgress";
+import { parseDecimalInput } from "./numericInput";
 
 function trim(value: number): string {
   return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
@@ -183,7 +184,7 @@ export function GoalManualProgress({
                   aria-label={tg("gl.mp.quickAdd")}
                 >
                   {model.quickAdds.map((amount) => {
-                    const selected = raw !== "" && Number(raw) === amount;
+                    const selected = raw !== "" && parseDecimalInput(raw) === amount;
                     return (
                       <button
                         key={amount}
