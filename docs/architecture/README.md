@@ -14,7 +14,8 @@ aspirational design.
 | [database.md](./database.md)                             | Schema, RLS, indexes, integrity                   |
 | [training.md](./training.md)                             | Workout generation, plan generation, plan runtime |
 | [gamification.md](./gamification.md)                     | XP, Progression, Achievements, Orchestrator       |
-| [goals.md](./goals.md)                                   | Goals domain & Goals Engine (Sprint 7.1)          |
+| [goals.md](./goals.md)                                   | Goals domain: implementation of Sprints 7.1–7.5   |
+| [goals-release-gate.md](./goals-release-gate.md)         | Goals Phase 7 release gate and validation record  |
 | [conventions.md](./conventions.md)                       | Coding conventions and architecture guardrails    |
 | [architecture-freeze-v1.md](./architecture-freeze-v1.md) | Sprint 6.6B freeze report                         |
 | [decisions/](./decisions/)                               | Architecture Decision Records (ADRs)              |

@@ -6,8 +6,8 @@ results actually produced by running the validation commands below.
 
 ## 1. Validated scope
 
-| Sprint | Scope                                                             |
-| ------ | ----------------------------------------------------------------- |
+| Sprint | Scope                                                              |
+| ------ | ------------------------------------------------------------------ |
 | 7.1    | Goals Core: model, rules, validation, events, persistence, hooks   |
 | 7.2    | Automatic tracking + persistent idempotency ledger                 |
 | 7.3    | Goals × Gamification bridge (XP / progression / achievements)      |
@@ -63,27 +63,27 @@ production code change was required.
 
 ## 5. Idempotency guarantees
 
-| Mechanism                                        | Protects against                        |
-| ------------------------------------------------ | --------------------------------------- |
-| `UNIQUE(goal_id, source_event_id, source_event_type)` | duplicate activity delivery        |
-| Optimistic `.eq("status", previous)` guard        | double transition / double completion   |
-| Compare-and-set on `current_value` + retry        | lost concurrent progress updates        |
-| `goal_completed:<goalId>` XP source uniqueness    | duplicate XP, levels, unlocks           |
-| Single-flight submission guard (wizard)           | duplicate goal creation from one intent |
+| Mechanism                                             | Protects against                        |
+| ----------------------------------------------------- | --------------------------------------- |
+| `UNIQUE(goal_id, source_event_id, source_event_type)` | duplicate activity delivery             |
+| Optimistic `.eq("status", previous)` guard            | double transition / double completion   |
+| Compare-and-set on `current_value` + retry            | lost concurrent progress updates        |
+| `goal_completed:<goalId>` XP source uniqueness        | duplicate XP, levels, unlocks           |
+| Single-flight submission guard (wizard)               | duplicate goal creation from one intent |
 
 ## 6. Tracking matrix
 
-| Goal type                       | Mode                                          |
-| ------------------------------- | --------------------------------------------- |
-| `workout_count`                 | auto                                          |
-| `workout_frequency`             | auto                                          |
-| `training_time`                 | auto                                          |
-| `streak`                        | auto                                          |
-| `program`                       | auto                                          |
-| `strength`, `duration`          | auto with `metadata.exerciseId`, else pending |
-| `skill`                         | auto with `metadata.skillId`, else pending    |
+| Goal type                         | Mode                                              |
+| --------------------------------- | ------------------------------------------------- |
+| `workout_count`                   | auto                                              |
+| `workout_frequency`               | auto                                              |
+| `training_time`                   | auto                                              |
+| `streak`                          | auto                                              |
+| `program`                         | auto                                              |
+| `strength`, `duration`            | auto with `metadata.exerciseId`, else pending     |
+| `skill`                           | auto with `metadata.skillId`, else pending        |
 | `body_weight`, `body_measurement` | auto with `metadata.measurementKey`, else pending |
-| `custom`                        | manual                                        |
+| `custom`                          | manual                                            |
 
 `pending` means: no authoritative producer exists yet, so the user logs progress
 manually and the badge says so instead of promising automation.
@@ -134,18 +134,18 @@ bun run build
 
 ## 10. Results (Sprint 7.5B run)
 
-| Check                | Result                                                     |
-| -------------------- | ---------------------------------------------------------- |
-| Bun                  | 1.3.3                                                      |
-| `install --frozen-lockfile` | success, no lockfile change                         |
-| `typecheck`          | 0 errors                                                   |
-| `test:run`           | 343 passed / 343 (22 files)                                |
-| `lint`               | 0 errors, 13 warnings                                      |
-| `build`              | client + SSR + Nitro completed, no Rolldown panic          |
-| `bun.lock` SHA-256   | `184c717a13a2b402067877f9689afcd83edf96945a9e94f952c73fcb81805058` before and after |
-| Other lockfiles      | none                                                       |
-| Dependency changes   | none                                                       |
-| Database / infra     | unchanged                                                  |
+| Check                       | Result                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| Bun                         | 1.3.3                                                                               |
+| `install --frozen-lockfile` | success, no lockfile change                                                         |
+| `typecheck`                 | 0 errors                                                                            |
+| `test:run`                  | 343 passed / 343 (22 files)                                                         |
+| `lint`                      | 0 errors, 13 warnings                                                               |
+| `build`                     | client + SSR + Nitro completed, no Rolldown panic                                   |
+| `bun.lock` SHA-256          | `184c717a13a2b402067877f9689afcd83edf96945a9e94f952c73fcb81805058` before and after |
+| Other lockfiles             | none                                                                                |
+| Dependency changes          | none                                                                                |
+| Database / infra            | unchanged                                                                           |
 
 ## 11. Known warnings (non-blocking)
 
