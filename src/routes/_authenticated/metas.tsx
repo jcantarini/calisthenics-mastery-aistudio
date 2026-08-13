@@ -160,7 +160,6 @@ function GoalsPage() {
                 <li key={goal.id}>
                   <GoalCard
                     goal={goal}
-                    // Built from this same goals array, so the entry always exists.
                     progress={progressById.get(goal.id) as GoalProgress}
                     onOpen={(g) => setSelectedId(g.id)}
                   />
