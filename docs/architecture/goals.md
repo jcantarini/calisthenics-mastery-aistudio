@@ -1,9 +1,9 @@
-# Goals Domain (Sprints 7.1–7.5)
+# Goals Domain (Sprints 7.1–7.5D)
 
-> Status: implemented through Sprint 7.5B. Final release approval remains
-> governed by [goals-release-gate.md](./goals-release-gate.md), which is
-> currently PARTIALLY VALIDATED (manual UX walkthrough pending). This document
-> describes the code as it exists, not planned work.
+> Status: **RELEASE APPROVED**. Phase 7 was implemented through Sprints 7.1–7.5D.
+> The automated release gate and the user-confirmed manual walkthrough are both
+> complete. Final approval is recorded in [goals-release-gate.md](./goals-release-gate.md).
+> This document describes the code as it exists, not planned work.
 
 ## Goals Core (Sprint 7.1)
 
@@ -501,7 +501,36 @@ numeric issues), including the two documented intentionally empty strings.
 
 ---
 
-# Release guarantees (Sprint 7.5B)
+# Phase 7 closure (Sprint 7.5D)
+
+Phase 7 reached release approval after the automated quality gate and a complete
+user-confirmed manual walkthrough.
+
+## Sprint 7.5C-C — Responsive Dashboard polish
+
+- Fixed confirmed responsive text truncation in the Dashboard header and Level/XP
+  card labels on narrow layouts.
+- `SectionTitle` gained a `stack` prop so long headers wrap with `break-words`
+  and action buttons stack on narrow screens.
+- `StatTile` labels now wrap instead of truncating, eliminating ellipsis on
+  "Próximo nível" / "Next level" / "Livello successivo" and similar strings.
+- No business logic, dependency, database, Supabase or infrastructure changes.
+
+## Sprint 7.5C-C2 — PlayerLevelCard internationalization
+
+- Localized all `PlayerLevelCard` labels through `useT()` / `tG()`.
+- Added `g.remaining` key to `src/lib/gamification-i18n.ts`.
+- Verified presentation in Portuguese, English and Italian; Spanish and French
+  remaining-label strings are concise and wrap safely.
+- Maximum-level presentation and the accessible progress-bar label are covered.
+- XP and level values are preserved exactly; only presentation strings changed.
+
+No Goal business rules, reward amounts, XP values, persistence behavior or
+infrastructure were modified in these closure sprints.
+
+---
+
+# Release guarantees (Sprints 7.5B–7.5D)
 
 Proven by `src/services/goals/releaseContract.test.ts`, which drives the real
 services and rules against an in-memory persistence layer:
