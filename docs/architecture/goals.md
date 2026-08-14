@@ -1,9 +1,9 @@
-# Goals Domain (Sprints 7.1–7.5)
+# Goals Domain (Sprints 7.1–7.5D)
 
-> Status: implemented through Sprint 7.5B. Final release approval remains
-> governed by [goals-release-gate.md](./goals-release-gate.md), which is
-> currently PARTIALLY VALIDATED (manual UX walkthrough pending). This document
-> describes the code as it exists, not planned work.
+> Status: **RELEASE APPROVED**. Phase 7 was implemented through Sprints 7.1–7.5D.
+> The automated release gate and the user-confirmed manual walkthrough are both
+> complete. Final approval is recorded in [goals-release-gate.md](./goals-release-gate.md).
+> This document describes the code as it exists, not planned work.
 
 ## Goals Core (Sprint 7.1)
 
