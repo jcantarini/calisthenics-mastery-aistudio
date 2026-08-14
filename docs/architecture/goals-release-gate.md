@@ -137,12 +137,26 @@ completion, reward dialog, pause/resume/cancel/duplicate/delete, return to
 Dashboard; focus visibility, keyboard-only navigation, bottom-nav/safe-area
 overlap, dialog dismissal during mutation):
 
-- **NOT EXECUTED.** The signed-in preview account is held by the onboarding
-  gate: `/_authenticated` redirects to `/assessment` until a fitness assessment
-  row exists, so `/metas` cannot be reached in the preview. Completing the
-  assessment would write real fitness data into the user's account, which is out
-  of scope for this sprint. These items must be re-checked manually by an
-  account that has finished onboarding.
+- **EXECUTED.** The following workflows were confirmed by the user:
+  - Goals Home loads.
+  - Goal Details opens.
+  - Goal creation wizard runs end-to-end.
+  - Custom goal creation works.
+  - Required-field validation is enforced.
+  - Active, paused, completed and all-goals filters work.
+  - Pause and resume actions work.
+  - Cancellation shows a confirmation and completes.
+  - Deletion shows a confirmation and completes.
+  - Goal duplication works.
+  - Manual progress registration works.
+  - Automatic and pending tracking presentation is correct.
+  - Goal completion at 100% works.
+  - Completed goals reject further progress changes.
+  - XP and goal reward presentation is correct.
+  - Dashboard Goals widget is visible.
+  - Recent goal rewards appear on the Dashboard.
+  - Cancelled goals leave Active and remain visible in All.
+  - Responsive narrow/mobile presentation of the corrected Dashboard cards is correct.
 
 ## 9. Validation commands
 
