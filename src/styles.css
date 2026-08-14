@@ -44,7 +44,6 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 
-
   --shadow-glow: 0 0 40px -8px var(--lime);
   --shadow-card: 0 20px 40px -20px oklch(0 0 0 / 0.6);
 }
@@ -127,7 +126,8 @@
     -webkit-text-size-adjust: 100%;
   }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
@@ -136,7 +136,11 @@
     overscroll-behavior-y: none;
   }
 
-  h1, h2, h3, h4, .display {
+  h1,
+  h2,
+  h3,
+  h4,
+  .display {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
@@ -147,7 +151,10 @@
   }
 
   /* Slim, unobtrusive scrollbar. */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
   ::-webkit-scrollbar-thumb {
     background: color-mix(in oklab, var(--foreground) 18%, transparent);
     border-radius: 999px;
@@ -159,18 +166,24 @@
     background-clip: padding-box;
     border: 2px solid transparent;
   }
-  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
   /* Consistent, accessible focus ring on every interactive element. */
   :where(a, button, [role="button"], input, textarea, select, summary, [tabindex]):focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+    box-shadow:
+      0 0 0 2px var(--background),
+      0 0 0 4px var(--ring);
     border-radius: inherit;
   }
 
   /* Respect reduced motion. */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -198,9 +211,18 @@
 }
 
 @keyframes celebrate {
-  0% { transform: scale(0.6); opacity: 0; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @utility animate-celebrate {
@@ -208,8 +230,12 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @utility animate-shimmer {

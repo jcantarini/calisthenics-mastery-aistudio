@@ -1,15 +1,18 @@
 # Barra — Calisthenics Training App
 
 A mobile-first calisthenics application: personalised training programs from
-beginner to advanced, exercise videos, interval timer, nutrition planning and
-a full gamification layer (XP, levels, achievements).
+beginner to advanced, exercise videos, interval timer, nutrition planning,
+personal goals with automatic tracking, and a full gamification layer
+(XP, levels, achievements).
 
 ## Purpose
 
 Guide a user from an initial fitness assessment to a personalised 4-week
 training plan, track execution day by day, and keep motivation high through a
-game-like progression system. Available in Portuguese, English, Italian,
-Spanish and French.
+game-like progression system. Users also set personal goals, which are tracked
+automatically from real training activity (or logged manually when no
+authoritative producer exists) and rewarded through the same gamification
+pipeline. Available in Portuguese, English, Italian, Spanish and French.
 
 ## Technology stack
 
@@ -40,7 +43,6 @@ bun run dev        # http://localhost:8080
   `package-lock.json`, `yarn.lock` or `pnpm-lock.yaml` may be committed.
 - `npm run <script>` may technically invoke an existing script, but validation and all
   documented workflows use `bun run`.
-
 
 ## Environment configuration
 
@@ -80,13 +82,15 @@ bun run test:watch  # vitest in watch mode
 src/
   routes/              file-based routes (_authenticated/* is session-gated)
   components/
-    dashboard/         dashboard widgets
+    dashboard/         dashboard widgets (including goals spotlight + rewards)
     gamification/      XP, level and achievement UI
+    goals/             goals UI: cards, details, wizard, manual progress
     ui/                shadcn primitives
   hooks/               React ↔ service bindings
   services/
     workout-generator/ single-workout generation
     training-plan/     plan generation + runtime (source of truth)
+    goals/             goals engine, automatic tracking, reward recovery
     xp/                XP engine
     progression/       level engine
     achievements/      achievement engine
@@ -103,4 +107,7 @@ The Core Platform architecture is documented in
 v1.0** — see
 [`architecture-freeze-v1.md`](./docs/architecture/architecture-freeze-v1.md).
 New features must extend the architecture; redesigning it requires a
-documented architectural reason and a new ADR.
+documented architectural reason and a new ADR. The Goals domain (Sprints
+7.1–7.5) is documented in [`goals.md`](./docs/architecture/goals.md) with its
+release record in
+[`goals-release-gate.md`](./docs/architecture/goals-release-gate.md).
