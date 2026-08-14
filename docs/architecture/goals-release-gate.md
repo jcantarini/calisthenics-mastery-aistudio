@@ -156,7 +156,10 @@ bun run lint
 bun run build
 ```
 
-## 10. Results (Sprint 7.5C-A run — automated quality gate closure)
+## 10. Results (latest independently audited baseline — Sprint 7.5C-C2)
+
+The automated baseline below was produced by Sprint 7.5C-C2. Sprint 7.5D is a
+documentation-only closure and did not rerun the full quality gate.
 
 | Check                       | Result                                                                              |
 | --------------------------- | ----------------------------------------------------------------------------------- |
@@ -164,7 +167,7 @@ bun run build
 | `install --frozen-lockfile` | success, no lockfile change                                                         |
 | `prettier --check .`        | pass — "All matched files use Prettier code style!"                                 |
 | `typecheck`                 | 0 errors                                                                            |
-| `test:run`                  | 348 passed / 348 (22 files)                                                         |
+| `test:run`                  | 355 passed / 355 (23 files)                                                         |
 | `lint`                      | exit code 0 — 0 errors, 13 warnings                                                 |
 | `build`                     | client + SSR + Nitro completed, no Rolldown panic                                   |
 | `bun.lock` SHA-256          | `184c717a13a2b402067877f9689afcd83edf96945a9e94f952c73fcb81805058` before and after |
@@ -172,7 +175,7 @@ bun run build
 | Dependency changes          | none                                                                                |
 | Database / infra            | unchanged                                                                           |
 
-Formatting-only corrections in this run: `AGENTS.md`,
+Formatting-only corrections in the Sprint 7.5C-A run: `AGENTS.md`,
 `docs/architecture/conventions.md`, `src/routes/README.md`, `src/styles.css`.
 The eight files flagged by the external audit already satisfied the project
 Prettier configuration in the current repository state; no source behavior was
