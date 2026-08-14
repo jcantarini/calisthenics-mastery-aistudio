@@ -519,7 +519,7 @@ user-confirmed manual walkthrough.
 ## Sprint 7.5C-C2 — PlayerLevelCard internationalization
 
 - Localized all `PlayerLevelCard` labels through `useT()` / `tG()`.
-- Added `playerLevelRemaining` key to `src/lib/gamification-i18n.ts`.
+- Added `g.remaining` key to `src/lib/gamification-i18n.ts`.
 - Verified presentation in Portuguese, English and Italian; Spanish and French
   remaining-label strings are concise and wrap safely.
 - Maximum-level presentation and the accessible progress-bar label are covered.
