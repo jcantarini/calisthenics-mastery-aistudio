@@ -6,16 +6,19 @@ results actually produced by running the validation commands below.
 
 ## 1. Validated scope
 
-| Sprint | Scope                                                              |
-| ------ | ------------------------------------------------------------------ |
-| 7.1    | Goals Core: model, rules, validation, events, persistence, hooks   |
-| 7.2    | Automatic tracking + persistent idempotency ledger                 |
-| 7.3    | Goals × Gamification bridge (XP / progression / achievements)      |
-| 7.3B   | Goal reward recovery (deterministic XP source reconciliation)      |
-| 7.4A   | Goals Home UI, cards, details, filters, tracking capability badges |
-| 7.4B   | Creation wizard, templates, manual progress, Dashboard integration |
-| 7.5A   | Accessibility, keyboard, localized numeric input, async resilience |
-| 7.5B   | Integrated audit, release contract tests, documentation, this gate |
+| Sprint   | Scope                                                              |
+| -------- | ------------------------------------------------------------------ |
+| 7.1      | Goals Core: model, rules, validation, events, persistence, hooks     |
+| 7.2      | Automatic tracking + persistent idempotency ledger                   |
+| 7.3      | Goals × Gamification bridge (XP / progression / achievements)          |
+| 7.3B     | Goal reward recovery (deterministic XP source reconciliation)      |
+| 7.4A     | Goals Home UI, cards, details, filters, tracking capability badges   |
+| 7.4B     | Creation wizard, templates, manual progress, Dashboard integration   |
+| 7.5A     | Accessibility, keyboard, localized numeric input, async resilience |
+| 7.5B     | Integrated audit, release contract tests, documentation, this gate |
+| 7.5C-C   | Responsive Dashboard text truncation polish                          |
+| 7.5C-C2  | PlayerLevelCard internationalization (PT / EN / IT / ES / FR)        |
+| 7.5D     | Phase 7 documentation closure and release approval                   |
 
 ## 2. Architectural invariants (audited)
 
