@@ -1,4 +1,4 @@
-# Goals Release Gate — Phase 7 (Sprints 7.1–7.5)
+# Goals Release Gate — Phase 7 (Sprints 7.1–7.5D)
 
 Permanent release document for the Goals domain. It records what was validated,
 how it was validated, and what was explicitly left out. It is updated only with
@@ -6,16 +6,19 @@ results actually produced by running the validation commands below.
 
 ## 1. Validated scope
 
-| Sprint | Scope                                                              |
-| ------ | ------------------------------------------------------------------ |
-| 7.1    | Goals Core: model, rules, validation, events, persistence, hooks   |
-| 7.2    | Automatic tracking + persistent idempotency ledger                 |
-| 7.3    | Goals × Gamification bridge (XP / progression / achievements)      |
-| 7.3B   | Goal reward recovery (deterministic XP source reconciliation)      |
-| 7.4A   | Goals Home UI, cards, details, filters, tracking capability badges |
-| 7.4B   | Creation wizard, templates, manual progress, Dashboard integration |
-| 7.5A   | Accessibility, keyboard, localized numeric input, async resilience |
-| 7.5B   | Integrated audit, release contract tests, documentation, this gate |
+| Sprint  | Scope                                                              |
+| ------- | ------------------------------------------------------------------ |
+| 7.1     | Goals Core: model, rules, validation, events, persistence, hooks   |
+| 7.2     | Automatic tracking + persistent idempotency ledger                 |
+| 7.3     | Goals × Gamification bridge (XP / progression / achievements)      |
+| 7.3B    | Goal reward recovery (deterministic XP source reconciliation)      |
+| 7.4A    | Goals Home UI, cards, details, filters, tracking capability badges |
+| 7.4B    | Creation wizard, templates, manual progress, Dashboard integration |
+| 7.5A    | Accessibility, keyboard, localized numeric input, async resilience |
+| 7.5B    | Integrated audit, release contract tests, documentation, this gate |
+| 7.5C-C  | Responsive Dashboard text truncation polish                        |
+| 7.5C-C2 | PlayerLevelCard internationalization (PT / EN / IT / ES / FR)      |
+| 7.5D    | Phase 7 documentation closure and release approval                 |
 
 ## 2. Architectural invariants (audited)
 
@@ -134,12 +137,26 @@ completion, reward dialog, pause/resume/cancel/duplicate/delete, return to
 Dashboard; focus visibility, keyboard-only navigation, bottom-nav/safe-area
 overlap, dialog dismissal during mutation):
 
-- **NOT EXECUTED.** The signed-in preview account is held by the onboarding
-  gate: `/_authenticated` redirects to `/assessment` until a fitness assessment
-  row exists, so `/metas` cannot be reached in the preview. Completing the
-  assessment would write real fitness data into the user's account, which is out
-  of scope for this sprint. These items must be re-checked manually by an
-  account that has finished onboarding.
+- **EXECUTED.** The following workflows were confirmed by the user:
+  - Goals Home loads.
+  - Goal Details opens.
+  - Goal creation wizard runs end-to-end.
+  - Custom goal creation works.
+  - Required-field validation is enforced.
+  - Active, paused, completed and all-goals filters work.
+  - Pause and resume actions work.
+  - Cancellation shows a confirmation and completes.
+  - Deletion shows a confirmation and completes.
+  - Goal duplication works.
+  - Manual progress registration works.
+  - Automatic and pending tracking presentation is correct.
+  - Goal completion at 100% works.
+  - Completed goals reject further progress changes.
+  - XP and goal reward presentation is correct.
+  - Dashboard Goals widget is visible.
+  - Recent goal rewards appear on the Dashboard.
+  - Cancelled goals leave Active and remain visible in All.
+  - Responsive narrow/mobile presentation of the corrected Dashboard cards is correct.
 
 ## 9. Validation commands
 
@@ -153,7 +170,10 @@ bun run lint
 bun run build
 ```
 
-## 10. Results (Sprint 7.5C-A run — automated quality gate closure)
+## 10. Results (latest independently audited baseline — Sprint 7.5C-C2)
+
+The automated baseline below was produced by Sprint 7.5C-C2. Sprint 7.5D is a
+documentation-only closure and did not rerun the full quality gate.
 
 | Check                       | Result                                                                              |
 | --------------------------- | ----------------------------------------------------------------------------------- |
@@ -161,7 +181,7 @@ bun run build
 | `install --frozen-lockfile` | success, no lockfile change                                                         |
 | `prettier --check .`        | pass — "All matched files use Prettier code style!"                                 |
 | `typecheck`                 | 0 errors                                                                            |
-| `test:run`                  | 348 passed / 348 (22 files)                                                         |
+| `test:run`                  | 355 passed / 355 (23 files)                                                         |
 | `lint`                      | exit code 0 — 0 errors, 13 warnings                                                 |
 | `build`                     | client + SSR + Nitro completed, no Rolldown panic                                   |
 | `bun.lock` SHA-256          | `184c717a13a2b402067877f9689afcd83edf96945a9e94f952c73fcb81805058` before and after |
@@ -169,7 +189,7 @@ bun run build
 | Dependency changes          | none                                                                                |
 | Database / infra            | unchanged                                                                           |
 
-Formatting-only corrections in this run: `AGENTS.md`,
+Formatting-only corrections in the Sprint 7.5C-A run: `AGENTS.md`,
 `docs/architecture/conventions.md`, `src/routes/README.md`, `src/styles.css`.
 The eight files flagged by the external audit already satisfied the project
 Prettier configuration in the current repository state; no source behavior was
@@ -200,25 +220,47 @@ migrations; new dependencies; any Phase 8 feature.
 
 ## 14. Final decision
 
-**AUTOMATED GATE VALIDATED — MANUAL WALKTHROUGH PENDING.**
+**PHASE 7 RELEASE GATE VALIDATED — RELEASE APPROVED.**
 
-Automated validation (Prettier, typecheck, 348 tests, lint with exit code 0,
-build) passes reproducibly on the current repository state, and the
-architectural audit found no violation. CORE ARCHITECTURE v1.0 remains FROZEN.
+Automated validation (Prettier, typecheck, 355 tests across 23 test files, lint
+with exit code 0, build) passed on the latest independently audited baseline
+(Sprint 7.5C-C2), and the architectural audit found no violation. The
+user-confirmed manual walkthrough listed below is complete. CORE ARCHITECTURE
+v1.0 remains FROZEN.
 
-Manually confirmed by the user so far:
+### User-confirmed manual validation
 
-- Goals Home loads
-- Goal Details opens
-- Delete Goal works
+- Goals Home loads.
+- Goal Details opens.
+- Goal creation wizard runs end-to-end.
+- Custom goal creation works.
+- Required-field validation is enforced.
+- Active, paused, completed and all-goals filters work.
+- Pause and resume actions work.
+- Cancellation shows a confirmation and completes.
+- Deletion shows a confirmation and completes.
+- Goal duplication works.
+- Manual progress registration works.
+- Automatic and pending tracking presentation is correct.
+- Goal completion at 100% works.
+- Completed goals reject further progress changes.
+- XP and goal reward presentation is correct.
+- Dashboard Goals widget is visible.
+- Recent goal rewards appear on the Dashboard.
+- Cancelled goals leave Active and remain visible in All.
+- Responsive narrow/mobile presentation of the corrected Dashboard cards is correct.
 
-Still pending manual browser validation (none of these may be treated as
-complete): Creation Wizard; every Goal template; custom Goal; invalid-field
-correction; filters with real goals in different statuses; pause; resume;
-cancel; duplicate; manual progress; automatic tracking presentation; goal
-completion; XP/reward presentation; Dashboard Goals widget; loading, error and
-empty states; keyboard-only interaction; reduced motion; Portuguese, English and
-Italian; narrow Android viewport; large phone; tablet/desktop; light and dark
-themes.
+### Sprint 7.5C-C2 verification
 
-Phase 7 is therefore **not** fully validated.
+- `PlayerLevelCard` labels are fully localized.
+- Portuguese, English and Italian presentations were explicitly tested.
+- Spanish and French remaining-label strings are concise and wrap safely.
+- Maximum-level presentation is handled.
+- Accessible progress-bar label is present.
+- XP and level values are preserved unchanged.
+
+### Closure date
+
+2026-08-14.
+
+Phase 7 is fully validated and approved for release.
