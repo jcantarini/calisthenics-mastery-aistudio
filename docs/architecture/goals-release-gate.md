@@ -206,25 +206,47 @@ migrations; new dependencies; any Phase 8 feature.
 
 ## 14. Final decision
 
-**AUTOMATED GATE VALIDATED — MANUAL WALKTHROUGH PENDING.**
+**PHASE 7 RELEASE GATE VALIDATED — RELEASE APPROVED.**
 
-Automated validation (Prettier, typecheck, 348 tests, lint with exit code 0,
-build) passes reproducibly on the current repository state, and the
-architectural audit found no violation. CORE ARCHITECTURE v1.0 remains FROZEN.
+Automated validation (Prettier, typecheck, 355 tests across 23 test files, lint
+with exit code 0, build) passed on the latest independently audited baseline
+(Sprint 7.5C-C2), and the architectural audit found no violation. The
+user-confirmed manual walkthrough listed below is complete. CORE ARCHITECTURE
+v1.0 remains FROZEN.
 
-Manually confirmed by the user so far:
+### User-confirmed manual validation
 
-- Goals Home loads
-- Goal Details opens
-- Delete Goal works
+- Goals Home loads.
+- Goal Details opens.
+- Goal creation wizard runs end-to-end.
+- Custom goal creation works.
+- Required-field validation is enforced.
+- Active, paused, completed and all-goals filters work.
+- Pause and resume actions work.
+- Cancellation shows a confirmation and completes.
+- Deletion shows a confirmation and completes.
+- Goal duplication works.
+- Manual progress registration works.
+- Automatic and pending tracking presentation is correct.
+- Goal completion at 100% works.
+- Completed goals reject further progress changes.
+- XP and goal reward presentation is correct.
+- Dashboard Goals widget is visible.
+- Recent goal rewards appear on the Dashboard.
+- Cancelled goals leave Active and remain visible in All.
+- Responsive narrow/mobile presentation of the corrected Dashboard cards is correct.
 
-Still pending manual browser validation (none of these may be treated as
-complete): Creation Wizard; every Goal template; custom Goal; invalid-field
-correction; filters with real goals in different statuses; pause; resume;
-cancel; duplicate; manual progress; automatic tracking presentation; goal
-completion; XP/reward presentation; Dashboard Goals widget; loading, error and
-empty states; keyboard-only interaction; reduced motion; Portuguese, English and
-Italian; narrow Android viewport; large phone; tablet/desktop; light and dark
-themes.
+### Sprint 7.5C-C2 verification
 
-Phase 7 is therefore **not** fully validated.
+- `PlayerLevelCard` labels are fully localized.
+- Portuguese, English and Italian presentations were explicitly tested.
+- Spanish and French remaining-label strings are concise and wrap safely.
+- Maximum-level presentation is handled.
+- Accessible progress-bar label is present.
+- XP and level values are preserved unchanged.
+
+### Closure date
+
+2026-08-14.
+
+Phase 7 is fully validated and approved for release.
