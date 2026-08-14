@@ -1,4 +1,4 @@
-# Goals Release Gate — Phase 7 (Sprints 7.1–7.5)
+# Goals Release Gate — Phase 7 (Sprints 7.1–7.5D)
 
 Permanent release document for the Goals domain. It records what was validated,
 how it was validated, and what was explicitly left out. It is updated only with
