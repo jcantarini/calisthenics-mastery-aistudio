@@ -21,16 +21,30 @@ The application currently has **two parallel progress systems**:
 
 The Progress page (`src/routes/_authenticated/progresso.tsx`) and the Weekly
 Report (`src/routes/_authenticated/relatorio.tsx`) are built **entirely on the
-legacy local state**. They are device-local, lost on logout/reinstall, never
-synced, and they contain a **second goals model** that conflicts with the
-canonical Phase 7 Goals domain.
+legacy local state**. That state is device-local and never synced: it survives
+reload **and** a normal logout (`handleLogout()` in `perfil.tsx` calls
+`supabase.auth.signOut()` but never removes `barra:state:v2`), and it is not
+available on another browser or device. It can be lost when the user clears
+browser/site storage, or depending on PWA/browser uninstall behaviour.
+
+Because the key is **not namespaced by the authenticated `user_id`**, another
+account signing in on the same browser profile inherits and sees the previous
+account's local profile, workouts, goals, diet and reminder data — a
+**cross-account local-data isolation/privacy risk**. Supabase RLS does not
+protect this `localStorage` state. The Progress page also contains a **second
+goals model** that conflicts with the canonical Phase 7 Goals domain.
 
 There is currently **no workout-history table**. Completion is a mutation of
 the plan row (`planned_workouts.status/completed_at`), not an append-only
 history record. Exercise-level performance (actual sets, reps, load, RPE) is
-**never captured**. Nutrition and hydration have **no persistence at all**.
+**never captured**. Nutrition and hydration have **local browser persistence
+only** (inside `barra:state:v2`) and **no canonical server-side/Supabase
+persistence**; they are not portable between browsers/devices and not
+user-scoped.
 
-**Readiness decision: READY WITH BLOCKERS** (see §14).
+**Readiness decision: READY WITH BLOCKERS** (blocking decisions in §17, final
+decision in §19).
+
 
 ---
 
