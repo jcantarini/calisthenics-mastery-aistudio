@@ -16,6 +16,7 @@ aspirational design.
 | [gamification.md](./gamification.md)                     | XP, Progression, Achievements, Orchestrator       |
 | [goals.md](./goals.md)                                   | Goals domain: implementation of Sprints 7.1–7.5   |
 | [goals-release-gate.md](./goals-release-gate.md)         | Goals Phase 7 release gate and validation record  |
+| [progress-current-state-audit.md](./progress-current-state-audit.md) | Sprint 8.0A read-only audit of Progress, History and their real data sources |
 | [conventions.md](./conventions.md)                       | Coding conventions and architecture guardrails    |
 | [architecture-freeze-v1.md](./architecture-freeze-v1.md) | Sprint 6.6B freeze report                         |
 | [decisions/](./decisions/)                               | Architecture Decision Records (ADRs)              |
