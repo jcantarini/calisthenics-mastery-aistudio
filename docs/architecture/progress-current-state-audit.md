@@ -21,16 +21,30 @@ The application currently has **two parallel progress systems**:
 
 The Progress page (`src/routes/_authenticated/progresso.tsx`) and the Weekly
 Report (`src/routes/_authenticated/relatorio.tsx`) are built **entirely on the
-legacy local state**. They are device-local, lost on logout/reinstall, never
-synced, and they contain a **second goals model** that conflicts with the
-canonical Phase 7 Goals domain.
+legacy local state**. That state is device-local and never synced: it survives
+reload **and** a normal logout (`handleLogout()` in `perfil.tsx` calls
+`supabase.auth.signOut()` but never removes `barra:state:v2`), and it is not
+available on another browser or device. It can be lost when the user clears
+browser/site storage, or depending on PWA/browser uninstall behaviour.
+
+Because the key is **not namespaced by the authenticated `user_id`**, another
+account signing in on the same browser profile inherits and sees the previous
+account's local profile, workouts, goals, diet and reminder data — a
+**cross-account local-data isolation/privacy risk**. Supabase RLS does not
+protect this `localStorage` state. The Progress page also contains a **second
+goals model** that conflicts with the canonical Phase 7 Goals domain.
 
 There is currently **no workout-history table**. Completion is a mutation of
 the plan row (`planned_workouts.status/completed_at`), not an append-only
 history record. Exercise-level performance (actual sets, reps, load, RPE) is
-**never captured**. Nutrition and hydration have **no persistence at all**.
+**never captured**. Nutrition and hydration have **local browser persistence
+only** (inside `barra:state:v2`) and **no canonical server-side/Supabase
+persistence**; they are not portable between browsers/devices and not
+user-scoped.
 
-**Readiness decision: READY WITH BLOCKERS** (see §14).
+**Readiness decision: READY WITH BLOCKERS** (blocking decisions in §17, final
+decision in §19).
+
 
 ---
 
@@ -61,12 +75,19 @@ and no real user data was read or reproduced.
 
 | Metric                   | Source                                          | Computed in | Persistence         | Survives reload / logout / other device |
 | ------------------------ | ----------------------------------------------- | ----------- | ------------------- | --------------------------------------- |
-| Streak (`state.streak`)  | `useAppState()` legacy store                    | Store       | `localStorage` only | Yes / No / No                           |
-| Sessions total           | `state.completedSessions.length`                | Route       | `localStorage` only | Yes / No / No                           |
-| Goals completed count    | `state.goals.filter(g => g.done)`               | Route       | `localStorage` only | Yes / No / No                           |
-| 35-day activity heatmap  | `state.completedSessions` → `Set(toDateString)` | Route       | `localStorage` only | Yes / No / No                           |
-| Goal list + add/toggle   | `state.goals` (local `{id,label,done}` model)   | Route       | `localStorage` only | Yes / No / No                           |
+| Streak (`state.streak`)  | `useAppState()` legacy store                    | Store       | `localStorage` only | Yes / Yes / No                          |
+| Sessions total           | `state.completedSessions.length`                | Route       | `localStorage` only | Yes / Yes / No                          |
+| Goals completed count    | `state.goals.filter(g => g.done)`               | Route       | `localStorage` only | Yes / Yes / No                          |
+| 35-day activity heatmap  | `state.completedSessions` → `Set(toDateString)` | Route       | `localStorage` only | Yes / Yes / No                          |
+| Goal list + add/toggle   | `state.goals` (local `{id,label,done}` model)   | Route       | `localStorage` only | Yes / Yes / No                          |
 | Weekly report entry link | Static link to `/relatorio`                     | —           | —                   | —                                       |
+
+Survival matrix note: logout does **not** clear `barra:state:v2`
+(`handleLogout()` only calls `supabase.auth.signOut()`), so the data persists
+in the browser and is visible to the next account that signs in on the same
+browser profile — the key is not namespaced by `user_id`. The data can be lost
+when browser/site storage is cleared, or depending on PWA/browser uninstall
+behaviour; it is never available on another device.
 
 Notes: no loading state, no error state, no empty state for the heatmap or
 goal list; local timezone via `Date#toDateString()`; i18n through `useT()`;
