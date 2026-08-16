@@ -75,12 +75,19 @@ and no real user data was read or reproduced.
 
 | Metric                   | Source                                          | Computed in | Persistence         | Survives reload / logout / other device |
 | ------------------------ | ----------------------------------------------- | ----------- | ------------------- | --------------------------------------- |
-| Streak (`state.streak`)  | `useAppState()` legacy store                    | Store       | `localStorage` only | Yes / No / No                           |
-| Sessions total           | `state.completedSessions.length`                | Route       | `localStorage` only | Yes / No / No                           |
-| Goals completed count    | `state.goals.filter(g => g.done)`               | Route       | `localStorage` only | Yes / No / No                           |
-| 35-day activity heatmap  | `state.completedSessions` → `Set(toDateString)` | Route       | `localStorage` only | Yes / No / No                           |
-| Goal list + add/toggle   | `state.goals` (local `{id,label,done}` model)   | Route       | `localStorage` only | Yes / No / No                           |
+| Streak (`state.streak`)  | `useAppState()` legacy store                    | Store       | `localStorage` only | Yes / Yes / No                          |
+| Sessions total           | `state.completedSessions.length`                | Route       | `localStorage` only | Yes / Yes / No                          |
+| Goals completed count    | `state.goals.filter(g => g.done)`               | Route       | `localStorage` only | Yes / Yes / No                          |
+| 35-day activity heatmap  | `state.completedSessions` → `Set(toDateString)` | Route       | `localStorage` only | Yes / Yes / No                          |
+| Goal list + add/toggle   | `state.goals` (local `{id,label,done}` model)   | Route       | `localStorage` only | Yes / Yes / No                          |
 | Weekly report entry link | Static link to `/relatorio`                     | —           | —                   | —                                       |
+
+Survival matrix note: logout does **not** clear `barra:state:v2`
+(`handleLogout()` only calls `supabase.auth.signOut()`), so the data persists
+in the browser and is visible to the next account that signs in on the same
+browser profile — the key is not namespaced by `user_id`. The data can be lost
+when browser/site storage is cleared, or depending on PWA/browser uninstall
+behaviour; it is never available on another device.
 
 Notes: no loading state, no error state, no empty state for the heatmap or
 goal list; local timezone via `Date#toDateString()`; i18n through `useT()`;
