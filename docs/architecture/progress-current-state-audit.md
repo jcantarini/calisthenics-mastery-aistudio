@@ -557,5 +557,7 @@ _(Recommendations only — nothing is implemented in Sprint 8.0A.)_
 
 The canonical training and gamification domains are solid, RLS-correct and
 safe to consume read-only, so Phase 8 can proceed — but Sprint 8.0B must first
-resolve the eight blocking decisions in §17, in particular the history model,
-the immutability/snapshot policy and the fate of the legacy local state.
+resolve the ten blocking decisions in §17, in particular the history model, the
+immutability/snapshot policy, the fate of the legacy local state, the
+cross-account local-state user-isolation risk, and whether ledger
+immutability becomes database-enforced rather than a service convention.
