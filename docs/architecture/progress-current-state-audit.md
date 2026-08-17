@@ -142,7 +142,22 @@ gap equivalent to the one closed for `PlayerLevelCard` in Sprint 7.5C-C2.
 | `profile`            | **Duplicated** with `profiles`/`user_onboarding`                  | `perfil.tsx`, `dieta.tsx`         | nutrition, report, timer kcal estimate |
 | `dietLog`            | **Canonical-by-default but local-only**                           | `dieta.tsx`                       | `dieta.tsx`, `relatorio.tsx`           |
 | `workoutLog`         | **Canonical-by-default but local-only**                           | `timer.tsx` (`logWorkoutSession`) | `relatorio.tsx`, Dashboard time/kcal   |
-| `reminders`          | Temporary UI/config state (legacy vs `workout_reminder_settings`) | `dieta.tsx`, `lembretes.tsx`      | reminders scheduler                    |
+| `reminders`          | Diet/hydration reminder config (local-only, not user-scoped)      | `dieta.tsx`                       | `src/lib/reminders.ts` scheduler        |
+
+**Reminder systems are two distinct categories, not duplicates of the same
+configuration:**
+
+1. **Diet/hydration reminders** — `store.reminders`, stored inside
+   `barra:state:v2`, edited by `dieta.tsx`, consumed by `src/lib/reminders.ts`.
+   Local-only and not user-scoped.
+2. **Workout reminders** — managed by `src/lib/workout-reminders.ts` and
+   `lembretes.tsx`, cached locally under `barra:workout-reminders:v1` and
+   synchronised with the `workout_reminder_settings` table in Supabase.
+   User-owned and protected by RLS on the server.
+
+The architectural issue is the **overlap and naming confusion** between the two
+mechanisms (two scheduling paths, two storage keys, two persistence models),
+not configuration duplication.
 
 Helpers: `todayKey()` (local timezone), `estimateKcal()` (MET × weight ×
 duration), `logWorkoutSession()` (naive streak: +1 unless already logged
