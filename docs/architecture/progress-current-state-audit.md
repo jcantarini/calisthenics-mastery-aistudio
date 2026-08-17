@@ -211,11 +211,29 @@ today; no gap reset), `initialsFrom()`.
 | Orchestration | `GamificationOrchestrator`           | `useGamification`, `useWorkoutRewards`          | none of its own                                                  |
 
 Phase 8 **can** consume these read-only: every domain exposes a service-level
-read API and hooks, `xp_history` is an authoritative append-only ledger for
-reward presentation, and `goal_progress_events` is an authoritative
-idempotency ledger. Phase 8 **must not** write to those tables, recompute XP
-or level curves, re-emit completion events for historical backfill, or model
-goals locally.
+read API and hooks.
+
+**Ledger semantics (accurate wording):**
+
+- `xp_history` — `XPService` uses **insert-only ledger behaviour** at the
+  application level: corrections are written as negative adjustment rows
+  instead of editing prior XP entries. The database, however, grants
+  `SELECT, INSERT, UPDATE, DELETE` on `xp_history` to `authenticated`, and its
+  `FOR ALL` ownership policy (`auth.uid() = user_id`) allows an authenticated
+  user to update or delete their own XP rows. Append-only is therefore an
+  **application/service convention, not a database-enforced invariant**.
+- `goal_progress_events` — a **persistent idempotency/state ledger**, not an
+  append-only log. `GoalTrackingService` inserts claims, updates them during
+  settlement and deletes them during release/retry; the table also grants
+  `UPDATE` and `DELETE` to `authenticated`. The unique constraint
+  `(goal_id, source_event_id, source_event_type)` provides duplicate protection
+  **only while the corresponding ledger row is still present**.
+
+This is recorded as an architectural/security finding for later hardening; no
+database change is made in this sprint.
+
+Phase 8 **must not** write to those tables, recompute XP or level curves,
+re-emit completion events for historical backfill, or model goals locally.
 
 ---
 
