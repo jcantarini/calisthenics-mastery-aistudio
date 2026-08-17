@@ -311,7 +311,7 @@ bypass. All timestamps are `timestamptz`; `scheduled_date`,
 | Goals                       | `user_goals` via `GoalService`                           | `store.goals`                                 |
 | XP / level / achievements   | `xp_history`, `user_progression`, `user_achievements`    | none                                          |
 | Profile / body metrics      | `profiles` + `user_onboarding`                           | `store.profile`                               |
-| Nutrition & hydration       | **none** (no table)                                      | `store.dietLog`                               |
+| Nutrition & hydration       | **none server-side** (no table)                          | `store.dietLog` (local browser persistence)   |
 
 ---
 
