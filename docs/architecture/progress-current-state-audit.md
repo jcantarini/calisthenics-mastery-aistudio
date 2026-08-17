@@ -249,9 +249,14 @@ re-emit completion events for historical backfill, or model goals locally.
 | Water                    | Local-only fact: `dietLog[dayKey].waterMl`                                       |
 | `kcalTarget` per day     | Partially snapshotted (`dietLog[key].kcalTarget`), falls back to today's profile |
 
+Persistence: nutrition and hydration data **is persisted locally** in the
+browser through `barra:state:v2`, but there is **no canonical
+server-side/Supabase persistence** (no nutrition table exists). The data is not
+portable between browsers or devices and is not scoped to the authenticated
+user.
+
 Consequence: changing weight/activity retroactively changes historical
-calorie targets and consumed-calorie figures in the Weekly Report. No
-nutrition table exists in Supabase.
+calorie targets and consumed-calorie figures in the Weekly Report.
 
 ---
 
