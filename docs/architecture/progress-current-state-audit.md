@@ -45,7 +45,6 @@ user-scoped.
 **Readiness decision: READY WITH BLOCKERS** (blocking decisions in §17, final
 decision in §19).
 
-
 ---
 
 ## 2. Scope and audit method
@@ -130,19 +129,34 @@ gap equivalent to the one closed for `PlayerLevelCard` in Sprint 7.5C-C2.
 
 ## 4. State-field inventory — `src/lib/store.ts` (`barra:state:v2`)
 
-| Field                | Classification                                                    | Writers                           | Consumers                              |
-| -------------------- | ----------------------------------------------------------------- | --------------------------------- | -------------------------------------- |
-| `streak`             | **Duplicated / legacy**                                           | `logWorkoutSession` (timer)       | `progresso.tsx`                        |
-| `lastSession`        | Legacy                                                            | `logWorkoutSession`               | `logWorkoutSession` streak rule        |
-| `completedSessions`  | **Duplicated / legacy**                                           | `logWorkoutSession`               | `progresso.tsx` (count + heatmap)      |
-| `completedExercises` | Legacy / unclear                                                  | `treinos.$slug.tsx`               | `treinos.$slug.tsx`                    |
-| `activeProgram`      | **Duplicated / legacy**                                           | `treinos.*`                       | `treinos.*`                            |
-| `weeklyGoal`         | Legacy, effectively unused                                        | default only                      | —                                      |
-| `goals`              | **Duplicated / legacy** (second Goals model)                      | `progresso.tsx`                   | `progresso.tsx`                        |
-| `profile`            | **Duplicated** with `profiles`/`user_onboarding`                  | `perfil.tsx`, `dieta.tsx`         | nutrition, report, timer kcal estimate |
-| `dietLog`            | **Canonical-by-default but local-only**                           | `dieta.tsx`                       | `dieta.tsx`, `relatorio.tsx`           |
-| `workoutLog`         | **Canonical-by-default but local-only**                           | `timer.tsx` (`logWorkoutSession`) | `relatorio.tsx`, Dashboard time/kcal   |
-| `reminders`          | Temporary UI/config state (legacy vs `workout_reminder_settings`) | `dieta.tsx`, `lembretes.tsx`      | reminders scheduler                    |
+| Field                | Classification                                               | Writers                           | Consumers                              |
+| -------------------- | ------------------------------------------------------------ | --------------------------------- | -------------------------------------- |
+| `streak`             | **Duplicated / legacy**                                      | `logWorkoutSession` (timer)       | `progresso.tsx`                        |
+| `lastSession`        | Legacy                                                       | `logWorkoutSession`               | `logWorkoutSession` streak rule        |
+| `completedSessions`  | **Duplicated / legacy**                                      | `logWorkoutSession`               | `progresso.tsx` (count + heatmap)      |
+| `completedExercises` | Legacy / unclear                                             | `treinos.$slug.tsx`               | `treinos.$slug.tsx`                    |
+| `activeProgram`      | **Duplicated / legacy**                                      | `treinos.*`                       | `treinos.*`                            |
+| `weeklyGoal`         | Legacy, effectively unused                                   | default only                      | —                                      |
+| `goals`              | **Duplicated / legacy** (second Goals model)                 | `progresso.tsx`                   | `progresso.tsx`                        |
+| `profile`            | **Duplicated** with `profiles`/`user_onboarding`             | `perfil.tsx`, `dieta.tsx`         | nutrition, report, timer kcal estimate |
+| `dietLog`            | **Canonical-by-default but local-only**                      | `dieta.tsx`                       | `dieta.tsx`, `relatorio.tsx`           |
+| `workoutLog`         | **Canonical-by-default but local-only**                      | `timer.tsx` (`logWorkoutSession`) | `relatorio.tsx`, Dashboard time/kcal   |
+| `reminders`          | Diet/hydration reminder config (local-only, not user-scoped) | `dieta.tsx`                       | `src/lib/reminders.ts` scheduler       |
+
+**Reminder systems are two distinct categories, not duplicates of the same
+configuration:**
+
+1. **Diet/hydration reminders** — `store.reminders`, stored inside
+   `barra:state:v2`, edited by `dieta.tsx`, consumed by `src/lib/reminders.ts`.
+   Local-only and not user-scoped.
+2. **Workout reminders** — managed by `src/lib/workout-reminders.ts` and
+   `lembretes.tsx`, cached locally under `barra:workout-reminders:v1` and
+   synchronised with the `workout_reminder_settings` table in Supabase.
+   User-owned and protected by RLS on the server.
+
+The architectural issue is the **overlap and naming confusion** between the two
+mechanisms (two scheduling paths, two storage keys, two persistence models),
+not configuration duplication.
 
 Helpers: `todayKey()` (local timezone), `estimateKcal()` (MET × weight ×
 duration), `logWorkoutSession()` (naive streak: +1 unless already logged
@@ -196,11 +210,29 @@ today; no gap reset), `initialsFrom()`.
 | Orchestration | `GamificationOrchestrator`           | `useGamification`, `useWorkoutRewards`          | none of its own                                                  |
 
 Phase 8 **can** consume these read-only: every domain exposes a service-level
-read API and hooks, `xp_history` is an authoritative append-only ledger for
-reward presentation, and `goal_progress_events` is an authoritative
-idempotency ledger. Phase 8 **must not** write to those tables, recompute XP
-or level curves, re-emit completion events for historical backfill, or model
-goals locally.
+read API and hooks.
+
+**Ledger semantics (accurate wording):**
+
+- `xp_history` — `XPService` uses **insert-only ledger behaviour** at the
+  application level: corrections are written as negative adjustment rows
+  instead of editing prior XP entries. The database, however, grants
+  `SELECT, INSERT, UPDATE, DELETE` on `xp_history` to `authenticated`, and its
+  `FOR ALL` ownership policy (`auth.uid() = user_id`) allows an authenticated
+  user to update or delete their own XP rows. Append-only is therefore an
+  **application/service convention, not a database-enforced invariant**.
+- `goal_progress_events` — a **persistent idempotency/state ledger**, not an
+  append-only log. `GoalTrackingService` inserts claims, updates them during
+  settlement and deletes them during release/retry; the table also grants
+  `UPDATE` and `DELETE` to `authenticated`. The unique constraint
+  `(goal_id, source_event_id, source_event_type)` provides duplicate protection
+  **only while the corresponding ledger row is still present**.
+
+This is recorded as an architectural/security finding for later hardening; no
+database change is made in this sprint.
+
+Phase 8 **must not** write to those tables, recompute XP or level curves,
+re-emit completion events for historical backfill, or model goals locally.
 
 ---
 
@@ -216,9 +248,14 @@ goals locally.
 | Water                    | Local-only fact: `dietLog[dayKey].waterMl`                                       |
 | `kcalTarget` per day     | Partially snapshotted (`dietLog[key].kcalTarget`), falls back to today's profile |
 
+Persistence: nutrition and hydration data **is persisted locally** in the
+browser through `barra:state:v2`, but there is **no canonical
+server-side/Supabase persistence** (no nutrition table exists). The data is not
+portable between browsers or devices and is not scoped to the authenticated
+user.
+
 Consequence: changing weight/activity retroactively changes historical
-calorie targets and consumed-calorie figures in the Weekly Report. No
-nutrition table exists in Supabase.
+calorie targets and consumed-calorie figures in the Weekly Report.
 
 ---
 
@@ -273,7 +310,7 @@ bypass. All timestamps are `timestamptz`; `scheduled_date`,
 | Goals                       | `user_goals` via `GoalService`                           | `store.goals`                                 |
 | XP / level / achievements   | `xp_history`, `user_progression`, `user_achievements`    | none                                          |
 | Profile / body metrics      | `profiles` + `user_onboarding`                           | `store.profile`                               |
-| Nutrition & hydration       | **none** (no table)                                      | `store.dietLog`                               |
+| Nutrition & hydration       | **none server-side** (no table)                          | `store.dietLog` (local browser persistence)   |
 
 ---
 
@@ -346,22 +383,24 @@ Progress UI      -> ProgressHistoryService read models (no local state)
 
 ## 12. Duplication and conflict matrix
 
-| #   | Conflict                                                            | Severity | Files / symbols                                                     | Risk                                                  | Disposition |
-| --- | ------------------------------------------------------------------- | -------- | ------------------------------------------------------------------- | ----------------------------------------------------- | ----------- |
-| 1   | Local `store.goals` vs canonical `user_goals`                       | Critical | `store.ts:goals`, `progresso.tsx`                                   | Two Goals systems; user sees divergent goal sets      | Replace     |
-| 2   | Workout history only as mutable plan rows; no history table         | Critical | `planned_workouts`, `TrainingPlanService.restartProgram`            | History is destroyed on restart/delete                | Replace     |
-| 3   | `store.completedSessions`/`workoutLog` vs persisted completions     | Critical | `store.ts`, `timer.tsx`, `relatorio.tsx`, `index.tsx`               | Device-local, lost on logout; contradicts Dashboard   | Deprecate   |
-| 4   | Two definitions of "completed workout" (plan completion vs timer)   | High     | `TrainingPlanService.completeWorkout` vs `logWorkoutSession`        | Metrics disagree; timer grants no XP or goal progress | Replace     |
-| 5   | Local `store.streak` vs `computeStreak(plan)`                       | High     | `store.ts`, `trainingPlanRuntime.ts`                                | Two streak numbers on two screens                     | Deprecate   |
-| 6   | Business math inside route components                               | High     | `relatorio.tsx`, `progresso.tsx`, `index.tsx` `useMemo`             | Violates v1.0 layering; untestable                    | Replace     |
-| 7   | Nutrition history recomputed from current profile                   | High     | `nutrition.ts`, `relatorio.tsx`                                     | Past days silently change                             | Replace     |
-| 8   | No persisted actual duration/calories                               | High     | `completeWorkout` (actual duration discarded)                       | Volume/duration trends impossible                     | Adapt       |
-| 9   | `store.profile` vs `profiles`/`user_onboarding`                     | Medium   | `perfil.tsx`, `onboarding.ts`                                       | Divergent body metrics feeding kcal math              | Adapt       |
-| 10  | Duplicate completion not idempotent at training layer               | Medium   | `completeWorkout`                                                   | Repeated aggregates; downstream ledgers absorb it     | Adapt       |
-| 11  | Timezone conventions differ (`todayKey` local vs `daysBetween` UTC) | Medium   | `store.ts:todayKey`, `trainingPlanRuntime.ts:toDateKey/daysBetween` | Off-by-one day grouping                               | Investigate |
-| 12  | `StatisticsCard` hardcoded Portuguese labels                        | Medium   | `StatisticsCard.tsx`                                                | i18n regression vs Phase 7 standard                   | Adapt       |
-| 13  | Legacy `reminders` vs `workout_reminder_settings`                   | Low      | `store.ts:reminders`, `lembretes.tsx`                               | Config drift                                          | Investigate |
-| 14  | `weeklyGoal`, `completedExercises`, `activeProgram` dead/near-dead  | Low      | `store.ts`                                                          | Confusion                                             | Deprecate   |
+| #   | Conflict                                                            | Severity | Files / symbols                                                                  | Risk                                                                                                                                  | Disposition |
+| --- | ------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| 1   | Local `store.goals` vs canonical `user_goals`                       | Critical | `store.ts:goals`, `progresso.tsx`                                                | Two Goals systems; user sees divergent goal sets                                                                                      | Replace     |
+| 2   | Workout history only as mutable plan rows; no history table         | Critical | `planned_workouts`, `TrainingPlanService.restartProgram`                         | History is destroyed on restart/delete                                                                                                | Replace     |
+| 3   | `store.completedSessions`/`workoutLog` vs persisted completions     | Critical | `store.ts`, `timer.tsx`, `relatorio.tsx`, `index.tsx`                            | Device-local, survives logout, not portable; contradicts Dashboard                                                                    | Deprecate   |
+| 4   | Two definitions of "completed workout" (plan completion vs timer)   | High     | `TrainingPlanService.completeWorkout` vs `logWorkoutSession`                     | Metrics disagree; timer grants no XP or goal progress                                                                                 | Replace     |
+| 5   | Local `store.streak` vs `computeStreak(plan)`                       | High     | `store.ts`, `trainingPlanRuntime.ts`                                             | Two streak numbers on two screens                                                                                                     | Deprecate   |
+| 6   | Business math inside route components                               | High     | `relatorio.tsx`, `progresso.tsx`, `index.tsx` `useMemo`                          | Violates v1.0 layering; untestable                                                                                                    | Replace     |
+| 7   | Nutrition history recomputed from current profile                   | High     | `nutrition.ts`, `relatorio.tsx`                                                  | Past days silently change                                                                                                             | Replace     |
+| 8   | No persisted actual duration/calories                               | High     | `completeWorkout` (actual duration discarded)                                    | Volume/duration trends impossible                                                                                                     | Adapt       |
+| 9   | `store.profile` vs `profiles`/`user_onboarding`                     | Medium   | `perfil.tsx`, `onboarding.ts`                                                    | Divergent body metrics feeding kcal math                                                                                              | Adapt       |
+| 10  | Duplicate completion not idempotent at training layer               | Medium   | `completeWorkout`                                                                | Repeated aggregates; downstream ledgers absorb it                                                                                     | Adapt       |
+| 11  | Timezone conventions differ (`todayKey` local vs `daysBetween` UTC) | Medium   | `store.ts:todayKey`, `trainingPlanRuntime.ts:toDateKey/daysBetween`              | Off-by-one day grouping                                                                                                               | Investigate |
+| 12  | `StatisticsCard` hardcoded Portuguese labels                        | Medium   | `StatisticsCard.tsx`                                                             | i18n regression vs Phase 7 standard                                                                                                   | Adapt       |
+| 13  | Two reminder mechanisms with overlapping naming                     | Low      | `store.ts:reminders` + `reminders.ts` vs `workout-reminders.ts`, `lembretes.tsx` | Different categories (diet/hydration vs workout), overlapping scheduling & naming confusion                                           | Investigate |
+| 14  | `weeklyGoal`, `completedExercises`, `activeProgram` dead/near-dead  | Low      | `store.ts`                                                                       | Confusion                                                                                                                             | Deprecate   |
+| 15  | Local state not namespaced by `user_id`                             | Critical | `store.ts` (`barra:state:v2`), `perfil.tsx:handleLogout`                         | Survives logout; next account on the same browser inherits the previous user's data — cross-account local-data isolation/privacy risk | Replace     |
+| 16  | Ledger immutability is a convention, not enforced                   | High     | `xp_history`, `goal_progress_events` grants and `FOR ALL` policies               | Authenticated users can UPDATE/DELETE their own ledger rows                                                                           | Investigate |
 
 ---
 
@@ -376,11 +415,25 @@ Progress UI      -> ProgressHistoryService read models (no local state)
 - SECURITY DEFINER functions: only `handle_new_user()`, pinned with
   `SET search_path = public` and reachable solely through the
   `auth.users` insert trigger; not exposed to the Data API.
-- No `user_id` is client-provided in a trusted position: services resolve it
-  via `resolveUserId()` from the Supabase session, and RLS enforces it anyway.
-- Service-role credentials are not referenced in client code; the only
-  privileged entry point is `@/integrations/supabase/client.server`.
+- **User identity resolution (accurate wording):** service `resolveUserId(userId?)`
+  helpers return the **explicitly supplied `userId`** when one is passed, and
+  call `supabase.auth.getUser()` only when no explicit ID is given. The optional
+  `userId` parameter is therefore **not session-derived**. All current
+  browser-facing flows use the publishable client, so RLS remains the final
+  database authorization boundary and no exploit is implied — this is a
+  trust-boundary/documentation concern only.
+- The service-role client exists in `@/integrations/supabase/client.server` but
+  is **not used** by the audited Progress, Training, Goals or Gamification
+  flows. Any future privileged server flow must derive and validate user
+  identity explicitly, because service-role access bypasses RLS.
+- **Ledger enforcement:** `xp_history` and `goal_progress_events` both grant
+  `SELECT, INSERT, UPDATE, DELETE` to `authenticated` with `FOR ALL` ownership
+  policies. Insert-only/idempotency behaviour is enforced by the services, not
+  by the database. Recorded as a hardening candidate; unchanged in this sprint.
 - No `.env` values were read or reproduced; no real user data inspected.
+- **Local-state isolation:** `barra:state:v2` is outside every Supabase security
+  boundary. RLS does not protect it, logout does not clear it, and it is not
+  namespaced per user.
 - **Phase 8 note:** any new history table must ship RLS + grants in the same
   migration, and historical rows should be insert-only for `authenticated`
   (no UPDATE/DELETE policy) to guarantee immutability.
@@ -412,15 +465,28 @@ Progress UI      -> ProgressHistoryService read models (no local state)
 ## 15. Technical debt and risks
 
 1. Progress and Weekly Report are prototype-grade and non-portable across
-   devices; a reinstall or logout erases the user's entire visible history.
-2. A second Goals model in the Progress page directly contradicts the Phase 7
+   browsers/devices. The data survives reload and logout, but it exists only on
+   one browser profile and can be lost when site storage is cleared or
+   depending on PWA/browser uninstall behaviour.
+2. `barra:state:v2` is not namespaced by `user_id` and is not cleared on logout,
+   so a second account on the same browser inherits the previous user's local
+   profile, workouts, goals, diet and reminder data — a cross-account
+   local-data isolation/privacy risk that RLS cannot mitigate.
+3. Ledger immutability (`xp_history`) and idempotency (`goal_progress_events`)
+   are service conventions; the database grants `UPDATE`/`DELETE` to the owning
+   authenticated user.
+4. A second Goals model in the Progress page directly contradicts the Phase 7
    release-approved domain.
-3. Restarting a program silently rewrites what the user perceives as history.
-4. Timer workouts are invisible to Goals, XP and achievements.
-5. Route components hold non-trivial domain arithmetic.
-6. Nutrition history is retroactively mutable.
-7. Timezone handling is implicit and inconsistent.
-8. `StatisticsCard` is not localized.
+5. Restarting a program silently rewrites what the user perceives as history.
+6. Timer workouts are invisible to Goals, XP and achievements.
+7. Route components hold non-trivial domain arithmetic.
+8. Nutrition and hydration have local browser persistence only, with no
+   canonical server-side store, and their history is retroactively mutable
+   because it is derived from the current profile.
+9. Timezone handling is implicit and inconsistent.
+10. `StatisticsCard` is not localized.
+11. Two reminder mechanisms (diet/hydration local-only vs workout reminders
+    synced to `workout_reminder_settings`) overlap in naming and scheduling.
 
 ---
 
@@ -433,12 +499,15 @@ _(Recommendations only — nothing is implemented in Sprint 8.0A.)_
   `nutrition.ts` pure calculators; existing RLS/grant patterns.
 - **Adapt:** persist actual duration/calories on completion; add ownership-safe
   idempotency to `completeWorkout`; localize `StatisticsCard`; align profile
-  reads on the server profile.
+  reads on the server profile; consider database-enforced immutability for XP
+  and history ledgers.
 - **Deprecate:** `store.streak`, `store.completedSessions`, `store.weeklyGoal`,
   `store.activeProgram`, `store.completedExercises`.
 - **Replace:** `store.goals` with `GoalService`; `store.workoutLog` with a
   persisted history domain; route-level metric math with a
-  `ProgressHistoryService`; local `dietLog` with a persisted nutrition log.
+  `ProgressHistoryService`; local `dietLog` with a server-persisted nutrition
+  log. Any retained local state must be scoped per `user_id` and cleared on
+  logout.
 
 ---
 
@@ -457,8 +526,13 @@ _(Recommendations only — nothing is implemented in Sprint 8.0A.)_
    or group client-side in local time?
 7. **Snapshot policy:** which values must be frozen at write time (kcal target,
    body weight, difficulty, plan name)?
-8. **ADR requirement:** a new history domain touches frozen v1.0 boundaries and
-   needs ADR 0005 before implementation.
+8. **Local-state user isolation:** how legacy `barra:state:v2` is scoped per
+   `user_id`, cleared on logout and prevented from leaking across accounts.
+9. **Ledger enforcement:** whether XP/history immutability becomes a
+   database-enforced invariant (insert-only policies/grants) or stays a service
+   convention.
+10. **ADR requirement:** a new history domain touches frozen v1.0 boundaries and
+    needs ADR 0005 before implementation.
 
 ---
 
@@ -482,5 +556,7 @@ _(Recommendations only — nothing is implemented in Sprint 8.0A.)_
 
 The canonical training and gamification domains are solid, RLS-correct and
 safe to consume read-only, so Phase 8 can proceed — but Sprint 8.0B must first
-resolve the eight blocking decisions in §17, in particular the history model,
-the immutability/snapshot policy and the fate of the legacy local state.
+resolve the ten blocking decisions in §17, in particular the history model, the
+immutability/snapshot policy, the fate of the legacy local state, the
+cross-account local-state user-isolation risk, and whether ledger
+immutability becomes database-enforced rather than a service convention.
