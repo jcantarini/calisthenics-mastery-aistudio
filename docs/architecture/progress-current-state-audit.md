@@ -527,8 +527,13 @@ _(Recommendations only — nothing is implemented in Sprint 8.0A.)_
    or group client-side in local time?
 7. **Snapshot policy:** which values must be frozen at write time (kcal target,
    body weight, difficulty, plan name)?
-8. **ADR requirement:** a new history domain touches frozen v1.0 boundaries and
-   needs ADR 0005 before implementation.
+8. **Local-state user isolation:** how legacy `barra:state:v2` is scoped per
+   `user_id`, cleared on logout and prevented from leaking across accounts.
+9. **Ledger enforcement:** whether XP/history immutability becomes a
+   database-enforced invariant (insert-only policies/grants) or stays a service
+   convention.
+10. **ADR requirement:** a new history domain touches frozen v1.0 boundaries and
+    needs ADR 0005 before implementation.
 
 ---
 
