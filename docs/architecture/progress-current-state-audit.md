@@ -398,8 +398,10 @@ Progress UI      -> ProgressHistoryService read models (no local state)
 | 10  | Duplicate completion not idempotent at training layer               | Medium   | `completeWorkout`                                                   | Repeated aggregates; downstream ledgers absorb it     | Adapt       |
 | 11  | Timezone conventions differ (`todayKey` local vs `daysBetween` UTC) | Medium   | `store.ts:todayKey`, `trainingPlanRuntime.ts:toDateKey/daysBetween` | Off-by-one day grouping                               | Investigate |
 | 12  | `StatisticsCard` hardcoded Portuguese labels                        | Medium   | `StatisticsCard.tsx`                                                | i18n regression vs Phase 7 standard                   | Adapt       |
-| 13  | Legacy `reminders` vs `workout_reminder_settings`                   | Low      | `store.ts:reminders`, `lembretes.tsx`                               | Config drift                                          | Investigate |
+| 13  | Two reminder mechanisms with overlapping naming                     | Low      | `store.ts:reminders` + `reminders.ts` vs `workout-reminders.ts`, `lembretes.tsx` | Different categories (diet/hydration vs workout), overlapping scheduling & naming confusion | Investigate |
 | 14  | `weeklyGoal`, `completedExercises`, `activeProgram` dead/near-dead  | Low      | `store.ts`                                                          | Confusion                                             | Deprecate   |
+| 15  | Local state not namespaced by `user_id`                             | Critical | `store.ts` (`barra:state:v2`), `perfil.tsx:handleLogout`            | Survives logout; next account on the same browser inherits the previous user's data — cross-account local-data isolation/privacy risk | Replace |
+| 16  | Ledger immutability is a convention, not enforced                   | High     | `xp_history`, `goal_progress_events` grants and `FOR ALL` policies  | Authenticated users can UPDATE/DELETE their own ledger rows | Investigate |
 
 ---
 
@@ -414,11 +416,25 @@ Progress UI      -> ProgressHistoryService read models (no local state)
 - SECURITY DEFINER functions: only `handle_new_user()`, pinned with
   `SET search_path = public` and reachable solely through the
   `auth.users` insert trigger; not exposed to the Data API.
-- No `user_id` is client-provided in a trusted position: services resolve it
-  via `resolveUserId()` from the Supabase session, and RLS enforces it anyway.
-- Service-role credentials are not referenced in client code; the only
-  privileged entry point is `@/integrations/supabase/client.server`.
+- **User identity resolution (accurate wording):** service `resolveUserId(userId?)`
+  helpers return the **explicitly supplied `userId`** when one is passed, and
+  call `supabase.auth.getUser()` only when no explicit ID is given. The optional
+  `userId` parameter is therefore **not session-derived**. All current
+  browser-facing flows use the publishable client, so RLS remains the final
+  database authorization boundary and no exploit is implied — this is a
+  trust-boundary/documentation concern only.
+- The service-role client exists in `@/integrations/supabase/client.server` but
+  is **not used** by the audited Progress, Training, Goals or Gamification
+  flows. Any future privileged server flow must derive and validate user
+  identity explicitly, because service-role access bypasses RLS.
+- **Ledger enforcement:** `xp_history` and `goal_progress_events` both grant
+  `SELECT, INSERT, UPDATE, DELETE` to `authenticated` with `FOR ALL` ownership
+  policies. Insert-only/idempotency behaviour is enforced by the services, not
+  by the database. Recorded as a hardening candidate; unchanged in this sprint.
 - No `.env` values were read or reproduced; no real user data inspected.
+- **Local-state isolation:** `barra:state:v2` is outside every Supabase security
+  boundary. RLS does not protect it, logout does not clear it, and it is not
+  namespaced per user.
 - **Phase 8 note:** any new history table must ship RLS + grants in the same
   migration, and historical rows should be insert-only for `authenticated`
   (no UPDATE/DELETE policy) to guarantee immutability.
