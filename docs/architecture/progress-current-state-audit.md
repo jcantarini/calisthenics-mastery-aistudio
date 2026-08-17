@@ -466,15 +466,28 @@ Progress UI      -> ProgressHistoryService read models (no local state)
 ## 15. Technical debt and risks
 
 1. Progress and Weekly Report are prototype-grade and non-portable across
-   devices; a reinstall or logout erases the user's entire visible history.
-2. A second Goals model in the Progress page directly contradicts the Phase 7
+   browsers/devices. The data survives reload and logout, but it exists only on
+   one browser profile and can be lost when site storage is cleared or
+   depending on PWA/browser uninstall behaviour.
+2. `barra:state:v2` is not namespaced by `user_id` and is not cleared on logout,
+   so a second account on the same browser inherits the previous user's local
+   profile, workouts, goals, diet and reminder data — a cross-account
+   local-data isolation/privacy risk that RLS cannot mitigate.
+3. Ledger immutability (`xp_history`) and idempotency (`goal_progress_events`)
+   are service conventions; the database grants `UPDATE`/`DELETE` to the owning
+   authenticated user.
+4. A second Goals model in the Progress page directly contradicts the Phase 7
    release-approved domain.
-3. Restarting a program silently rewrites what the user perceives as history.
-4. Timer workouts are invisible to Goals, XP and achievements.
-5. Route components hold non-trivial domain arithmetic.
-6. Nutrition history is retroactively mutable.
-7. Timezone handling is implicit and inconsistent.
-8. `StatisticsCard` is not localized.
+5. Restarting a program silently rewrites what the user perceives as history.
+6. Timer workouts are invisible to Goals, XP and achievements.
+7. Route components hold non-trivial domain arithmetic.
+8. Nutrition and hydration have local browser persistence only, with no
+   canonical server-side store, and their history is retroactively mutable
+   because it is derived from the current profile.
+9. Timezone handling is implicit and inconsistent.
+10. `StatisticsCard` is not localized.
+11. Two reminder mechanisms (diet/hydration local-only vs workout reminders
+    synced to `workout_reminder_settings`) overlap in naming and scheduling.
 
 ---
 
@@ -487,12 +500,15 @@ _(Recommendations only — nothing is implemented in Sprint 8.0A.)_
   `nutrition.ts` pure calculators; existing RLS/grant patterns.
 - **Adapt:** persist actual duration/calories on completion; add ownership-safe
   idempotency to `completeWorkout`; localize `StatisticsCard`; align profile
-  reads on the server profile.
+  reads on the server profile; consider database-enforced immutability for XP
+  and history ledgers.
 - **Deprecate:** `store.streak`, `store.completedSessions`, `store.weeklyGoal`,
   `store.activeProgram`, `store.completedExercises`.
 - **Replace:** `store.goals` with `GoalService`; `store.workoutLog` with a
   persisted history domain; route-level metric math with a
-  `ProgressHistoryService`; local `dietLog` with a persisted nutrition log.
+  `ProgressHistoryService`; local `dietLog` with a server-persisted nutrition
+  log. Any retained local state must be scoped per `user_id` and cleared on
+  logout.
 
 ---
 
