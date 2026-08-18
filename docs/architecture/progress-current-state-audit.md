@@ -261,10 +261,14 @@ calorie targets and consumed-calorie figures in the Weekly Report.
 
 ## 8. Database and persistence inventory
 
-All objects live in `public`, all user tables carry `user_id` (or `id` for
-`profiles`) referencing `auth.users`, all have RLS enabled with explicit
-`GRANT` to `authenticated` and `service_role`, all use
-`auth.uid() = user_id` in `USING` and `WITH CHECK`.
+All objects live in `public`, all user-owned tables carry `user_id` (or `id`
+for `profiles`) referencing `auth.users`, all have RLS enabled with explicit
+`GRANT` to `authenticated` and `service_role`. Ownership predicates are based
+on `auth.uid()`: most tables use `auth.uid() = user_id` in `USING` and
+`WITH CHECK`, `profiles` uses `auth.uid() = id`, and `achievements` is a
+read-only catalog with no user ownership column that relies on its catalog
+read policy instead.
+
 
 | Table                       | Owner domain      | Ownership col  | RLS | Notable indexes / constraints                          |
 | --------------------------- | ----------------- | -------------- | --- | ------------------------------------------------------ |
