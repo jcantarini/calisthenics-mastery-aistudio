@@ -30,18 +30,18 @@ Its central thesis:
 
 Headline recommendations:
 
-| #   | Blocker                     | Recommended direction                                                                        | Confidence | Status                    |
-| --- | --------------------------- | -------------------------------------------------------------------------------------------- | ---------- | ------------------------- |
-| 1   | Canonical history model     | New independent immutable domain; `planned_workouts` stays prescription/runtime only          | High       | Recommended for approval  |
-| 2   | Exercise-performance capture| Persist the full per-exercise/per-set model in Phase 8; detailed capture UI deferred to 8.5    | High       | Recommended for approval  |
-| 3   | Timer & ad-hoc sessions     | First-class history entries through one shared ingestion path; one reward pipeline only       | High       | Recommended for approval  |
-| 4   | Legacy local data           | Clean start + export-only archive; no automatic import (ownership unprovable)                 | Medium     | Requires product decision |
-| 5   | Nutrition/hydration boundary| Staged: Phase 8 stores adherence facts only; food/calorie facts belong to Phase 9B            | Medium     | Requires product decision |
-| 6   | Time contract               | Store UTC instant + IANA zone + precomputed local calendar day as a written fact              | High       | Recommended for approval  |
-| 7   | Snapshot policy             | Stable IDs + narrow immutable snapshot of values used in calculations or display at the time  | High       | Recommended for approval  |
-| 8   | Local-state isolation       | Per-user namespaced key + logout purge + no-inherit rule for unscoped legacy state            | High       | Recommended for approval  |
-| 9   | Ledger enforcement          | Enforce insert-only for `xp_history` in DB; keep `goal_progress_events` mutable but re-scoped | Medium     | Requires further evidence |
-| 10  | ADR boundary                | New `progress-history` domain; ADR 0005 required before any implementation                    | High       | Recommended for approval  |
+| #   | Blocker                      | Recommended direction                                                                         | Confidence | Status                    |
+| --- | ---------------------------- | --------------------------------------------------------------------------------------------- | ---------- | ------------------------- |
+| 1   | Canonical history model      | New independent immutable domain; `planned_workouts` stays prescription/runtime only          | High       | Recommended for approval  |
+| 2   | Exercise-performance capture | Persist the full per-exercise/per-set model in Phase 8; detailed capture UI deferred to 8.5   | High       | Recommended for approval  |
+| 3   | Timer & ad-hoc sessions      | First-class history entries through one shared ingestion path; one reward pipeline only       | High       | Recommended for approval  |
+| 4   | Legacy local data            | Clean start + export-only archive; no automatic import (ownership unprovable)                 | Medium     | Requires product decision |
+| 5   | Nutrition/hydration boundary | Staged: Phase 8 stores adherence facts only; food/calorie facts belong to Phase 9B            | Medium     | Requires product decision |
+| 6   | Time contract                | Store UTC instant + IANA zone + precomputed local calendar day as a written fact              | High       | Recommended for approval  |
+| 7   | Snapshot policy              | Stable IDs + narrow immutable snapshot of values used in calculations or display at the time  | High       | Recommended for approval  |
+| 8   | Local-state isolation        | Per-user namespaced key + logout purge + no-inherit rule for unscoped legacy state            | High       | Recommended for approval  |
+| 9   | Ledger enforcement           | Enforce insert-only for `xp_history` in DB; keep `goal_progress_events` mutable but re-scoped | Medium     | Requires further evidence |
+| 10  | ADR boundary                 | New `progress-history` domain; ADR 0005 required before any implementation                    | High       | Recommended for approval  |
 
 Readiness result: see §17.
 
@@ -95,18 +95,18 @@ Carried forward from
 
 ## 4. Consolidated decision matrix
 
-| #   | Decision                     | Recommendation                                                                                     | Data integrity | Security/privacy | Confidence | Status                     |
-| --- | ---------------------------- | ---------------------------------------------------------------------------------------------------- | -------------- | ---------------- | ---------- | -------------------------- |
-| 1   | Canonical history model      | Independent append-only history domain (`workout_sessions` + performance children)                     | High impact    | Medium           | High       | Recommended for approval   |
-| 2   | Exercise-performance capture | Persist session → exercise → set model now; UI in 8.5; nullable actuals                                | High impact    | Low              | High       | Recommended for approval   |
-| 3   | Timer / ad-hoc               | One `WorkoutHistoryService.ingest()` entry point; optional plan link; single reward pipeline            | High impact    | Low              | High       | Recommended for approval   |
-| 4   | Legacy local data            | Clean start + JSON export; optional user-confirmed import only if product insists                       | Medium         | High             | Medium     | Requires product decision  |
-| 5   | Nutrition/hydration          | Phase 8 = adherence + hydration facts; Phase 9B = food/calorie facts and corrections                    | Medium         | Medium           | Medium     | Requires product decision  |
-| 6   | Time contract                | `occurred_at timestamptz` + `tz` + `local_day date` written at ingestion                                | High impact    | Low              | High       | Recommended for approval   |
-| 7   | Snapshot policy              | IDs always; snapshot only display/calculation inputs; never copy volatile catalog text beyond label     | High impact    | Low              | High       | Recommended for approval   |
-| 8   | Local-state isolation        | `barra:state:{userId}:v3`, purge on logout, never inherit unscoped v2                                   | Medium         | High             | High       | Recommended for approval   |
-| 9   | Ledger enforcement           | `xp_history` DB-enforced insert-only; `goal_progress_events` stays operational, revisit write boundary  | Medium         | High             | Medium     | Requires further evidence  |
-| 10  | ADR boundary                 | New `progress-history` domain, ADR 0005 mandatory, possible ADR 0006 for ledger hardening               | Structural     | Medium           | High       | Recommended for approval   |
+| #   | Decision                     | Recommendation                                                                                         | Data integrity | Security/privacy | Confidence | Status                    |
+| --- | ---------------------------- | ------------------------------------------------------------------------------------------------------ | -------------- | ---------------- | ---------- | ------------------------- |
+| 1   | Canonical history model      | Independent append-only history domain (`workout_sessions` + performance children)                     | High impact    | Medium           | High       | Recommended for approval  |
+| 2   | Exercise-performance capture | Persist session → exercise → set model now; UI in 8.5; nullable actuals                                | High impact    | Low              | High       | Recommended for approval  |
+| 3   | Timer / ad-hoc               | One `WorkoutHistoryService.ingest()` entry point; optional plan link; single reward pipeline           | High impact    | Low              | High       | Recommended for approval  |
+| 4   | Legacy local data            | Clean start + JSON export; optional user-confirmed import only if product insists                      | Medium         | High             | Medium     | Requires product decision |
+| 5   | Nutrition/hydration          | Phase 8 = adherence + hydration facts; Phase 9B = food/calorie facts and corrections                   | Medium         | Medium           | Medium     | Requires product decision |
+| 6   | Time contract                | `occurred_at timestamptz` + `tz` + `local_day date` written at ingestion                               | High impact    | Low              | High       | Recommended for approval  |
+| 7   | Snapshot policy              | IDs always; snapshot only display/calculation inputs; never copy volatile catalog text beyond label    | High impact    | Low              | High       | Recommended for approval  |
+| 8   | Local-state isolation        | `barra:state:{userId}:v3`, purge on logout, never inherit unscoped v2                                  | Medium         | High             | High       | Recommended for approval  |
+| 9   | Ledger enforcement           | `xp_history` DB-enforced insert-only; `goal_progress_events` stays operational, revisit write boundary | Medium         | High             | Medium     | Requires further evidence |
+| 10  | ADR boundary                 | New `progress-history` domain, ADR 0005 mandatory, possible ADR 0006 for ledger hardening              | Structural     | Medium           | High       | Recommended for approval  |
 
 ---
 
@@ -149,12 +149,12 @@ a plan rewrites the past.
 
 **Recommendation: B.** Four concepts are separated explicitly:
 
-| Concept                | Owner                                 | Mutability                        |
-| ---------------------- | ------------------------------------- | --------------------------------- |
-| Training prescription  | Training (`planned_workouts`)         | Mutable, regenerable              |
-| Runtime plan state     | `TrainingPlanService`                 | Mutable state machine             |
-| Completed fact         | Progress History (`workout_sessions`) | Append-only + compensating rows   |
-| Derived analytics      | Progress History read model           | Recomputed, never stored as truth |
+| Concept               | Owner                                 | Mutability                        |
+| --------------------- | ------------------------------------- | --------------------------------- |
+| Training prescription | Training (`planned_workouts`)         | Mutable, regenerable              |
+| Runtime plan state    | `TrainingPlanService`                 | Mutable state machine             |
+| Completed fact        | Progress History (`workout_sessions`) | Append-only + compensating rows   |
+| Derived analytics     | Progress History read model           | Recomputed, never stored as truth |
 
 - Authoritative historical source: `workout_sessions` and its children.
 - A completed session **references** the planned workout by ID (nullable) and
@@ -295,7 +295,7 @@ ships and after Progress/Weekly Report read exclusively from the new domain.
 
 **Problem.** Nutrition and hydration have local browser persistence only, are
 not user-scoped, and historical calorie figures are recomputed from the
-*current* profile, so past days change when weight changes.
+_current_ profile, so past days change when weight changes.
 
 **Evidence.** `src/lib/nutrition.ts` (BMR/TDEE from current profile),
 `src/lib/store.ts` `dietLog`/`DietDayLog`, `src/routes/_authenticated/dieta.tsx`,
@@ -303,15 +303,15 @@ not user-scoped, and historical calorie figures are recomputed from the
 
 **Recommendation: staged model.**
 
-| Concept                       | Phase                     |
-| ----------------------------- | ------------------------- |
-| Meal-plan prescription        | Derived, not stored       |
-| Recorded meal completion      | Phase 8 (adherence fact)  |
-| Hydration fact (ml, local day)| Phase 8                   |
-| Recorded food/calorie fact    | Phase 9B                  |
-| Estimated values              | Phase 9B, flagged         |
-| User-corrected CalorieCam     | Phase 9B, flagged         |
-| Historical snapshot of target | Phase 8 (target + weight) |
+| Concept                        | Phase                     |
+| ------------------------------ | ------------------------- |
+| Meal-plan prescription         | Derived, not stored       |
+| Recorded meal completion       | Phase 8 (adherence fact)  |
+| Hydration fact (ml, local day) | Phase 8                   |
+| Recorded food/calorie fact     | Phase 9B                  |
+| Estimated values               | Phase 9B, flagged         |
+| User-corrected CalorieCam      | Phase 9B, flagged         |
+| Historical snapshot of target  | Phase 8 (target + weight) |
 
 Phase 8 reports can honestly display: meals-checked adherence, hydration
 totals and streaks, and the calorie target that was in force on that day —
@@ -374,8 +374,8 @@ approval.**
 | Media, video URLs, exercise cues      | **Not copied** — current catalog       |
 | Achievement/XP amounts                | **Not copied** — owned by gamification |
 
-Rule of thumb: snapshot anything that was *used in a calculation* or *shown as
-the identity of the event*; resolve everything presentational from the current
+Rule of thumb: snapshot anything that was _used in a calculation_ or _shown as
+the identity of the event_; resolve everything presentational from the current
 catalog. **Confidence: High. Status: Recommended for approval.**
 
 ### Decision 8 — Local-state user isolation
@@ -418,7 +418,7 @@ from `authenticated`, split the `FOR ALL` policy into explicit `SELECT` and
 `INSERT` policies with `auth.uid() = user_id`, and keep reads and inserts
 working unchanged (no service change required, since the service already only
 selects and inserts). Balance corrections continue as compensating rows.
-Effort is small; the reason this is *Requires further technical evidence* is
+Effort is small; the reason this is _Requires further technical evidence_ is
 that a full check for any incidental `update`/`delete` usage against
 `xp_history`, and the same question for `user_progression` and
 `user_achievements`, has not been performed in this documentation sprint.
@@ -451,8 +451,8 @@ levels or achievements; never updates goals; never writes Training, Goals or
 Gamification tables; never contains reward amounts or level maths.
 
 **Dependency direction.** Components → Hooks → `WorkoutHistoryService` →
-history rules → Supabase. `TrainingPlanService` and the timer call *into*
-ingestion; ingestion calls *out* to `GamificationOrchestrator` and
+history rules → Supabase. `TrainingPlanService` and the timer call _into_
+ingestion; ingestion calls _out_ to `GamificationOrchestrator` and
 `GoalTrackingService` via the existing event contracts (ADR 0003/0004). The
 Progress domain never imports Goals or Gamification internals.
 
@@ -585,37 +585,37 @@ reinterpreted when the device or profile timezone changes.
 2. Ship local export (Decision 4) and per-user namespacing (Decision 8).
 3. Switch Progress and Weekly Report to canonical-only reads.
 4. Remove legacy history fields from `src/lib/store.ts` one release later.
-No local data is migrated or deleted in this sprint.
+   No local data is migrated or deleted in this sprint.
 
 ---
 
 ## 13. Dependencies between Phase 8 sprints
 
-| Sprint | Depends on                                   | Delivers                                    |
-| ------ | -------------------------------------------- | ------------------------------------------- |
-| 8.0B-A | 8.0A validated                               | This proposal                               |
-| 8.0B-B | Approval of this proposal                    | ADR 0005 + domain contracts                 |
-| 8.1    | ADR 0005                                     | Schema, RLS/grants, ingestion service       |
-| 8.2    | 8.1                                          | Plan + timer + first-workout ingestion      |
-| 8.3    | 8.2                                          | Progress & History read models and UI       |
-| 8.4    | 8.3, Decision 4/8 approval                   | Local-state isolation, export, legacy retire|
-| 8.5    | 8.1                                          | Detailed workout-execution capture UI       |
-| 9B     | Decision 5 approval                          | CalorieCam & nutrition facts                |
+| Sprint | Depends on                 | Delivers                                     |
+| ------ | -------------------------- | -------------------------------------------- |
+| 8.0B-A | 8.0A validated             | This proposal                                |
+| 8.0B-B | Approval of this proposal  | ADR 0005 + domain contracts                  |
+| 8.1    | ADR 0005                   | Schema, RLS/grants, ingestion service        |
+| 8.2    | 8.1                        | Plan + timer + first-workout ingestion       |
+| 8.3    | 8.2                        | Progress & History read models and UI        |
+| 8.4    | 8.3, Decision 4/8 approval | Local-state isolation, export, legacy retire |
+| 8.5    | 8.1                        | Detailed workout-execution capture UI        |
+| 9B     | Decision 5 approval        | CalorieCam & nutrition facts                 |
 
 ---
 
 ## 14. Risks and mitigations
 
-| Risk                                              | Mitigation                                                 |
-| ------------------------------------------------- | ---------------------------------------------------------- |
-| Double counting during dual-read                  | Ingest forward-only; provenance tags; no legacy events      |
-| Cross-account local data leakage before 8.4       | Prioritise Decision 8; never auto-adopt unscoped v2         |
-| XP ledger tampering from the browser              | Decision 9 hardening, tracked as its own ADR candidate      |
-| Goal claim deletion enabling replay               | Later server/RPC boundary for `goal_progress_events`        |
-| Snapshot bloat                                    | Snapshot only calculation/identity values (Decision 7)      |
-| Timezone drift after travel                       | `local_day` fixed at write time                             |
-| Scope creep into Goals/Gamification               | Constraint 11 + single emission point                       |
-| Set-level model arriving late                     | Persist the three-level model from the first migration      |
+| Risk                                        | Mitigation                                             |
+| ------------------------------------------- | ------------------------------------------------------ |
+| Double counting during dual-read            | Ingest forward-only; provenance tags; no legacy events |
+| Cross-account local data leakage before 8.4 | Prioritise Decision 8; never auto-adopt unscoped v2    |
+| XP ledger tampering from the browser        | Decision 9 hardening, tracked as its own ADR candidate |
+| Goal claim deletion enabling replay         | Later server/RPC boundary for `goal_progress_events`   |
+| Snapshot bloat                              | Snapshot only calculation/identity values (Decision 7) |
+| Timezone drift after travel                 | `local_day` fixed at write time                        |
+| Scope creep into Goals/Gamification         | Constraint 11 + single emission point                  |
+| Set-level model arriving late               | Persist the three-level model from the first migration |
 
 ---
 
