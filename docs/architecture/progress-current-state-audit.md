@@ -269,7 +269,6 @@ on `auth.uid()`: most tables use `auth.uid() = user_id` in `USING` and
 read-only catalog with no user ownership column that relies on its catalog
 read policy instead.
 
-
 | Table                       | Owner domain      | Ownership col  | RLS | Notable indexes / constraints                          |
 | --------------------------- | ----------------- | -------------- | --- | ------------------------------------------------------ |
 | `profiles`                  | Profile           | `id`           | Yes | insert/select/update policies, no delete               |
