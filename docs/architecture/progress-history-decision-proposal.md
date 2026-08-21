@@ -1,4 +1,4 @@
-# Progress & History — Architecture Decision Proposal (Sprint 8.0B-A, closed by 8.0B-A-C1)
+# Progress & History — Architecture Decision Proposal (Sprint 8.0B-A, closure finalized by 8.0B-A-C2)
 
 **Status:** PROPOSAL — pending independent validation. Not approved, not
 implemented.
@@ -167,7 +167,7 @@ ad-hoc sessions elsewhere.
 - Ad-hoc workouts are ordinary sessions with no plan provenance and
   `source = 'timer' | 'manual' | 'first_workout'`.
 - Sessions are never modified. Voids and corrections are append-only
-  adjustment events (§8, Decision 7 and §15).
+  adjustment events (§9).
 - Duplicate ingestion is prevented by `(user_id, ingestion_key)` (§10).
 - The model needs three levels: **session**, **session exercise**, **session
   set**. Two levels would make per-set analytics a migration-breaking change.
@@ -187,9 +187,13 @@ through the trusted boundary (§6).
 **UX implications.** Enables a real history timeline, honest streaks and
 durable personal records.
 
-**Migration and backward-compatibility implications.** Additive only. Existing
-plan reconstruction may remain as a clearly labelled read fallback for one
-transition sprint.
+**Migration and backward-compatibility implications.** Additive only. Canonical
+Progress and Weekly Report reads begin from the Progress History domain at
+cutover. Existing `planned_workouts` reconstruction is not retained as a
+historical fallback, and existing local or reconstructed data is not imported
+into canonical history. Pre-cutover history may legitimately be empty because
+the application has not been publicly released. No XP, goals, achievements or
+streaks are generated from legacy estimates.
 
 **Dependencies for later sprints.** 8.0B-B (ADR + contracts), 8.1 (schema and
 ingestion), 8.5 (execution UI).
@@ -626,7 +630,7 @@ the only calorie figure the app can produce today).
 domain. C. Several small ADRs.
 
 **Recommended decision: B**, with the domain defined in §6–§15 and ADR 0005
-drafted from the outline in §18. Follow-up ADR 0006 may cover ledger and Goals
+drafted from the outline in §19. Follow-up ADR 0006 may cover ledger and Goals
 write-boundary hardening.
 
 **Calorie model correction.** Store a single value plus provenance:
