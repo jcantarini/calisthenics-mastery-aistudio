@@ -227,20 +227,20 @@ food facts, calorie ingestion and CalorieCam are Phase 9B.
 
 ## 13. Rejected alternatives
 
-| Rejected                                              | Reason                                                                       |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Extending `planned_workouts` into history             | Prescription rows are mutable and regenerable; history would be destroyed.   |
-| Reconstructing history from the current plan          | Produces retroactively changing, unverifiable facts.                         |
-| Separate ingestion flows for timer/plan/first workout | Divergent rewards and duplicate records for one logical completion.          |
-| Direct authenticated browser inserts                  | Reward-bearing writes become client-forgeable.                               |
-| History and rewards without a durable outbox          | A consumer failure silently loses rewards or the workout.                    |
-| Mutating sessions with `voided_at`                    | Rewrites the original fact; breaks append-only auditability.                 |
-| Foreign keys from history to deletable plan rows      | Plan deletion would erase or null historical provenance.                     |
-| `(user_id, source, source_event_id)` uniqueness       | Same completion from two surfaces would duplicate; `source` is provenance.   |
-| Offset pagination                                     | Non-deterministic under concurrent inserts; unstable timelines.              |
-| Importing unscoped legacy local data                  | `barra:state:v2` has no user isolation; would fabricate rewardable history.  |
-| Snapshotting translated UI strings                    | Freezes history in one language and corrupts identity matching.              |
-| Implementing the domain without an ADR                | Core Architecture v1.0 is frozen; extension requires a recorded decision.    |
+| Rejected                                              | Reason                                                                      |
+| ----------------------------------------------------- | --------------------------------------------------------------------------- |
+| Extending `planned_workouts` into history             | Prescription rows are mutable and regenerable; history would be destroyed.  |
+| Reconstructing history from the current plan          | Produces retroactively changing, unverifiable facts.                        |
+| Separate ingestion flows for timer/plan/first workout | Divergent rewards and duplicate records for one logical completion.         |
+| Direct authenticated browser inserts                  | Reward-bearing writes become client-forgeable.                              |
+| History and rewards without a durable outbox          | A consumer failure silently loses rewards or the workout.                   |
+| Mutating sessions with `voided_at`                    | Rewrites the original fact; breaks append-only auditability.                |
+| Foreign keys from history to deletable plan rows      | Plan deletion would erase or null historical provenance.                    |
+| `(user_id, source, source_event_id)` uniqueness       | Same completion from two surfaces would duplicate; `source` is provenance.  |
+| Offset pagination                                     | Non-deterministic under concurrent inserts; unstable timelines.             |
+| Importing unscoped legacy local data                  | `barra:state:v2` has no user isolation; would fabricate rewardable history. |
+| Snapshotting translated UI strings                    | Freezes history in one language and corrupts identity matching.             |
+| Implementing the domain without an ADR                | Core Architecture v1.0 is frozen; extension requires a recorded decision.   |
 
 ## 14. Consequences
 
