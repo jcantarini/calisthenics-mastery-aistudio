@@ -1041,8 +1041,8 @@ outline:
 17. Rollback strategy.
 18. Validation requirements.
 
-**Readiness: READY FOR 8.0B-B**
+**Readiness: ADR 0005 PROPOSED — READY FOR 8.0B-B2 CONTRACT FREEZE**
 
-This means the proposal is ready to be independently validated and then
-converted into ADR 0005. It does not mean the architecture has been approved
-or implemented.
+This means the proposal has been independently validated and converted into
+proposed ADR 0005. It does not mean the architecture has been accepted or
+implemented.
