@@ -1016,7 +1016,10 @@ No item in this table remains open.
 
 ## 19. ADR 0005 drafting outline and readiness
 
-ADR 0005 does not exist and was **not** created in this sprint. Its drafting
+ADR 0005 was drafted in Sprint 8.0B-B1 from this validated proposal and is
+recorded at
+[decisions/0005-progress-history-domain.md](./decisions/0005-progress-history-domain.md)
+with status **Proposed — pending independent validation**. Its drafting
 outline:
 
 1. Context — Sprint 8.0A blockers and this validated proposal.
