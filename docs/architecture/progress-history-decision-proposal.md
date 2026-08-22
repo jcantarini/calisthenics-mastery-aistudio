@@ -1,14 +1,17 @@
 # Progress & History — Architecture Decision Proposal (Sprint 8.0B-A, closure finalized by 8.0B-A-C2)
 
-**Status:** PROPOSAL — pending independent validation. Not approved, not
+**Status:** VALIDATED — architectural basis for proposed ADR 0005; not
 implemented.
 **Scope:** documentation only. No executable behaviour, schema, policy or
 dependency changed.
-**Successor:** Sprint 8.0B-B independently validates this proposal and only
-then creates ADR 0005 and the domain contracts.
+**Successor:** Sprint 8.0B-B1 converted this proposal into
+[ADR 0005 — Progress History Domain and Trusted Workout Completion](./decisions/0005-progress-history-domain.md).
 
-ADR 0005 does not exist and has **not** been approved. Nothing in this
-document is an implemented fact. Implemented facts are only those recorded in
+Independent validation of this proposal passed after Sprint 8.0B-A-C2. ADR
+0005 now exists as a **Proposed** record and remains Proposed until Sprint
+8.0B-B2 freezes the detailed domain contracts and its resulting ZIP passes
+independent validation. Nothing in this document is an implemented fact.
+Implemented facts are only those recorded in
 [progress-current-state-audit.md](./progress-current-state-audit.md) and the
 frozen Core Architecture v1.0 documents.
 
@@ -1013,7 +1016,10 @@ No item in this table remains open.
 
 ## 19. ADR 0005 drafting outline and readiness
 
-ADR 0005 does not exist and was **not** created in this sprint. Its drafting
+ADR 0005 was drafted in Sprint 8.0B-B1 from this validated proposal and is
+recorded at
+[decisions/0005-progress-history-domain.md](./decisions/0005-progress-history-domain.md)
+with status **Proposed — pending independent validation**. Its drafting
 outline:
 
 1. Context — Sprint 8.0A blockers and this validated proposal.
@@ -1035,8 +1041,8 @@ outline:
 17. Rollback strategy.
 18. Validation requirements.
 
-**Readiness: READY FOR 8.0B-B**
+**Readiness: ADR 0005 PROPOSED — READY FOR 8.0B-B2 CONTRACT FREEZE**
 
-This means the proposal is ready to be independently validated and then
-converted into ADR 0005. It does not mean the architecture has been approved
-or implemented.
+This means the proposal has been independently validated and converted into
+proposed ADR 0005. It does not mean the architecture has been accepted or
+implemented.
