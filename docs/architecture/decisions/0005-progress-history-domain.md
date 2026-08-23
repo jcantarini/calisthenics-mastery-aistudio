@@ -107,8 +107,8 @@ The future database function must conceptually use `SECURITY INVOKER`, an
 empty safe `search_path`, fully qualified relation names, execution revoked
 from `PUBLIC`, `anon` and `authenticated`, and execution granted only to
 `service_role`. No executable SQL is defined in this sprint; the exact
-signature, payload shape and error taxonomy are contract details for Sprint
-8.0B-B2.
+signature, payload shape and error taxonomy are frozen by the contract
+companion drafted in Sprint 8.0B-B2A.
 
 ## 5. Ownership and transaction boundaries
 
@@ -139,7 +139,8 @@ Canonical keys:
 
 The same planned workout uses the same key regardless of which UI completed
 it. Key generation timing, storage of the client-stable UUID and conflict
-response semantics are contract details for Sprint 8.0B-B2.
+response semantics are frozen by the contract companion drafted in Sprint
+8.0B-B2A.
 
 ## 7. Append-only history and corrections
 
@@ -201,7 +202,8 @@ History data only. They must not reconstruct history from `planned_workouts`,
 
 Timelines use deterministic keyset pagination on `occurred_at` and `id`.
 Offset pagination is not used. Concrete read-model shapes, aggregate
-definitions and index lists are contract details for Sprint 8.0B-B2.
+definitions and index lists are frozen by the contract companion drafted in
+Sprint 8.0B-B2A.
 
 ## 11. Legacy-data and staged product boundaries
 
