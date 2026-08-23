@@ -276,25 +276,32 @@ food facts, calorie ingestion and CalorieCam are Phase 9B.
 Acceptance of this ADR does not authorize implementation, and this sprint
 implements nothing. Expected sequence:
 
-1. **8.0B-B1** — ADR 0005 draft and decision traceability (this sprint).
-2. **8.0B-B2** — detailed domain contracts and final ADR acceptance.
-3. **8.1** — schema, constraints, indexes, RLS/grants, trusted ingestion,
+1. **8.0B-B1** — ADR 0005 draft and decision traceability.
+2. **8.0B-B2A** — detailed domain contract draft (this sprint's companion
+   document, drafted and pending independent validation).
+3. **8.0B-B2B** — contract correction or ratification and final ADR
+   acceptance.
+4. **8.1** — schema, constraints, indexes, RLS/grants, trusted ingestion,
    outbox.
-4. **8.2** — completion coordinator and source wiring.
-5. **8.3** — canonical read models and Progress/History UI.
-6. **8.4** — local-state isolation and legacy retirement.
-7. **8.5** — detailed workout-execution capture.
-8. **Phase 9B** — food facts, calorie ingestion and CalorieCam.
+5. **8.2** — completion coordinator and source wiring.
+6. **8.3** — canonical read models and Progress/History UI.
+7. **8.4** — local-state isolation and legacy retirement.
+8. **8.5** — detailed workout-execution capture.
+9. **Phase 9B** — food facts, calorie ingestion and CalorieCam.
 
 ## 16. Validation and acceptance gate
 
 This ADR stays **Proposed** until:
 
 1. it passes independent validation as drafted;
-2. Sprint 8.0B-B2 freezes the detailed domain contracts (table and column
+2. Sprint 8.0B-B2A drafts the detailed domain contracts (table and column
    contracts, RPC signature and error taxonomy, outbox state machine, read
-   models and index list, adjustment-event taxonomy);
-3. the resulting deliverable passes independent validation.
+   models and index list, adjustment-event taxonomy) —
+   [progress-history-domain-contracts.md](../progress-history-domain-contracts.md),
+   currently a DRAFT;
+3. that contract draft passes independent validation and Sprint 8.0B-B2B
+   either corrects it or ratifies it.
+
 
 Only then is the status changed to Accepted. Any decision that contradicts or
 materially expands the validated proposal requires a new ADR rather than an
