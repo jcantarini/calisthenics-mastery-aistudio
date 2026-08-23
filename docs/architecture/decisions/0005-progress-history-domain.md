@@ -24,7 +24,6 @@ is
 validated proposal, it is frozen in that contract companion within the
 boundaries of this ADR and is deliberately not invented in this ADR.
 
-
 ---
 
 ## 1. Context
@@ -303,7 +302,6 @@ This ADR stays **Proposed** until:
    currently a DRAFT;
 3. that contract draft passes independent validation and Sprint 8.0B-B2B
    either corrects it or ratifies it.
-
 
 Only then is the status changed to Accepted. Any decision that contradicts or
 materially expands the validated proposal requires a new ADR rather than an
