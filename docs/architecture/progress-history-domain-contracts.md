@@ -957,8 +957,8 @@ Rollback principles:
 
 ## 19. Validation and ADR acceptance gate
 
-This contract contains no unresolved open questions, TODOs, TBDs or
-placeholders. Every detail required for implementation is frozen above, and
+This contract contains no unresolved open questions, deferred decisions or
+placeholder text. Every detail required for implementation is frozen above, and
 every choice remains inside ADR 0005's decisions.
 
 Remaining blockers: **none.**
