@@ -18,7 +18,8 @@ aspirational design.
 | [goals-release-gate.md](./goals-release-gate.md)                                         | Goals Phase 7 release gate and validation record                                                                |
 | [progress-current-state-audit.md](./progress-current-state-audit.md)                     | Sprint 8.0A read-only audit of Progress, History and their real data sources                                    |
 | [progress-history-decision-proposal.md](./progress-history-decision-proposal.md)         | Validated Sprint 8.0B-A decision analysis supporting ADR 0005 (not implemented)                                 |
-| [decisions/0005-progress-history-domain.md](./decisions/0005-progress-history-domain.md) | ADR 0005 — Progress History domain, proposed and pending independent validation; implementation has not started |
+| [decisions/0005-progress-history-domain.md](./decisions/0005-progress-history-domain.md) | ADR 0005 — Progress History domain, **Proposed**; contract draft pending independent validation, implementation has not started    |
+| [progress-history-domain-contracts.md](./progress-history-domain-contracts.md)           | Draft implementation-neutral contract companion to proposed ADR 0005, pending independent validation; nothing implemented        |
 | [conventions.md](./conventions.md)                                                       | Coding conventions and architecture guardrails                                                                  |
 | [architecture-freeze-v1.md](./architecture-freeze-v1.md)                                 | Sprint 6.6B freeze report                                                                                       |
 | [decisions/](./decisions/)                                                               | Architecture Decision Records (ADRs)                                                                            |
