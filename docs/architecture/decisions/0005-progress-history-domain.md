@@ -1,22 +1,28 @@
 # 0005 — Progress History Domain and Trusted Workout Completion
 
-**Status:** Proposed (Sprint 8.0B-B1) · Pending independent validation · Extends Core Architecture v1.0
+**Status:** Proposed (Sprint 8.0B-B2A) · Contract draft pending independent validation · Extends Core Architecture v1.0
 
 > This ADR is **architectural documentation only**. Progress History is **not
 > implemented**. No table, RLS policy, grant, database function, outbox
 > processor, service, hook, route or component exists for this domain.
 > Database schema, RLS, RPCs, outbox processing and application services begin
 > only after this ADR and its companion contracts are accepted.
-> Sprint 8.0B-B2 will freeze the detailed domain contracts and, after
-> independent validation, change this ADR status to Accepted.
+> Sprint 8.0B-B2A drafted the detailed domain contracts in
+> [progress-history-domain-contracts.md](../progress-history-domain-contracts.md);
+> that draft has **not** yet passed independent validation, this ADR is **not
+> Accepted**, and Sprint 8.0B-B2B is the acceptance gate that will either
+> correct the contract or ratify this ADR.
 
 Evidence and full analysis are not duplicated here. See
 [progress-current-state-audit.md](../progress-current-state-audit.md) (facts)
 and
 [progress-history-decision-proposal.md](../progress-history-decision-proposal.md)
-(validated decision analysis). Where a detail required by implementation is
-not frozen by the validated proposal, it is marked here as a **contract detail
-for Sprint 8.0B-B2** and is deliberately not invented in this ADR.
+(validated decision analysis). The normative implementation contract companion
+is
+[progress-history-domain-contracts.md](../progress-history-domain-contracts.md)
+(DRAFT). Where a detail required by implementation is not frozen by the
+validated proposal, it is frozen in that contract companion within the
+boundaries of this ADR and is deliberately not invented in this ADR.
 
 ---
 
@@ -100,8 +106,8 @@ The future database function must conceptually use `SECURITY INVOKER`, an
 empty safe `search_path`, fully qualified relation names, execution revoked
 from `PUBLIC`, `anon` and `authenticated`, and execution granted only to
 `service_role`. No executable SQL is defined in this sprint; the exact
-signature, payload shape and error taxonomy are contract details for Sprint
-8.0B-B2.
+signature, payload shape and error taxonomy are frozen by the contract
+companion drafted in Sprint 8.0B-B2A.
 
 ## 5. Ownership and transaction boundaries
 
@@ -132,7 +138,8 @@ Canonical keys:
 
 The same planned workout uses the same key regardless of which UI completed
 it. Key generation timing, storage of the client-stable UUID and conflict
-response semantics are contract details for Sprint 8.0B-B2.
+response semantics are frozen by the contract companion drafted in Sprint
+8.0B-B2A.
 
 ## 7. Append-only history and corrections
 
@@ -194,7 +201,8 @@ History data only. They must not reconstruct history from `planned_workouts`,
 
 Timelines use deterministic keyset pagination on `occurred_at` and `id`.
 Offset pagination is not used. Concrete read-model shapes, aggregate
-definitions and index lists are contract details for Sprint 8.0B-B2.
+definitions and index lists are frozen by the contract companion drafted in
+Sprint 8.0B-B2A.
 
 ## 11. Legacy-data and staged product boundaries
 
@@ -269,25 +277,31 @@ food facts, calorie ingestion and CalorieCam are Phase 9B.
 Acceptance of this ADR does not authorize implementation, and this sprint
 implements nothing. Expected sequence:
 
-1. **8.0B-B1** — ADR 0005 draft and decision traceability (this sprint).
-2. **8.0B-B2** — detailed domain contracts and final ADR acceptance.
-3. **8.1** — schema, constraints, indexes, RLS/grants, trusted ingestion,
+1. **8.0B-B1** — ADR 0005 draft and decision traceability.
+2. **8.0B-B2A** — detailed domain contract draft (this sprint's companion
+   document, drafted and pending independent validation).
+3. **8.0B-B2B** — contract correction or ratification and final ADR
+   acceptance.
+4. **8.1** — schema, constraints, indexes, RLS/grants, trusted ingestion,
    outbox.
-4. **8.2** — completion coordinator and source wiring.
-5. **8.3** — canonical read models and Progress/History UI.
-6. **8.4** — local-state isolation and legacy retirement.
-7. **8.5** — detailed workout-execution capture.
-8. **Phase 9B** — food facts, calorie ingestion and CalorieCam.
+5. **8.2** — completion coordinator and source wiring.
+6. **8.3** — canonical read models and Progress/History UI.
+7. **8.4** — local-state isolation and legacy retirement.
+8. **8.5** — detailed workout-execution capture.
+9. **Phase 9B** — food facts, calorie ingestion and CalorieCam.
 
 ## 16. Validation and acceptance gate
 
 This ADR stays **Proposed** until:
 
 1. it passes independent validation as drafted;
-2. Sprint 8.0B-B2 freezes the detailed domain contracts (table and column
+2. Sprint 8.0B-B2A drafts the detailed domain contracts (table and column
    contracts, RPC signature and error taxonomy, outbox state machine, read
-   models and index list, adjustment-event taxonomy);
-3. the resulting deliverable passes independent validation.
+   models and index list, adjustment-event taxonomy) —
+   [progress-history-domain-contracts.md](../progress-history-domain-contracts.md),
+   currently a DRAFT;
+3. that contract draft passes independent validation and Sprint 8.0B-B2B
+   either corrects it or ratifies it.
 
 Only then is the status changed to Accepted. Any decision that contradicts or
 materially expands the validated proposal requires a new ADR rather than an
