@@ -1,0 +1,978 @@
+# Progress History Domain Contracts — ADR 0005 Companion
+
+**Status:** DRAFT (Sprint 8.0B-B2A) · Pending independent validation · Not implemented
+
+---
+
+## 1. Status, scope and authority
+
+This document is the normative implementation contract companion to
+[ADR 0005 — Progress History Domain and Trusted Workout Completion](./decisions/0005-progress-history-domain.md).
+
+- It does **not** change the decisions in ADR 0005. It refines them into
+  implementable, frozen detail.
+- It is **not** executable schema, migration or application code. No SQL and no
+  TypeScript appear here.
+- **No part of Progress History has been implemented.** No table, policy,
+  grant, function, outbox, service, hook, route or component exists.
+- This contract becomes authoritative only after it passes independent
+  validation and Sprint 8.0B-B2B accepts it.
+- ADR 0005 remains **Proposed** until that acceptance sprint passes validation.
+
+**Authority order.** ADR 0005 governs. Where this document adds detail, the
+detail must remain inside ADR 0005's boundaries. If a future need contradicts
+ADR 0005, a new ADR is required — this contract may not be used to override it.
+
+**Architectural sources.** `progress-current-state-audit.md` (facts),
+`progress-history-decision-proposal.md` (validated decision analysis),
+ADR 0005, `architecture-freeze-v1.md`, `conventions.md`, ADRs 0001–0004.
+
+**Out of scope.** Detailed food facts, consumed-calorie ingestion and
+CalorieCam (Phase 9B). Goals write-boundary hardening beyond ADR 0005. Any
+worker, service or UI implementation.
+
+---
+
+## 2. Contract-wide invariants
+
+| #   | Invariant                                                                                                              | Implementation-contract implication                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| I1  | Completed workout history is independent of mutable prescription data.                                                 | No FK from history to `training_plans`/`planned_workouts`; provenance stored as immutable scalars (§5).            |
+| I2  | One logical completion creates at most one canonical session.                                                          | Unique `(user_id, ingestion_key)` on `public.workout_sessions` (§11, §15).                                         |
+| I3  | The browser cannot write reward-bearing history.                                                                       | No `INSERT/UPDATE/DELETE` grant to `authenticated`; no RPC execute grant (§16).                                    |
+| I4  | The trusted server derives `user_id`.                                                                                  | `user_id` is a separate server-derived argument, never a payload field (§9).                                       |
+| I5  | A client-supplied `user_id` is never accepted as authority.                                                            | Any `user_id`-like field in the payload is a contract violation → `PH_INVALID_COMMAND_VERSION` / rejected schema.  |
+| I6  | Session, children, supplied auxiliary facts and dispatch rows commit atomically.                                       | One transactional function call per completion (§9, §17).                                                          |
+| I7  | Original historical facts are immutable.                                                                               | No `UPDATE` path exists for fact tables in any role except account-deletion cascade (§17).                         |
+| I8  | Corrections are append-only.                                                                                           | `public.workout_session_adjustments` insert-only; originals never edited (§7).                                     |
+| I9  | Historical provenance never uses a foreign key to mutable training-plan rows.                                          | Source plan/planned-workout IDs are plain UUID scalars, no FK, no `ON DELETE SET NULL` (§5).                       |
+| I10 | Training-plan runtime remains writable only through `TrainingPlanService`.                                             | The outbox `training_plan_sync` consumer calls the service; it never touches plan tables (§12, §13).               |
+| I11 | Progress History never directly awards XP or changes Goals.                                                            | Outbox delivers facts; consumers own their own writes (§13).                                                       |
+| I12 | Downstream delivery is durable and independently retryable.                                                            | One outbox row per `(logical event, consumer)`; per-consumer state machine (§12).                                  |
+| I13 | Historical dates, snapshots and calculation inputs never silently change.                                              | `local_day`, timezone, snapshots and `calculation_weight_kg` are write-once (§5, §9).                              |
+| I14 | User account deletion is the only ordinary hard-deletion exception.                                                    | `user_id → auth.users(id) ON DELETE CASCADE`; no other delete path (§17).                                          |
+| I15 | Canonical reports never reconstruct history from `planned_workouts`, current profile values or `src/lib/store.ts`.     | Read models bind exclusively to Progress History tables after cutover (§14).                                       |
+| I16 | All direct user access is separately controlled by grants and RLS.                                                     | Grants are designed independently of RLS; RLS is defense in depth (§16).                                           |
+
+---
+
+## 3. Naming, types and versioning conventions
+
+| Concern              | Frozen convention                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Schema               | All entities live in `public`.                                                                                        |
+| Table names          | Plural, snake_case, domain-prefixed where ambiguous (`workout_session_*`, `history_dispatch_outbox`).                 |
+| Primary key          | `id`, UUID, server-generated at insert.                                                                               |
+| Ownership column     | `user_id`, UUID, references `auth.users(id) ON DELETE CASCADE`, never nullable.                                       |
+| UTC instants         | Logical type "UTC timestamp" — timezone-aware instant stored in UTC.                                                  |
+| Local dates          | Logical type "local date" — calendar day, no time, no zone; precomputed at ingestion, never recomputed.               |
+| Timezone names       | Constrained text holding a valid IANA zone name (e.g. `Europe/Berlin`), max 64 characters.                            |
+| Enumerations         | Constrained text with an explicitly frozen allowed-value list in this contract (implementation may use a check).      |
+| Money/quantity       | Decimal with explicit scale stated per field; never floating binary for stored user-visible quantities.               |
+| Non-negativity       | Every quantity field listed as non-negative is constrained `>= 0`; positive-only fields are constrained `> 0`.        |
+| Ordering indexes     | All `order_index` / `set_index` values are **zero-based**, contiguous, unique within their parent.                    |
+| Contract version     | `contract_version`, bounded integer, current value `1`, present on every fact and adjustment row.                     |
+| Event version        | `event_version`, bounded integer, current value `1`, present on every outbox row and delivered envelope.              |
+| Command version      | `command_version`, bounded integer, current supported value `1`.                                                      |
+| Function versioning  | Version suffix in the function name (`..._v1`); a breaking change creates `..._v2`, never mutates `_v1` semantics.    |
+| Error codes          | Stable uppercase `PH_*` identifiers; codes are never reused with a different meaning.                                 |
+| Timestamps metadata  | `created_at` (server clock, write-once) on every table; `updated_at` only on mutable operational state (outbox).      |
+| Text bounds          | Every free-text field has an explicit maximum length; unbounded text is forbidden.                                    |
+
+---
+
+## 4. Physical entity inventory
+
+| Physical name                          | Classification                     | Owner              | Mutability                                       |
+| -------------------------------------- | ---------------------------------- | ------------------ | ------------------------------------------------ |
+| `public.workout_sessions`              | Immutable historical fact          | Progress History   | Insert-only (delete only via account cascade)    |
+| `public.workout_session_exercises`     | Immutable historical fact          | Progress History   | Insert-only (delete only via account cascade)    |
+| `public.workout_session_sets`          | Immutable historical fact          | Progress History   | Insert-only (delete only via account cascade)    |
+| `public.workout_session_adjustments`   | Append-only correction event       | Progress History   | Insert-only                                      |
+| `public.history_dispatch_outbox`       | Mutable server-owned operational state | Progress History | Insert + restricted state updates by worker    |
+| `public.hydration_facts`               | Auxiliary append-only fact         | Progress History   | Insert-only                                      |
+| `public.meal_adherence_facts`          | Auxiliary append-only fact         | Progress History   | Insert-only                                      |
+| `public.daily_target_snapshots`        | Auxiliary append-only fact         | Progress History   | Insert-only                                      |
+| History read models (§14)              | Downstream read model / projection | Progress History   | Derived; no independent storage in Phase 8       |
+
+**Boundaries.** Hydration, meal adherence and daily-target snapshots are
+**not** workout-session children: they carry no `session_id`, are keyed by
+their own idempotency key and `local_day`, and survive independently of any
+workout. Detailed food facts, consumed-calorie events and CalorieCam entities
+are deliberately absent — they remain Phase 9B.
+
+---
+
+## 5. Workout session contract
+
+`public.workout_sessions` — immutable canonical record of one completed
+workout.
+
+| Field                        | Logical type                        | Required                      | Source/owner                                   | Mutability | Constraints and allowed values                                                       | Purpose                                          |
+| ---------------------------- | ----------------------------------- | ----------------------------- | ---------------------------------------------- | ---------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| `id`                         | UUID                                | Required                      | Server-generated                               | Write-once | Primary key                                                                          | Canonical session identity                       |
+| `user_id`                    | UUID                                | Required                      | Server-derived from verified session           | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                | Ownership                                        |
+| `ingestion_key`              | Constrained text (max 128)          | Required                      | Client-proposed, server-validated              | Write-once | Matches a frozen key form (§11); unique with `user_id`                               | Idempotency identity                             |
+| `command_fingerprint`        | Constrained text (64, hex)          | Required                      | Server-computed from canonical payload         | Write-once | SHA-256 hex of the canonicalized immutable command subset (§11)                      | Detect incompatible reuse of an ingestion key    |
+| `source`                     | Constrained text                    | Required                      | Client-declared, server-validated              | Write-once | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`              | Provenance only; not part of uniqueness          |
+| `created_at`                 | UTC timestamp                       | Required                      | Database clock                                 | Write-once | Default now                                                                          | Row creation time (not the event time)           |
+| `occurred_at`                | UTC timestamp                       | Required                      | Client-observed, server-validated              | Write-once | Not more than 48 h in the past nor 5 min in the future relative to server clock      | Event occurrence instant                         |
+| `occurred_timezone`          | Constrained text (max 64)           | Required                      | Client-observed, server-validated              | Write-once | Valid IANA zone name                                                                 | Zone captured at ingestion                       |
+| `occurred_timezone_source`   | Constrained text                    | Required                      | Client-declared, server-validated              | Write-once | `device` \| `user_setting` \| `assumed_utc`                                          | Honesty about zone provenance                    |
+| `local_day`                  | Local date                          | Required                      | Server-derived from `occurred_at` + zone       | Write-once | Never recalculated after ingestion                                                   | Historical calendar-day grouping                 |
+| `source_plan_id`             | UUID                                | Nullable                      | Copied from trusted application state          | Write-once | **No FK**; required when `source = plan_workout`                                     | Immutable plan provenance                        |
+| `source_planned_workout_id`  | UUID                                | Nullable                      | Copied from trusted application state          | Write-once | **No FK**; required when `source = plan_workout`                                     | Plan-sync target identity                        |
+| `plan_name_snapshot`         | Constrained text (max 160)          | Nullable                      | Snapshot at ingestion                          | Write-once | Neutral stored value; never re-resolved                                              | Stable historical display                        |
+| `workout_title_snapshot`     | Constrained text (max 160)          | Required                      | Snapshot at ingestion                          | Write-once | Non-empty; neutral identity, not a translated UI string                              | Stable historical display                        |
+| `week_number_snapshot`       | Bounded integer                     | Nullable                      | Snapshot at ingestion                          | Write-once | `>= 1` when present                                                                  | Plan position at completion time                 |
+| `day_number_snapshot`        | Bounded integer                     | Nullable                      | Snapshot at ingestion                          | Write-once | `>= 1` when present                                                                  | Plan position at completion time                 |
+| `difficulty_snapshot`        | Constrained text                    | Nullable                      | Snapshot at ingestion                          | Write-once | `beginner` \| `intermediate` \| `advanced`                                           | Historical difficulty context                    |
+| `estimated_duration_seconds` | Bounded integer                     | Nullable                      | Snapshot of prescription                       | Write-once | `>= 0`, `<= 86400`                                                                   | Prescribed duration                              |
+| `actual_duration_seconds`    | Bounded integer                     | Nullable                      | Client-observed, server-validated              | Write-once | `>= 0`, `<= 86400`; distinct from estimated                                          | Measured duration                                |
+| `calories_kcal`              | Decimal(7,2)                        | Nullable                      | Derived or user-entered                        | Write-once | `>= 0`; required non-null when `calories_source <> 'unknown'`                        | Energy fact                                      |
+| `calories_source`            | Constrained text                    | Required                      | Server-validated                               | Write-once | `estimated` \| `measured` \| `user_entered` \| `unknown`                             | Provenance; forbids labelling estimates as actual |
+| `calorie_algorithm_version`  | Constrained text (max 32)           | Nullable                      | Server-supplied                                | Write-once | Required when `calories_source = 'estimated'`; forbidden otherwise                   | Reproducibility of estimates                     |
+| `calculation_weight_kg`      | Decimal(5,2)                        | Nullable                      | Snapshot of profile at ingestion               | Write-once | `> 0` when present; required when `calories_source = 'estimated'`                    | Historical calculation input                     |
+| `notes`                      | Constrained text (max 2000)         | Nullable                      | User-entered                                   | Write-once | Never overwritten on replay                                                          | User annotation                                  |
+| `app_version`                | Constrained text (max 32)           | Required                      | Client-declared                                | Write-once | Non-empty                                                                            | Diagnostics and provenance                       |
+| `contract_version`           | Bounded integer                     | Required                      | Server-set                                     | Write-once | Currently `1`                                                                        | Schema/contract evolution                        |
+
+**Time semantics.** `occurred_at` is the event instant; `created_at` is the
+database write instant; `local_day` is the historical calendar day derived once
+from `occurred_at` in `occurred_timezone`. Travel or a timezone setting change
+never rewrites `local_day` (I13).
+
+**Source vocabulary.** `plan_workout` (plan-linked completion),
+`timer_session` (timer-only ad-hoc), `first_workout` (onboarding first
+workout), `adhoc_workout` (other explicitly supported ad-hoc completion). UI
+route names are never used as source values.
+
+**Field derivation classes.** Server-generated: `id`, `created_at`,
+`local_day`, `command_fingerprint`, `contract_version`. Server-derived:
+`user_id`. Client-observed and server-validated: `occurred_at`,
+`occurred_timezone`, `occurred_timezone_source`, `actual_duration_seconds`,
+`app_version`, `notes`. Copied from trusted application state: plan provenance
+and all snapshot fields, `estimated_duration_seconds`, calorie fields.
+
+---
+
+## 6. Session exercise and set contracts
+
+### 6.1 `public.workout_session_exercises`
+
+| Field                       | Logical type                | Required | Source/owner                     | Mutability | Constraints and allowed values                                          | Purpose                                     |
+| --------------------------- | --------------------------- | -------- | -------------------------------- | ---------- | ------------------------------------------------------------------------- | ------------------------------------------- |
+| `id`                        | UUID                        | Required | Server-generated                 | Write-once | Primary key                                                             | Exercise-row identity                       |
+| `session_id`                | UUID                        | Required | Server                           | Write-once | FK `(session_id, user_id) → workout_sessions(id, user_id)` ON DELETE CASCADE | Same-user parent link                  |
+| `user_id`                   | UUID                        | Required | Server-derived                   | Write-once | Must equal parent `user_id`                                             | Ownership and RLS                           |
+| `order_index`               | Bounded integer             | Required | Client-observed                  | Write-once | Zero-based, contiguous, unique per session                              | Deterministic ordering                      |
+| `exercise_id`               | UUID                        | Nullable | Catalog reference snapshot       | Write-once | No FK to a mutable catalog; null when unmatched                         | Current-catalog label resolution            |
+| `exercise_key_snapshot`     | Constrained text (max 80)   | Required | Snapshot at ingestion            | Write-once | Non-empty neutral, non-translated identity key                          | Stable identity independent of language     |
+| `exercise_name_snapshot`    | Constrained text (max 160)  | Required | Snapshot at ingestion            | Write-once | Neutral (source-language canonical) name, not a localized UI string     | Fallback display                            |
+| `prescription_snapshot`     | Constrained text (max 400)  | Required | Snapshot of prescription         | Write-once | Neutral encoded prescription (e.g. sets/reps/tempo/rest)                | Historical prescription fact                |
+| `substituted_for_exercise_id` | UUID                      | Nullable | Client-observed                  | Write-once | No FK; present only when the user swapped an exercise                   | Substitution provenance                     |
+| `status`                    | Constrained text            | Required | Client-observed                  | Write-once | `completed` \| `partially_completed` \| `skipped`                       | Execution outcome                           |
+| `notes`                     | Constrained text (max 1000) | Nullable | User-entered                     | Write-once | —                                                                       | User annotation                             |
+| `created_at`                | UTC timestamp               | Required | Database clock                   | Write-once | Default now                                                             | Audit                                       |
+| `contract_version`          | Bounded integer             | Required | Server-set                       | Write-once | Currently `1`                                                           | Contract evolution                          |
+
+Frozen rules:
+
+- Status vocabulary is exactly `completed`, `partially_completed`, `skipped`.
+- `order_index` is **zero-based**, contiguous from `0`, unique per session.
+- Every exercise row must carry a neutral snapshot pair
+  (`exercise_key_snapshot`, `exercise_name_snapshot`); translated UI strings are
+  never canonical identity.
+- **Localization fallback:** if `exercise_id` resolves in the current catalog,
+  read models display the current localized label; otherwise they display
+  `exercise_name_snapshot` verbatim.
+- A `skipped` exercise may have zero sets or only non-completed sets.
+
+### 6.2 `public.workout_session_sets`
+
+| Field                  | Logical type    | Required | Source/owner    | Mutability | Constraints and allowed values                                                            | Purpose                    |
+| ---------------------- | --------------- | -------- | --------------- | ---------- | ------------------------------------------------------------------------------------------- | -------------------------- |
+| `id`                   | UUID            | Required | Server          | Write-once | Primary key                                                                               | Set identity               |
+| `session_exercise_id`  | UUID            | Required | Server          | Write-once | FK `(session_exercise_id, user_id) → workout_session_exercises(id, user_id)` ON DELETE CASCADE | Same-user parent link |
+| `user_id`              | UUID            | Required | Server-derived  | Write-once | Must equal parent `user_id`                                                               | Ownership and RLS          |
+| `set_index`            | Bounded integer | Required | Client-observed | Write-once | Zero-based, contiguous, unique per exercise                                               | Deterministic ordering     |
+| `reps`                 | Bounded integer | Nullable | Client-observed | Write-once | `>= 0`, `<= 1000`                                                                         | Repetition evidence        |
+| `load_kg`              | Decimal(6,2)    | Nullable | Client-observed | Write-once | `>= 0`, `<= 1000`                                                                         | External load              |
+| `assistance_level`     | Constrained text | Nullable | Client-observed | Write-once | `none` \| `band_light` \| `band_medium` \| `band_heavy` \| `partner` \| `machine`         | Calisthenics assistance    |
+| `duration_seconds`     | Bounded integer | Nullable | Client-observed | Write-once | `>= 0`, `<= 86400`                                                                        | Timed set evidence         |
+| `hold_seconds`         | Bounded integer | Nullable | Client-observed | Write-once | `>= 0`, `<= 86400`                                                                        | Isometric hold evidence    |
+| `distance_m`           | Decimal(8,2)    | Nullable | Client-observed | Write-once | `>= 0`, `<= 100000`                                                                       | Distance evidence          |
+| `rpe`                  | Decimal(3,1)    | Nullable | User-entered    | Write-once | Borg CR10 scale: `1.0`–`10.0`, steps of `0.5`                                             | Perceived effort           |
+| `is_completed`         | Boolean         | Required | Client-observed | Write-once | —                                                                                         | Completion status          |
+| `performed_at`         | UTC timestamp   | Nullable | Client-observed | Write-once | When present, within the session window `[occurred_at - 24 h, occurred_at + 5 min]`       | Set-level timing           |
+| `created_at`           | UTC timestamp   | Required | Database clock  | Write-once | Default now                                                                               | Audit                      |
+| `contract_version`     | Bounded integer | Required | Server-set      | Write-once | Currently `1`                                                                             | Contract evolution         |
+
+Frozen rules:
+
+- **Completed set:** `is_completed = true` **and** at least one measurable
+  field (`reps`, `duration_seconds`, `hold_seconds`, `distance_m`) is present
+  and strictly greater than zero.
+- **Valid nonzero workout evidence:** the session contains at least one
+  completed set as defined above.
+- **Skipped/incomplete representation:** incomplete work is persisted with
+  `is_completed = false` (and, at exercise level, status
+  `partially_completed` or `skipped`). Nothing is deleted to represent a skip.
+- **Empty workouts are rejected.** A session with zero exercises, or with no
+  completed set, fails validation with `PH_EMPTY_WORKOUT`.
+- **Timer and ad-hoc completions** are persisted only when the command carries
+  explicit completion confirmation (§9) **and** valid nonzero workout
+  evidence. No arbitrary elapsed-time threshold is used.
+
+### 6.3 Composite ownership
+
+- `public.workout_sessions` carries a unique constraint on `(id, user_id)`.
+- `public.workout_session_exercises` carries a unique constraint on
+  `(id, user_id)` and references the parent through `(session_id, user_id)`.
+- `public.workout_session_sets` references its parent through
+  `(session_exercise_id, user_id)`.
+- Consequence: a child owned by user A can never reference a parent owned by
+  user B, independently of RLS.
+
+---
+
+## 7. Append-only adjustment contract
+
+`public.workout_session_adjustments` — the only mechanism for voiding or
+correcting history. Originals are never edited.
+
+| Field                     | Logical type                | Required | Source/owner              | Mutability | Constraints and allowed values                                                       | Purpose                             |
+| ------------------------- | --------------------------- | -------- | ------------------------- | ---------- | ------------------------------------------------------------------------------------ | ----------------------------------- |
+| `id`                      | UUID                        | Required | Server-generated          | Write-once | Primary key                                                                          | Adjustment identity                 |
+| `user_id`                 | UUID                        | Required | Server-derived            | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                | Ownership                           |
+| `kind`                    | Constrained text            | Required | Server-validated          | Write-once | `void` \| `correction`                                                               | Adjustment semantics                |
+| `target_session_id`       | UUID                        | Required | Client-proposed, validated | Write-once | FK `(target_session_id, user_id) → workout_sessions(id, user_id)`                    | Session being adjusted              |
+| `replacement_session_id`  | UUID                        | Nullable | Server-created            | Write-once | FK `(replacement_session_id, user_id) → workout_sessions(id, user_id)`; required iff `kind = 'correction'`; forbidden when `kind = 'void'`; `<> target_session_id` | New canonical session |
+| `reason`                  | Constrained text (max 500)  | Required | User- or server-supplied  | Write-once | Non-empty; neutral reason code or user text                                          | Auditability                        |
+| `occurred_at`             | UTC timestamp               | Required | Server clock at request   | Write-once | —                                                                                    | When the adjustment happened        |
+| `actor_type`              | Constrained text            | Required | Server-derived            | Write-once | `user` \| `system` \| `support`                                                      | Who adjusted                        |
+| `actor_id`                | UUID                        | Nullable | Server-derived            | Write-once | Required when `actor_type = 'user'`; must equal `user_id`; null for `system`         | Verified actor identity             |
+| `created_at`              | UTC timestamp               | Required | Database clock            | Write-once | Default now                                                                          | Audit                               |
+| `contract_version`        | Bounded integer             | Required | Server-set                | Write-once | Currently `1`                                                                        | Contract evolution                  |
+
+Frozen rules:
+
+- A `void` has no replacement session; a `correction` must have one.
+- Target and replacement must belong to the same `user_id` (enforced by the
+  composite FKs).
+- Target and replacement must be different sessions.
+- Original sessions are never edited or deleted; a replacement is a **new**
+  immutable canonical session with its own `ingestion_key`
+  (`correction:{originalSessionId}:{stableUuid}`).
+- Correction adjustment and its replacement session commit in one transaction
+  (§17).
+- **Terminal-adjustment conflict:** at most one adjustment may directly target
+  a given session. This is enforced by a unique constraint on
+  `target_session_id`. A second attempt returns `PH_ADJUSTMENT_CONFLICT`. To
+  adjust again, the user adjusts the current effective (replacement) session,
+  producing a deterministic chain.
+- **Chain determinism:** because each session has at most one direct
+  adjustment and each replacement is a newly created session (which cannot
+  already exist earlier in a chain), the adjustment graph is a forest of
+  simple paths — acyclic and deterministic by construction. Effective-session
+  resolution follows `correction` links until a session with no adjustment
+  (effective) or a `void` (excluded) is reached; chain depth is bounded to 32
+  links, beyond which resolution returns `PH_ADJUSTMENT_CONFLICT` to the
+  operator and the last resolved session to readers.
+- Read models resolve the effective session purely by reading adjustments —
+  never by mutating any original row.
+- Account deletion remains the explicit hard-deletion exception.
+
+**Write boundary.** Voids and corrections are submitted to the trusted server
+route, which authenticates, derives `user_id`, and calls a restricted
+transactional function (`public.adjust_workout_session_v1`) under the same
+security rules as ingestion (§16). `authenticated` and `anon` have **no**
+insert privilege on the adjustment table and no execute privilege on the
+function.
+
+**Downstream consequences.** Every committed adjustment creates outbox rows in
+the same transaction: `session_void` or `session_correction` events for the
+`gamification` and `goals` consumers, and for `training_plan_sync` when the
+target session carries a `source_planned_workout_id`. Progress History never
+writes XP, levels, achievements or goal progress itself; consumers reverse or
+recompute their own projections idempotently.
+
+---
+
+## 8. Auxiliary Phase 8 fact contracts
+
+Auxiliary facts are **not** workout children. They carry no `session_id`.
+
+### 8.1 `public.hydration_facts`
+
+| Field                | Logical type               | Required | Source/owner       | Mutability | Constraints and allowed values                       | Purpose                     |
+| -------------------- | -------------------------- | -------- | ------------------ | ---------- | ------------------------------------------------------ | --------------------------- |
+| `id`                 | UUID                       | Required | Server-generated   | Write-once | Primary key                                          | Fact identity               |
+| `user_id`            | UUID                       | Required | Server-derived     | Write-once | FK `auth.users(id) ON DELETE CASCADE`                | Ownership                   |
+| `ingestion_key`      | Constrained text (max 128) | Required | Client-proposed    | Write-once | Unique with `user_id`; form `hydration:{stableUuid}` | Idempotency                 |
+| `occurred_at`        | UTC timestamp              | Required | Client-observed    | Write-once | Same window rule as §5                               | Event instant               |
+| `occurred_timezone`  | Constrained text (max 64)  | Required | Client-observed    | Write-once | Valid IANA zone                                      | Zone at ingestion           |
+| `occurred_timezone_source` | Constrained text     | Required | Client-declared    | Write-once | `device` \| `user_setting` \| `assumed_utc`          | Zone provenance             |
+| `local_day`          | Local date                 | Required | Server-derived     | Write-once | Never recalculated                                   | Daily grouping              |
+| `volume_ml`          | Bounded integer            | Required | Client-observed    | Write-once | `> 0`, `<= 10000`                                    | Hydration amount            |
+| `created_at`         | UTC timestamp              | Required | Database clock     | Write-once | Default now                                          | Audit                       |
+| `contract_version`   | Bounded integer            | Required | Server-set         | Write-once | Currently `1`                                        | Contract evolution          |
+
+Hydration facts are append-only. A mistaken entry is corrected by appending a
+compensating fact through the trusted boundary (a later negative-intent fact is
+**not** modelled in Phase 8; instead the product appends the corrected total as
+a new fact and read models sum facts per `local_day`). No original fact is
+rewritten.
+
+### 8.2 `public.meal_adherence_facts`
+
+| Field                | Logical type               | Required | Source/owner     | Mutability | Constraints and allowed values                                | Purpose                  |
+| -------------------- | -------------------------- | -------- | ---------------- | ---------- | --------------------------------------------------------------- | ------------------------ |
+| `id`                 | UUID                       | Required | Server-generated | Write-once | Primary key                                                   | Fact identity            |
+| `user_id`            | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                         | Ownership                |
+| `ingestion_key`      | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `meal:{stableUuid}`               | Idempotency              |
+| `occurred_at`        | UTC timestamp              | Required | Client-observed  | Write-once | Same window rule as §5                                        | Observation instant      |
+| `occurred_timezone`  | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                               | Zone at ingestion        |
+| `occurred_timezone_source` | Constrained text     | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                   | Zone provenance          |
+| `local_day`          | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                            | Daily grouping           |
+| `meal_key`           | Constrained text (max 40)  | Required | Client-declared  | Write-once | Neutral key: `breakfast` \| `lunch` \| `dinner` \| `snack_1` \| `snack_2` \| `snack_3` | Stable meal identity |
+| `adhered`            | Boolean                    | Required | Client-observed  | Write-once | —                                                             | Adherence value          |
+| `created_at`         | UTC timestamp              | Required | Database clock   | Write-once | Default now                                                   | Audit                    |
+| `contract_version`   | Bounded integer            | Required | Server-set       | Write-once | Currently `1`                                                 | Contract evolution       |
+
+**Deterministic read semantics.** When several append-only observations exist
+for the same `(user_id, local_day, meal_key)`, the effective value is the one
+with the greatest `occurred_at`, tie-broken by the greatest `created_at`, then
+the greatest `id`. Translated meal labels are never stored; `meal_key` is
+canonical and UI resolves the localized label.
+
+### 8.3 `public.daily_target_snapshots`
+
+| Field                       | Logical type               | Required | Source/owner     | Mutability | Constraints and allowed values                                  | Purpose                       |
+| --------------------------- | -------------------------- | -------- | ---------------- | ---------- | ----------------------------------------------------------------- | ----------------------------- |
+| `id`                        | UUID                       | Required | Server-generated | Write-once | Primary key                                                     | Snapshot identity             |
+| `user_id`                   | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                           | Ownership                     |
+| `ingestion_key`             | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `daily-target:{stableUuid}`         | Idempotency                   |
+| `captured_at`               | UTC timestamp              | Required | Client-observed  | Write-once | Same window rule as §5                                          | Capture instant               |
+| `captured_timezone`         | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                                 | Zone at capture               |
+| `captured_timezone_source`  | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                     | Zone provenance               |
+| `local_day`                 | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                              | Daily grouping                |
+| `calorie_target_kcal`       | Decimal(7,2)               | Required | Derived/entered  | Write-once | `> 0`, `<= 20000`                                               | Applicable daily target       |
+| `calculation_weight_kg`     | Decimal(5,2)               | Nullable | Snapshot         | Write-once | `> 0` when present; required when `target_source = 'calculated'` | Historical calculation input |
+| `target_source`             | Constrained text           | Required | Server-validated | Write-once | `calculated` \| `user_entered` \| `unknown`                     | Provenance                    |
+| `target_algorithm_version`  | Constrained text (max 32)  | Nullable | Server-supplied  | Write-once | Required when `target_source = 'calculated'`; forbidden otherwise | Reproducibility             |
+| `created_at`                | UTC timestamp              | Required | Database clock   | Write-once | Default now                                                     | Audit                         |
+| `contract_version`          | Bounded integer            | Required | Server-set       | Write-once | Currently `1`                                                   | Contract evolution            |
+
+**Multiplicity.** Several snapshots may exist for one `local_day` (for example
+after a profile change). The applicable snapshot for a day is the one with the
+greatest `captured_at`, tie-broken by greatest `created_at`, then greatest
+`id`.
+
+### 8.4 Auxiliary-fact boundaries
+
+- Auxiliary facts are not workout children and have no `session_id`.
+- They never grant workout XP.
+- They may be supplied inside the trusted completion command **only** when the
+  product has explicit applicable user input (an actual hydration entry, an
+  actual meal check, an actual target capture) — never synthesized.
+- When included, they commit atomically with the session without becoming
+  owned by it: no FK to the session, no cascade from the session.
+- Each auxiliary fact has its own `(user_id, ingestion_key)` idempotency.
+- Standalone auxiliary-fact ingestion, if added later, must use an equivalent
+  trusted server boundary and service-role-only function.
+- No detailed nutrition or consumed-calorie logging is defined here (Phase 9B).
+
+---
+
+## 9. Trusted ingestion command and result
+
+Future function: `public.ingest_workout_completion_v1`.
+
+**Conceptual signature (implementation-neutral, no SQL):**
+
+| Position | Argument                    | Logical type                | Notes                                                     |
+| -------- | --------------------------- | --------------------------- | --------------------------------------------------------- |
+| 1        | `p_user_id`                 | UUID                        | Server-derived only; never from the client payload        |
+| 2        | `p_command`                 | Versioned structured object | The completion command described below                    |
+| Returns  | `ingest_workout_result_v1`  | Versioned structured object | The result described below                                |
+
+Security and execution requirements for the future function:
+
+- `SECURITY INVOKER`.
+- Empty safe `search_path`.
+- Fully qualified relation names.
+- Execute revoked from `PUBLIC`, `anon`, `authenticated`.
+- Execute granted only to `service_role`.
+- Called by the trusted server boundary with a service-role client that does
+  **not** forward the browser user JWT.
+- Commits session, children, supplied auxiliary facts and dispatch rows in one
+  transaction.
+- Returns the existing session on a valid idempotent replay.
+
+### 9.1 Command input matrix
+
+| Field                     | Logical type                  | Required                          | Constraints and allowed values                                             |
+| ------------------------- | ----------------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
+| `command_version`         | Bounded integer               | Required                          | Must be `1`                                                                |
+| `ingestion_key`           | Constrained text (max 128)    | Required                          | Matches a frozen key form (§11)                                            |
+| `source`                  | Constrained text              | Required                          | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`    |
+| `occurred_at`             | UTC timestamp                 | Required                          | Window rule of §5                                                          |
+| `timezone`                | Constrained text (max 64)     | Required                          | Valid IANA zone                                                            |
+| `timezone_source`         | Constrained text              | Required                          | `device` \| `user_setting` \| `assumed_utc`                                |
+| `completion_confirmed`    | Boolean                       | Required                          | Must be `true`; an unconfirmed command is rejected                         |
+| `confirmed_at`            | UTC timestamp                 | Required                          | `>= occurred_at - 24 h` and `<= server now + 5 min`                        |
+| `plan_provenance`         | Structured object             | Required when `source = plan_workout` | `{ plan_id, planned_workout_id, plan_name, week_number, day_number }` |
+| `workout_title`           | Constrained text (max 160)    | Required                          | Neutral, non-translated                                                    |
+| `difficulty`              | Constrained text              | Optional                          | `beginner` \| `intermediate` \| `advanced`                                 |
+| `estimated_duration_seconds` | Bounded integer            | Optional                          | `>= 0`, `<= 86400`                                                         |
+| `actual_duration_seconds` | Bounded integer               | Optional                          | `>= 0`, `<= 86400`                                                         |
+| `calories`                | Structured object             | Required                          | `{ kcal, source, algorithm_version, calculation_weight_kg }` per §5 rules  |
+| `exercises`               | Ordered list of objects       | Required                          | 1–60 items; each per §6.1 plus its `sets` list                             |
+| `exercises[].sets`        | Ordered list of objects       | Required                          | 0–100 items per exercise; each per §6.2                                    |
+| `auxiliary_facts`         | Structured object             | Optional                          | `{ hydration[0..20], meal_adherence[0..12], daily_target[0..2] }` per §8   |
+| `notes`                   | Constrained text (max 2000)   | Optional                          | —                                                                          |
+| `app_version`             | Constrained text (max 32)     | Required                          | Non-empty                                                                  |
+
+**No `user_id` field exists in the command payload.** Presence of any
+authoritative user identifier in the payload is a contract violation and the
+command is rejected.
+
+**Payload limits (frozen).** Total serialized command ≤ 256 KiB; ≤ 60
+exercises; ≤ 100 sets per exercise; ≤ 2000 sets per command; ≤ 20 hydration
+facts, ≤ 12 meal-adherence facts, ≤ 2 daily-target snapshots per command. A
+command exceeding any limit is rejected with `PH_INVALID_COMMAND_VERSION`
+semantics replaced by the specific taxonomy entry `PH_PAYLOAD_TOO_LARGE`.
+Unbounded payloads are forbidden.
+
+### 9.2 Result matrix
+
+| Field                   | Logical type            | Required | Meaning                                                                    |
+| ----------------------- | ----------------------- | -------- | ---------------------------------------------------------------------------- |
+| `result_version`        | Bounded integer         | Required | Currently `1`                                                              |
+| `ok`                    | Boolean                 | Required | Whether ingestion succeeded                                                |
+| `session_id`            | UUID                    | Nullable | Canonical session; present when `ok`                                       |
+| `ingestion_key`         | Constrained text        | Nullable | Echo of the accepted key; present when `ok`                                |
+| `outcome`               | Constrained text        | Nullable | `created` \| `replayed`; present when `ok`                                 |
+| `dispatch_summary`      | List of objects         | Nullable | `[{ consumer, event_kind, state, created }]` per created/existing outbox row |
+| `error_code`            | Constrained text        | Nullable | Stable `PH_*` code; present when not `ok`                                  |
+| `error_retryable`       | Boolean                 | Nullable | Whether the caller may retry unchanged; present when not `ok`              |
+| `error_display_safe`    | Boolean                 | Nullable | Whether the code may be localized and shown to the user                    |
+
+The result never contains raw database errors, SQL text or stack traces.
+
+---
+
+## 10. Validation and error taxonomy
+
+| Class                          | Code                              | Retryable | Client-display safe (after localization) |
+| ------------------------------ | --------------------------------- | --------- | ---------------------------------------- |
+| Authentication / boundary      | `PH_UNAUTHENTICATED`              | No        | Yes                                      |
+| Domain validation              | `PH_INVALID_COMMAND_VERSION`      | No        | Internal-only                            |
+| Domain validation              | `PH_PAYLOAD_TOO_LARGE`            | No        | Yes                                      |
+| Domain validation              | `PH_INVALID_INGESTION_KEY`        | No        | Internal-only                            |
+| Idempotency conflict           | `PH_INGESTION_KEY_CONFLICT`       | No        | Yes                                      |
+| Domain validation              | `PH_UNSUPPORTED_SOURCE`           | No        | Internal-only                            |
+| Domain validation              | `PH_INVALID_OCCURRED_AT`          | No        | Yes                                      |
+| Domain validation              | `PH_INVALID_TIMEZONE`             | No        | Yes                                      |
+| Domain validation              | `PH_EMPTY_WORKOUT`                | No        | Yes                                      |
+| Domain validation              | `PH_COMPLETION_NOT_CONFIRMED`     | No        | Yes                                      |
+| Domain validation              | `PH_INVALID_EXERCISE`             | No        | Yes                                      |
+| Domain validation              | `PH_INVALID_SET`                  | No        | Yes                                      |
+| Authorization / ownership      | `PH_CROSS_USER_VIOLATION`         | No        | Internal-only                            |
+| Domain validation              | `PH_INVALID_CALORIE_PROVENANCE`   | No        | Internal-only                            |
+| Domain validation              | `PH_INVALID_AUXILIARY_FACT`       | No        | Yes                                      |
+| Domain validation              | `PH_INVALID_ADJUSTMENT`           | No        | Yes                                      |
+| Idempotency / state conflict   | `PH_ADJUSTMENT_CONFLICT`          | No        | Yes                                      |
+| Persistence                    | `PH_PERSISTENCE_FAILURE`          | Yes       | Yes (generic message)                    |
+| Retryable downstream           | `PH_DISPATCH_DELIVERY_FAILURE`    | Yes       | Internal-only                            |
+| Retryable downstream           | `PH_DISPATCH_CONSUMER_UNAVAILABLE`| Yes       | Internal-only                            |
+
+Rules:
+
+- Downstream failure codes never surface in the ingestion result; ingestion
+  succeeds once history and dispatch rows commit.
+- Internal-only codes are logged server-side and mapped to a generic localized
+  message for the user.
+- Sensitive database errors and stack traces are never stored in user-visible
+  result fields or in the outbox `last_error_summary` (which is sanitized to a
+  bounded, code-plus-safe-text form).
+
+---
+
+## 11. Idempotency and replay contract
+
+Canonical session uniqueness: **`(user_id, ingestion_key)`**.
+
+Frozen key forms:
+
+| Completion                       | Key form                              |
+| -------------------------------- | ------------------------------------- |
+| Plan-linked completion           | `planned-workout:{plannedWorkoutId}`  |
+| Timer-only ad-hoc completion     | `timer:{stableUuid}`                  |
+| First-workout / ad-hoc completion | `first-workout:{stableUuid}`         |
+| Correction replacement session   | `correction:{originalSessionId}:{stableUuid}` |
+
+Rules:
+
+- The same planned workout uses the same key regardless of which UI completed
+  it.
+- The stable UUID is generated once by the client at the moment the user
+  confirms completion, persisted with the pending command, and reused across
+  every retry of that same command.
+- `source` is provenance only and is not part of uniqueness.
+- **Replay:** same key + fingerprint-equivalent immutable command → return the
+  original `session_id` with `outcome = replayed`; no new child rows, no new
+  auxiliary facts, no new dispatch rows.
+- **Conflict:** same key + materially different immutable payload →
+  `PH_INGESTION_KEY_CONFLICT`; nothing is written and nothing is overwritten.
+- `notes` and every other stored field are never overwritten during replay.
+
+**Fingerprint definition.** `command_fingerprint` is SHA-256 over a canonical
+serialization of exactly these fields: `command_version`, `ingestion_key`,
+`source`, `occurred_at` (UTC, second precision), `timezone`,
+`timezone_source`, plan provenance identifiers, `workout_title`,
+`actual_duration_seconds`, calorie object (`kcal`, `source`,
+`algorithm_version`, `calculation_weight_kg`), and the exercise list reduced to
+`(order_index, exercise_key_snapshot, status)` with, per exercise, its set list
+reduced to `(set_index, reps, load_kg, duration_seconds, hold_seconds,
+distance_m, is_completed)`. Excluded from the fingerprint: `notes`,
+`app_version`, `confirmed_at`, `auxiliary_facts`, RPE and free-text fields.
+Canonicalization sorts object keys lexicographically and orders list items by
+their index field, so non-semantic ordering differences never produce a
+conflict.
+
+**Independent idempotency.**
+
+- Auxiliary facts: `(user_id, ingestion_key)` per auxiliary table; a replayed
+  auxiliary fact is skipped without error and without duplicating rows.
+- Adjustment commands: idempotent on `(user_id, target_session_id, kind)`; a
+  repeated identical adjustment returns the existing adjustment, while a
+  different terminal adjustment for the same target returns
+  `PH_ADJUSTMENT_CONFLICT`.
+- Consumer idempotency (§13) is independent of ingestion idempotency: each
+  consumer deduplicates on the delivered event identity.
+
+---
+
+## 12. Durable dispatch / outbox contract
+
+`public.history_dispatch_outbox` — mutable server-owned delivery state. It is
+**not** canonical history and is never read by clients.
+
+| Field                  | Logical type                | Required | Source/owner        | Mutability                  | Constraints and allowed values                                           | Purpose                     |
+| ---------------------- | --------------------------- | -------- | ------------------- | --------------------------- | -------------------------------------------------------------------------- | --------------------------- |
+| `id`                   | UUID                        | Required | Server-generated    | Write-once                  | Primary key                                                              | Row identity                |
+| `user_id`              | UUID                        | Required | Server-derived      | Write-once                  | FK `auth.users(id) ON DELETE CASCADE`                                    | Ownership/partitioning      |
+| `session_id`           | UUID                        | Required | Server              | Write-once                  | FK `(session_id, user_id) → workout_sessions(id, user_id)`               | Canonical event subject     |
+| `adjustment_id`        | UUID                        | Nullable | Server              | Write-once                  | FK `(adjustment_id, user_id) → workout_session_adjustments(id, user_id)`; required for void/correction events | Correction subject |
+| `event_kind`           | Constrained text            | Required | Server              | Write-once                  | `session_completed` \| `session_voided` \| `session_corrected`           | Delivered semantics         |
+| `consumer`             | Constrained text            | Required | Server              | Write-once                  | `training_plan_sync` \| `gamification` \| `goals`                        | Delivery target             |
+| `state`                | Constrained text            | Required | Worker              | Mutable (state machine)     | `pending` \| `processing` \| `retry_scheduled` \| `delivered` \| `dead_letter` | Delivery progress     |
+| `attempt_count`        | Bounded integer             | Required | Worker              | Mutable                     | `>= 0`; incremented on each claim                                        | Retry accounting            |
+| `next_attempt_at`      | UTC timestamp               | Required | Worker              | Mutable                     | Initially `created_at`                                                   | Backoff scheduling          |
+| `leased_at`            | UTC timestamp               | Nullable | Worker              | Mutable                     | Set on claim, cleared on terminal state                                  | Lease start                 |
+| `lease_expires_at`     | UTC timestamp               | Nullable | Worker              | Mutable                     | `leased_at + lease duration` (frozen default 120 s)                      | Abandoned-worker recovery   |
+| `lease_owner`          | Constrained text (max 100)  | Nullable | Worker              | Mutable                     | Worker instance identifier                                              | Ownership of the claim      |
+| `last_error_code`      | Constrained text (max 64)   | Nullable | Worker              | Mutable                     | Stable `PH_*` code                                                       | Diagnostics                 |
+| `last_error_summary`   | Constrained text (max 500)  | Nullable | Worker              | Mutable                     | Sanitized; no SQL, no stack traces, no PII beyond identifiers            | Diagnostics                 |
+| `delivered_at`         | UTC timestamp               | Nullable | Worker              | Write-once on delivery      | Set only in `delivered`                                                  | Completion audit            |
+| `created_at`           | UTC timestamp               | Required | Database clock      | Write-once                  | Default now                                                              | Audit                       |
+| `updated_at`           | UTC timestamp               | Required | Worker/DB           | Mutable                     | Updated on every state change                                            | Audit                       |
+| `event_version`        | Bounded integer             | Required | Server              | Write-once                  | Currently `1`                                                            | Envelope evolution          |
+
+**State machine.**
+
+| From              | To                | Trigger                                                     |
+| ----------------- | ----------------- | ----------------------------------------------------------- |
+| —                 | `pending`         | Row created atomically with the history event                |
+| `pending`         | `processing`      | Atomic worker claim (`next_attempt_at <= now`)               |
+| `retry_scheduled` | `processing`      | Atomic worker claim after backoff elapsed                    |
+| `processing`      | `delivered`       | Consumer acknowledged successfully                           |
+| `processing`      | `retry_scheduled` | Retryable failure and `attempt_count < 10`                   |
+| `processing`      | `dead_letter`     | Non-retryable failure, or `attempt_count >= 10`              |
+| `processing`      | `retry_scheduled` | Lease expiry recovery by a sweeper (abandoned worker)        |
+| `dead_letter`     | `pending`         | Explicit operator manual replay (resets lease, keeps counts) |
+
+Frozen operational rules:
+
+- **Atomic claim:** a claim selects eligible rows (`state IN (pending,
+  retry_scheduled)` and `next_attempt_at <= now`), locks them skipping locked
+  rows, and transitions them to `processing` with `leased_at`,
+  `lease_expires_at` and `lease_owner` in the same statement.
+- **Lease recovery:** rows in `processing` with `lease_expires_at < now` are
+  returned to `retry_scheduled` by a sweeper; the attempt already counted is
+  retained.
+- **Attempt count** increments on each claim, not on each error.
+- **Backoff** is owned by the outbox worker: exponential with jitter, base 30 s,
+  factor 2, cap 1 h, maximum 10 attempts before `dead_letter`.
+- **Dead-letter** rows are retained for operator inspection and manual replay;
+  they are never deleted automatically.
+- **Per-consumer independence:** one consumer failing never blocks another.
+- **History is never deleted** because a delivery failed or dead-lettered.
+- **No user access:** `anon` and `authenticated` receive no grants and no RLS
+  policy on this table.
+- **Duplicate protection:** unique `(session_id, event_kind, consumer,
+  adjustment_id)` — treating a null `adjustment_id` as a distinct logical
+  value — so one logical history event yields at most one delivery row per
+  consumer.
+
+**Plan synchronization.** A `training_plan_sync` row is created only when the
+subject session carries a non-null `source_planned_workout_id`. When it is
+null, no row is created and the plan-sync outcome is the deterministic
+not-applicable state (recorded implicitly by the absence of the row, which the
+`dispatch_summary` reports as absent). The worker calls `TrainingPlanService`
+and never writes plan tables directly.
+
+**Gamification and Goals** rows are always created for every
+`session_completed`, `session_voided` and `session_corrected` event. Consumers
+keep their domain ownership; Progress History computes no rewards or goal
+progress.
+
+No worker implementation is produced in this sprint.
+
+---
+
+## 13. Downstream consumer contracts
+
+**Minimum stable event envelope** delivered to every consumer:
+
+| Field                       | Logical type      | Required | Notes                                                        |
+| --------------------------- | ----------------- | -------- | -------------------------------------------------------------- |
+| `event_id`                  | UUID              | Required | The outbox row `id`                                          |
+| `event_kind`                | Constrained text  | Required | `session_completed` \| `session_voided` \| `session_corrected` |
+| `event_version`             | Bounded integer   | Required | Currently `1`                                                |
+| `user_id`                   | UUID              | Required | Server-derived owner                                         |
+| `session_id`                | UUID              | Required | Canonical session                                            |
+| `adjustment_id`             | UUID              | Nullable | Present for void/correction                                  |
+| `occurred_at`               | UTC timestamp     | Required | Historical event instant (not delivery time)                 |
+| `local_day`                 | Local date        | Required | Historical calendar day                                      |
+| `dedup_key`                 | Constrained text  | Required | `{consumer}:{event_kind}:{session_id}:{adjustment_id\|none}` |
+| `source`                    | Constrained text  | Required | Immutable provenance                                         |
+| `source_planned_workout_id` | UUID              | Nullable | Immutable provenance, plan-linked events only                |
+| `replacement_session_id`    | UUID              | Nullable | Correction events only                                       |
+
+The envelope carries immutable facts only. Mutable reward calculations (XP
+amounts, goal increments, level deltas) are never copied into the outbox.
+
+### Training-plan synchronization
+
+- Only `TrainingPlanService` writes plan runtime (ADR 0002, I10).
+- Plan-linked completion targets `source_planned_workout_id`.
+- Replays deliver no new event, so a plan workout can never be completed twice.
+- Ad-hoc workouts (`timer_session`, `first_workout`, `adhoc_workout`) create no
+  plan-sync work and never mutate unrelated plan runtime.
+
+### Gamification
+
+- Delivery goes through the existing `GamificationOrchestrator` (ADR 0004).
+- Progress History supplies facts, never XP amounts.
+- `xp_history` remains a downstream ledger; ADR 0005 recommends future
+  insert-only database enforcement.
+- `session_completed`, `session_voided` and `session_corrected` handling must
+  be idempotent on `dedup_key`.
+
+### Goals
+
+- Delivery goes through the Goals-owned service boundary
+  (`GoalTrackingService`).
+- Progress History supplies facts, never goal increments.
+- `goal_progress_events` remains mutable operational state under its existing
+  retry contract; further hardening is outside ADR 0005.
+
+**Implementation dependency (recorded, not weakening the contract).** The
+current Gamification and Goals consumers implement forward progress only; they
+have no reversal path for void or correction events. The durable delivery
+contract stands as specified: void and correction outbox rows are created from
+day one. Until reversal handling ships (Sprint 8.2 for Gamification and Goals
+consumer updates), those rows are delivered to consumers that must at minimum
+acknowledge them idempotently as no-ops and record the unhandled event for
+later recomputation. No history write is skipped or delayed because of this
+dependency.
+
+---
+
+## 14. Read models, ordering and pagination
+
+| Read model                       | Consumer/screen                    | Authoritative sources                                                            | Adjustment behaviour                                              | Ordering                          | Pagination                       | Localization fallback                              | Empty state                          | Phase |
+| -------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- | -------------------------------- | -------------------------------------------------- | ------------------------------------ | ----- |
+| Workout history timeline item    | History list (`/progresso`)        | `workout_sessions`, `workout_session_adjustments`                                | Voided excluded; corrected replaced by replacement session        | `occurred_at DESC, id DESC`       | Keyset on `(occurred_at, id)`    | Current catalog label, else neutral snapshot       | Neutral "no workouts yet" state      | 8.3  |
+| Workout history session detail   | Session detail view                | `workout_sessions`, `..._exercises`, `..._sets`, `..._adjustments`               | Shows effective session; original remains readable for audit      | Exercises `order_index ASC`, sets `set_index ASC` | None (bounded children) | Per exercise, catalog label else snapshot          | Not reachable when no session        | 8.3  |
+| Weekly progress summary          | Weekly Report (`/relatorio`)       | `workout_sessions`, `..._sets`, `..._adjustments`, `daily_target_snapshots`      | Voided excluded from totals; corrections counted once (effective) | Weeks descending by week start    | Bounded window (last 12 weeks)   | Not applicable (aggregates)                        | Zeroed KPIs with neutral copy        | 8.3  |
+| Effective-session resolution     | Shared projection for all readers  | `workout_sessions`, `workout_session_adjustments`                                | Follows `correction` chain; excludes terminal `void`              | Deterministic by chain            | Not paginated                    | Not applicable                                     | Not applicable                       | 8.3  |
+| Auxiliary daily progress summary | Diet/diary daily and weekly views  | `hydration_facts`, `meal_adherence_facts`, `daily_target_snapshots`              | Not applicable (no workout adjustments)                           | `local_day DESC`                  | Keyset on `local_day`            | `meal_key` resolved to localized label at render   | Zeroed daily totals                  | 8.3  |
+
+**Timeline pagination (frozen).**
+
+- Ordering: `occurred_at DESC, id DESC`.
+- Cursor: the tuple `(occurred_at, id)` of the last returned row.
+- Next-page predicate: `occurred_at < cursor.occurred_at OR (occurred_at =
+  cursor.occurred_at AND id < cursor.id)`.
+- `OFFSET` is never used.
+- The cursor is exposed as a stable opaque string with a version prefix
+  (`v1:` followed by the encoded tuple); a cursor with an unknown version is
+  rejected and the client restarts from the first page.
+- Ties are broken exclusively by `id`.
+
+**Canonical-source rule.** After cutover, Progress, History and Weekly Report
+read canonical Progress History data only. They never reconstruct completed
+history from `planned_workouts`, `src/lib/store.ts` or current mutable profile
+values (I15).
+
+**Adjustment and provenance rules for all read models.**
+
+- Voided sessions are excluded from ordinary totals and reward-relevant
+  projections.
+- Corrected sessions are replaced by their replacement session; one logical
+  completion is counted once.
+- Original rows are preserved and remain available for audit views.
+- Exercise labels use the current localized catalog entry when `exercise_id`
+  resolves, otherwise the neutral `exercise_name_snapshot`.
+- Calories and derived metrics use the captured historical inputs
+  (`calculation_weight_kg`, `calorie_algorithm_version`), never current profile
+  values.
+
+**Week boundary (frozen).** Repository evidence is mixed across existing
+prototype surfaces, so this contract selects one deterministic rule: a
+reporting week starts on **Monday** and ends on Sunday, computed on
+`local_day` (the historical local calendar day), not on UTC. Justification:
+the product's primary locale set (pt-BR, en, it, es, fr) uses Monday-first
+calendars, training plans are already structured in Monday-anchored weeks
+(`training_weeks.week_number` with day 1 as the first training day), and using
+`local_day` keeps historical weeks stable under timezone travel (I13).
+
+---
+
+## 15. Constraints and index contract
+
+### `public.workout_sessions`
+
+| Object                                            | Type        | Purpose / query contract                                            |
+| ------------------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| `(user_id, ingestion_key)`                        | Unique      | Canonical idempotency (I2, §11)                                     |
+| `(id, user_id)`                                   | Unique      | Composite-ownership target for children and outbox                  |
+| `(user_id, occurred_at DESC, id DESC)`            | Index       | Timeline keyset pagination (§14)                                    |
+| `(user_id, local_day)`                            | Index       | Daily/weekly grouping for Weekly Report                             |
+| `(user_id, source_planned_workout_id)` partial where not null | Index | Plan-sync lookup and duplicate-completion checks           |
+| `user_id`                                         | Index       | RLS ownership path (leading column of the timeline index satisfies this) |
+
+### `public.workout_session_exercises`
+
+| Object                                             | Type        | Purpose / query contract                             |
+| -------------------------------------------------- | ----------- | ----------------------------------------------------- |
+| `(session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user parent relationship                    |
+| `(id, user_id)`                                    | Unique      | Composite-ownership target for sets                   |
+| `(session_id, order_index)`                        | Unique      | Deterministic ordering, no duplicate positions        |
+| `(session_id)`                                     | Index       | FK index; session-detail fetch                        |
+| `user_id`                                          | Index       | RLS ownership path                                    |
+| `(user_id, exercise_id)` partial where not null    | Index       | Per-exercise history read model (§14 detail/aggregate) |
+
+No further exercise indexes are added; speculative indexes without a defined
+query consumer are forbidden.
+
+### `public.workout_session_sets`
+
+| Object                                                                      | Type        | Purpose / query contract          |
+| ---------------------------------------------------------------------------- | ----------- | ---------------------------------- |
+| `(session_exercise_id, user_id) → workout_session_exercises(id, user_id)`   | Foreign key | Same-user parent relationship     |
+| `(session_exercise_id, set_index)`                                          | Unique      | Deterministic set ordering        |
+| `(session_exercise_id)`                                                     | Index       | FK index; detail fetch            |
+| `user_id`                                                                   | Index       | RLS ownership path                |
+
+### `public.workout_session_adjustments`
+
+| Object                                                                    | Type        | Purpose / query contract                                    |
+| --------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------ |
+| `(target_session_id, user_id) → workout_sessions(id, user_id)`            | Foreign key | Same-user target                                            |
+| `(replacement_session_id, user_id) → workout_sessions(id, user_id)`       | Foreign key | Same-user replacement                                       |
+| `(id, user_id)`                                                           | Unique      | Composite-ownership target for outbox rows                  |
+| `(target_session_id)`                                                     | Unique      | At most one direct adjustment per session (§7 determinism)  |
+| `(replacement_session_id)` partial where not null                         | Index       | Reverse chain resolution                                    |
+| `(user_id, occurred_at DESC, id DESC)`                                    | Index       | Audit timeline ordering                                     |
+| `user_id`                                                                 | Index       | RLS ownership path (satisfied by the audit index)           |
+
+### `public.history_dispatch_outbox`
+
+| Object                                                                       | Type        | Purpose / query contract                                          |
+| ------------------------------------------------------------------------------ | ----------- | ------------------------------------------------------------------ |
+| `(session_id, event_kind, consumer, adjustment_id)` (nulls treated distinctly) | Unique      | One delivery row per logical event and consumer                   |
+| `(state, next_attempt_at, id)` partial where `state IN ('pending','retry_scheduled')` | Index | Worker claim scan                                          |
+| `(lease_expires_at)` partial where `state = 'processing'`                    | Index       | Lease-expiry sweeper                                              |
+| `(session_id, user_id) → workout_sessions(id, user_id)`                      | Foreign key | Composite ownership to the subject session                        |
+| `(adjustment_id, user_id) → workout_session_adjustments(id, user_id)`        | Foreign key | Composite ownership for correction events                         |
+| `(session_id)`                                                               | Index       | FK index and per-session dispatch inspection                      |
+| `(adjustment_id)` partial where not null                                     | Index       | FK index                                                          |
+| `(state, updated_at)` partial where `state = 'dead_letter'`                  | Index       | Operator dead-letter review                                       |
+
+No `user_id` lookup index is required: authenticated users never query this
+table.
+
+### Auxiliary facts
+
+| Table                          | Object                                | Type   | Purpose / query contract                                   |
+| ------------------------------ | ------------------------------------- | ------ | ------------------------------------------------------------ |
+| `hydration_facts`              | `(user_id, ingestion_key)`            | Unique | Per-user idempotency                                        |
+| `hydration_facts`              | `(user_id, local_day)`                | Index  | Daily/weekly hydration totals                               |
+| `meal_adherence_facts`         | `(user_id, ingestion_key)`            | Unique | Per-user idempotency                                        |
+| `meal_adherence_facts`         | `(user_id, local_day, meal_key, occurred_at DESC, id DESC)` | Index | Deterministic latest-observation selection (§8.2) |
+| `daily_target_snapshots`       | `(user_id, ingestion_key)`            | Unique | Per-user idempotency                                        |
+| `daily_target_snapshots`       | `(user_id, local_day, captured_at DESC, id DESC)` | Index | Deterministic applicable-snapshot selection (§8.3) |
+| All three                      | `user_id`                             | Index  | RLS ownership path (satisfied by the leading column above)  |
+
+Every foreign-key path and every RLS ownership path listed above is indexed.
+
+---
+
+## 16. Security, RLS and Data API grant matrix
+
+**Direct authenticated Data API reads are ENABLED** for
+`workout_sessions`, `workout_session_exercises`, `workout_session_sets`,
+`workout_session_adjustments`, `hydration_facts`, `meal_adherence_facts` and
+`daily_target_snapshots` (own rows only, `SELECT` only). They are **DISABLED**
+for `history_dispatch_outbox`. This is a definitive selection, not conditional.
+
+| Entity                                 | `anon` | `authenticated`     | `service_role` | Trusted server route/function | Outbox worker            |
+| -------------------------------------- | ------ | ------------------- | -------------- | ----------------------------- | ------------------------ |
+| `public.workout_sessions`              | None   | `SELECT` (own, RLS) | `ALL`          | Writes via RPC only           | `SELECT` via service role |
+| `public.workout_session_exercises`     | None   | `SELECT` (own, RLS) | `ALL`          | Writes via RPC only           | `SELECT` via service role |
+| `public.workout_session_sets`          | None   | `SELECT` (own, RLS) | `ALL`          | Writes via RPC only           | `SELECT` via service role |
+| `public.workout_session_adjustments`   | None   | `SELECT` (own, RLS) | `ALL`          | Writes via RPC only           | `SELECT` via service role |
+| `public.hydration_facts`               | None   | `SELECT` (own, RLS) | `ALL`          | Writes via RPC only           | No access needed          |
+| `public.meal_adherence_facts`          | None   | `SELECT` (own, RLS) | `ALL`          | Writes via RPC only           | No access needed          |
+| `public.daily_target_snapshots`        | None   | `SELECT` (own, RLS) | `ALL`          | Writes via RPC only           | No access needed          |
+| `public.history_dispatch_outbox`       | None   | None                | `ALL`          | Insert via RPC only           | `SELECT`/`UPDATE` via service role |
+| Read-model views (§14, if materialized as views) | None | `SELECT` (own, via `security_invoker`) | `ALL` | Not applicable        | Not applicable            |
+| `public.ingest_workout_completion_v1`  | None   | None                | `EXECUTE`      | Calls via service role        | No                        |
+| `public.adjust_workout_session_v1`     | None   | None                | `EXECUTE`      | Calls via service role        | No                        |
+| Outbox claim/recovery functions        | None   | None                | `EXECUTE`      | No                            | Calls via service role    |
+
+**Anonymous users:** no grants, no policies, no function execution — no access
+of any kind.
+
+**Authenticated users:** own-row `SELECT` only on the seven exposed tables; no
+`INSERT`, `UPDATE` or `DELETE` on any history, adjustment or auxiliary table;
+no outbox access; no execution of any ingestion, adjustment or outbox
+function; no ability to supply an authoritative user ID.
+
+**Trusted server and service role:**
+
+- Authenticates the request before any database write.
+- Derives `user_id` from the verified session.
+- Uses a service-role client that does **not** forward the browser user JWT.
+- Calls only the restricted transactional functions.
+- Never exposes service-role credentials to the browser.
+
+**RLS:**
+
+- Enabled on every user-owned history and auxiliary-fact table, and on the
+  outbox (which simply has no user-facing policy).
+- Ownership policy form: `(select auth.uid()) = user_id`.
+- Every RLS `user_id` path is indexed (§15).
+- Composite ownership constraints prevent cross-user child references
+  independently of RLS.
+- RLS is defense in depth; grants are designed separately and are the primary
+  access control.
+
+**Views and functions:**
+
+- Exposed views use `security_invoker`; any view that cannot is not exposed.
+- Ingestion and adjustment functions use `SECURITY INVOKER`, an empty safe
+  `search_path` and fully qualified relation names.
+- Execution revoked from `PUBLIC`, `anon`, `authenticated`; granted only to
+  `service_role`.
+- `SECURITY DEFINER` is not used anywhere in this domain to bypass
+  permissions.
+
+No grants or policies are implemented in this sprint.
+
+---
+
+## 17. Transaction, deletion and retention boundaries
+
+**New completion (single transaction).** Create the session, all exercise
+rows, all set rows, all explicitly supplied auxiliary facts, and all required
+dispatch rows. Either everything commits or nothing is created.
+
+**Idempotent replay.** Return the existing session; create no children, no
+auxiliary facts and no dispatch rows; overwrite nothing; reject incompatible
+payload reuse with `PH_INGESTION_KEY_CONFLICT`.
+
+**Void (single transaction).** Create the append-only void adjustment and the
+required downstream dispatch rows. The original session is not edited.
+
+**Correction (single transaction).** Create the replacement immutable session
+and its children, the append-only correction adjustment, and the required
+downstream dispatch rows. The original session is neither edited nor deleted.
+
+**Downstream failure.** Never rolls back committed history. Retry state is
+persisted in the outbox. Per-consumer progress remains independent.
+
+**Deletion and retention.**
+
+- No ordinary hard delete or update path exists for historical facts,
+  adjustments or auxiliary facts.
+- User/account deletion cascades from `auth.users` as the explicit
+  legal/user-deletion exception.
+- Operational cleanup never erases canonical history because an outbox row was
+  delivered or dead-lettered.
+- **Outbox retention:** `delivered` rows may be purged after 90 days;
+  `dead_letter` rows are retained until an operator resolves them and are never
+  purged automatically. History retention is entirely independent of outbox
+  retention.
+
+---
+
+## 18. Migration and rollback sequence
+
+Documentation-only. No migration file is created in this sprint.
+
+Expected implementation sequence:
+
+1. Create schema objects, constraints and indexes.
+2. Apply explicit grants and RLS.
+3. Create trusted ingestion and adjustment functions.
+4. Add outbox claim/recovery infrastructure.
+5. Implement `WorkoutCompletionCoordinator`.
+6. Wire plan, timer and first-workout completion sources.
+7. Activate idempotent downstream consumers.
+8. Add canonical read models and UI.
+9. Cut Progress and Weekly Report directly to canonical history.
+10. Isolate and retire legacy local history state.
+
+Rollback principles:
+
+- Before cutover, additive unused schema may be disabled or removed through a
+  reviewed reverse migration.
+- After trusted ingestion begins, rollback must never delete committed
+  canonical history.
+- The trusted completion route may be disabled while preserving stored facts.
+- Downstream dispatch may be paused and resumed.
+- Failed consumers are recovered through the durable outbox, not by rewriting
+  history.
+- The app must not fall back to reconstructed plan history at any point.
+- Roll forward is preferred once canonical writes exist.
+- Backup and validation are required before any destructive operation.
+
+---
+
+## 19. Validation and ADR acceptance gate
+
+This contract contains no unresolved open questions, TODOs, TBDs or
+placeholders. Every detail required for implementation is frozen above, and
+every choice remains inside ADR 0005's decisions.
+
+Remaining blockers: **none.**
+
+Acceptance path:
+
+1. This draft passes independent validation.
+2. Sprint 8.0B-B2B either corrects the contract or ratifies it.
+3. Only then does ADR 0005 move from Proposed to Accepted, and only then may
+   Sprint 8.1 begin schema implementation.
+
+The marker below means: detailed contracts have been drafted; they have not
+yet been independently validated; ADR 0005 remains Proposed; no implementation
+is authorized; Sprint 8.0B-B2B will either correct this contract or ratify
+ADR 0005.
+
+CONTRACT DRAFT COMPLETE — READY FOR 8.0B-B2B VALIDATION
