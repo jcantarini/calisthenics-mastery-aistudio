@@ -781,45 +781,85 @@ query consumer are forbidden.
 
 ### `public.workout_session_adjustments`
 
-| Object                                                              | Type        | Purpose / query contract                                   |
-| ------------------------------------------------------------------- | ----------- | ---------------------------------------------------------- |
-| `(target_session_id, user_id) → workout_sessions(id, user_id)`      | Foreign key | Same-user target                                           |
-| `(replacement_session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user replacement                                      |
-| `(id, user_id)`                                                     | Unique      | Composite-ownership target for outbox rows                 |
-| `(target_session_id)`                                               | Unique      | At most one direct adjustment per session (§7 determinism) |
-| `(replacement_session_id)` partial where not null                   | Index       | Reverse chain resolution                                   |
-| `(user_id, occurred_at DESC, id DESC)`                              | Index       | Audit timeline ordering                                    |
-| `user_id`                                                           | Index       | RLS ownership path (satisfied by the audit index)          |
+| Object                                                                        | Type        | Purpose / query contract                                          |
+| ----------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
+| `(target_session_id, user_id) → workout_sessions(id, user_id)`                | Foreign key | Same-user target                                                  |
+| `(replacement_session_id, user_id) → workout_sessions(id, user_id)`           | Foreign key | Same-user replacement                                             |
+| `(id, user_id)`                                                               | Unique      | Composite-ownership target for outbox rows                        |
+| `(user_id, adjustment_key)`                                                   | Unique      | Adjustment-command idempotency (§7.2)                             |
+| `(target_session_id)`                                                         | Unique      | At most one direct adjustment per session (§7 determinism)        |
+| `(replacement_session_id)` partial where not null                             | Unique      | A replacement session may serve at most one correction (§7.2)     |
+| `(target_session_id, user_id)`                                                | Index       | Composite-FK referential lookup and same-user chain resolution    |
+| `(replacement_session_id, user_id)` partial where not null                    | Index       | Composite-FK referential lookup and reverse chain resolution      |
+| `(user_id, occurred_at DESC, id DESC)`                                        | Index       | Audit timeline ordering; also satisfies the RLS `user_id` path    |
+
+The unique constraint on `(replacement_session_id)` (non-null rows only)
+replaces the previous non-unique lookup index. It is what makes correction
+chains a forest of simple paths: a replacement session cannot be shared by two
+corrections, so no branching or merging is possible.
 
 ### `public.history_dispatch_outbox`
 
-| Object                                                                                | Type        | Purpose / query contract                        |
-| ------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------- |
-| `(session_id, event_kind, consumer, adjustment_id)` (nulls treated distinctly)        | Unique      | One delivery row per logical event and consumer |
-| `(state, next_attempt_at, id)` partial where `state IN ('pending','retry_scheduled')` | Index       | Worker claim scan                               |
-| `(lease_expires_at)` partial where `state = 'processing'`                             | Index       | Lease-expiry sweeper                            |
-| `(session_id, user_id) → workout_sessions(id, user_id)`                               | Foreign key | Composite ownership to the subject session      |
-| `(adjustment_id, user_id) → workout_session_adjustments(id, user_id)`                 | Foreign key | Composite ownership for correction events       |
-| `(session_id)`                                                                        | Index       | FK index and per-session dispatch inspection    |
-| `(adjustment_id)` partial where not null                                              | Index       | FK index                                        |
-| `(state, updated_at)` partial where `state = 'dead_letter'`                           | Index       | Operator dead-letter review                     |
+| Object                                                                                | Type        | Purpose / query contract                                       |
+| ------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------- |
+| `(session_id, event_kind, consumer)` partial where `adjustment_id IS NULL`             | Unique      | One completion delivery per session/event/consumer (§12.1)     |
+| `(adjustment_id, event_kind, consumer)` partial where `adjustment_id IS NOT NULL`      | Unique      | One adjustment delivery per adjustment/event/consumer (§12.1)   |
+| `(state, next_attempt_at, id)` partial where `state IN ('pending','retry_scheduled')`  | Index       | Worker claim scan                                              |
+| `(lease_expires_at)` partial where `state = 'processing'`                              | Index       | Lease-expiry sweeper                                           |
+| `(session_id, user_id) → workout_sessions(id, user_id)`                                | Foreign key | Composite ownership to the subject session                     |
+| `(adjustment_id, user_id) → workout_session_adjustments(id, user_id)`                  | Foreign key | Composite ownership for adjustment events                      |
+| `user_id → auth.users(id) ON DELETE CASCADE`                                           | Foreign key | Ownership / account-deletion cascade                           |
+| `(user_id)`                                                                            | Index       | FK deletion performance, account-deletion cascade, diagnostics |
+| `(session_id, user_id)`                                                                | Index       | Composite-FK referential lookup; per-session dispatch review   |
+| `(adjustment_id, user_id)` partial where not null                                      | Index       | Composite-FK referential lookup for adjustment events          |
+| `(state, updated_at)` partial where `state = 'dead_letter'`                            | Index       | Operator dead-letter review                                    |
+| `(state, delivered_at)` partial where `state = 'delivered'`                            | Index       | 90-day retention maintenance boundary (§17)                    |
 
-No `user_id` lookup index is required: authenticated users never query this
-table.
+The `(user_id)` index is **required** even though authenticated users never
+query this table: PostgreSQL does not index the referencing side of
+`user_id → auth.users(id)` automatically, and an account deletion would
+otherwise force a sequential scan of the whole outbox. The earlier claim that no
+`user_id` index was required is withdrawn.
 
 ### Auxiliary facts
 
-| Table                    | Object                                                      | Type   | Purpose / query contract                                   |
-| ------------------------ | ----------------------------------------------------------- | ------ | ---------------------------------------------------------- |
-| `hydration_facts`        | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                       |
-| `hydration_facts`        | `(user_id, local_day)`                                      | Index  | Daily/weekly hydration totals                              |
-| `meal_adherence_facts`   | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                       |
-| `meal_adherence_facts`   | `(user_id, local_day, meal_key, occurred_at DESC, id DESC)` | Index  | Deterministic latest-observation selection (§8.2)          |
-| `daily_target_snapshots` | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                       |
-| `daily_target_snapshots` | `(user_id, local_day, captured_at DESC, id DESC)`           | Index  | Deterministic applicable-snapshot selection (§8.3)         |
-| All three                | `user_id`                                                   | Index  | RLS ownership path (satisfied by the leading column above) |
+| Table                    | Object                                                      | Type   | Purpose / query contract                                       |
+| ------------------------ | ----------------------------------------------------------- | ------ | -------------------------------------------------------------- |
+| `hydration_facts`        | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
+| `hydration_facts`        | `(user_id, local_day, kind, id)`                            | Index  | Effective-hydration totals after voids (§14.5)                 |
+| `hydration_facts`        | `(target_fact_id, user_id)` partial where not null           | Unique | Composite-FK lookup and at most one direct void per entry (§8.1) |
+| `hydration_facts`        | `(target_fact_id, user_id) → hydration_facts(id, user_id)`   | Foreign key | Same-user self-referential void target                     |
+| `hydration_facts`        | `(id, user_id)`                                             | Unique | Composite-ownership target for void events                     |
+| `meal_adherence_facts`   | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
+| `meal_adherence_facts`   | `(user_id, local_day, meal_key, occurred_at DESC, id DESC)`  | Index  | Deterministic latest-observation selection (§8.2)               |
+| `daily_target_snapshots` | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
+| `daily_target_snapshots` | `(user_id, local_day, captured_at DESC, id DESC)`            | Index  | Deterministic applicable-snapshot selection (§8.3)              |
+| All three                | `user_id`                                                   | Index  | RLS ownership path (satisfied by the leading column above)      |
+| All three                | `user_id → auth.users(id) ON DELETE CASCADE`                 | Foreign key | Ownership / account-deletion cascade (indexed as above)    |
 
-Every foreign-key path and every RLS ownership path listed above is indexed.
+`fact_fingerprint` is deliberately **not** indexed: it is only ever read after a
+row has already been located through `(user_id, ingestion_key)` (§11.3).
+
+### Composite foreign-key index review (frozen)
+
+| Referencing side                                                       | Composite FK group                | Index that satisfies referential lookup      | Justification                                                                                                                     |
+| ---------------------------------------------------------------------- | --------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `workout_session_exercises`                                            | `(session_id, user_id)`           | `(session_id, user_id)`                      | Full composite group indexed with the group's leading column first.                                                                |
+| `workout_session_sets`                                                 | `(session_exercise_id, user_id)`  | `(session_exercise_id, user_id)`             | Full composite group indexed.                                                                                                     |
+| `workout_session_adjustments` target                                   | `(target_session_id, user_id)`    | `(target_session_id, user_id)`               | Full composite group indexed; the additional unique on `(target_session_id)` alone enforces one-adjustment-per-session.            |
+| `workout_session_adjustments` replacement                              | `(replacement_session_id, user_id)` | `(replacement_session_id, user_id)` partial | Full composite group indexed for non-null rows, which are the only rows the FK constrains.                                          |
+| `history_dispatch_outbox` session                                      | `(session_id, user_id)`           | `(session_id, user_id)`                      | Full composite group indexed.                                                                                                     |
+| `history_dispatch_outbox` adjustment                                   | `(adjustment_id, user_id)`        | `(adjustment_id, user_id)` partial           | Full composite group indexed for non-null rows.                                                                                   |
+| `hydration_facts` void target                                          | `(target_fact_id, user_id)`       | `(target_fact_id, user_id)` partial unique   | Full composite group indexed for non-null rows and simultaneously enforces one direct void per entry.                              |
+| Every table's `user_id → auth.users(id)`                               | `(user_id)`                       | Leading-column index listed per table        | Each table has an index whose leading column is `user_id`; the outbox has a dedicated `(user_id)` index.                            |
+
+Where an index over a globally unique child identifier alone would have been
+used (for example `(session_id)` instead of `(session_id, user_id)`), the full
+composite group is indexed instead. No composite foreign key relies on partial
+coverage.
+
+Every foreign-key path and every RLS ownership path listed above is indexed,
+including `history_dispatch_outbox.user_id`.
 
 ---
 
