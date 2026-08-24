@@ -893,16 +893,36 @@ No grants or policies are implemented in this sprint.
 rows, all set rows, all explicitly supplied auxiliary facts, and all required
 dispatch rows. Either everything commits or nothing is created.
 
-**Idempotent replay.** Return the existing session; create no children, no
-auxiliary facts and no dispatch rows; overwrite nothing; reject incompatible
-payload reuse with `PH_INGESTION_KEY_CONFLICT`.
+**Idempotent replay.** Look up `(user_id, ingestion_key)` first, compare the
+recomputed `command_fingerprint` (§11.1), and on equivalence return the existing
+session; create no children, no auxiliary facts and no dispatch rows; overwrite
+nothing. Reject incompatible payload reuse with `PH_INGESTION_KEY_CONFLICT`.
+Replay lookup precedes occurrence-window validation (§9.2), so a genuine replay
+never fails merely because the original occurrence window has elapsed.
 
-**Void (single transaction).** Create the append-only void adjustment and the
-required downstream dispatch rows. The original session is not edited.
+**Auxiliary-fact write (inside the same transaction).** For each supplied
+auxiliary fact, look up `(user_id, ingestion_key)`, compare the recomputed
+`fact_fingerprint` (§11.3), and either insert, treat as replay, or fail the whole
+transaction with `PH_AUXILIARY_FACT_KEY_CONFLICT`.
+
+**Void (single transaction).** Create the append-only void adjustment
+(`kind = void`) and the required downstream dispatch rows. The original session
+is not edited.
 
 **Correction (single transaction).** Create the replacement immutable session
 and its children, the append-only correction adjustment, and the required
 downstream dispatch rows. The original session is neither edited nor deleted.
+
+**Adjustment replay (single transaction).** Look up
+`(user_id, adjustment_key)`, compare the stored `command_fingerprint`, and
+return the existing adjustment on equivalence or
+`PH_ADJUSTMENT_KEY_CONFLICT` on divergence (§7.2). No replacement session is
+created on replay.
+
+**Hydration correction (single transaction).** Append one `void` event
+targeting the incorrect entry and one new `entry` event carrying the corrected
+volume. Both rows commit together or neither is created. The original row is
+never edited (§8.1).
 
 **Downstream failure.** Never rolls back committed history. Retry state is
 persisted in the outbox. Per-consumer progress remains independent.
@@ -910,15 +930,20 @@ persisted in the outbox. Per-consumer progress remains independent.
 **Deletion and retention.**
 
 - No ordinary hard delete or update path exists for historical facts,
-  adjustments or auxiliary facts.
+  adjustments or auxiliary facts. No role — including `service_role` — receives
+  an ordinary `UPDATE` or `DELETE` grant on them (§16).
 - User/account deletion cascades from `auth.users` as the explicit
   legal/user-deletion exception.
 - Operational cleanup never erases canonical history because an outbox row was
   delivered or dead-lettered.
 - **Outbox retention:** `delivered` rows may be purged after 90 days;
   `dead_letter` rows are retained until an operator resolves them and are never
-  purged automatically. History retention is entirely independent of outbox
-  retention.
+  purged automatically. Purging happens **only** through a restricted
+  server-only maintenance boundary (a dedicated `service_role`-only maintenance
+  function whose scope is limited to `history_dispatch_outbox` rows in state
+  `delivered` older than the retention window). No deletion right over
+  canonical history, adjustments or auxiliary facts is granted or implied.
+  History retention is entirely independent of outbox retention.
 
 ---
 
