@@ -831,28 +831,45 @@ Every foreign-key path and every RLS ownership path listed above is indexed.
 `daily_target_snapshots` (own rows only, `SELECT` only). They are **DISABLED**
 for `history_dispatch_outbox`. This is a definitive selection, not conditional.
 
-| Entity                                           | `anon` | `authenticated`                        | `service_role` | Trusted server route/function | Outbox worker                      |
-| ------------------------------------------------ | ------ | -------------------------------------- | -------------- | ----------------------------- | ---------------------------------- |
-| `public.workout_sessions`                        | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_exercises`               | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_sets`                    | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_adjustments`             | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | `SELECT` via service role          |
-| `public.hydration_facts`                         | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | No access needed                   |
-| `public.meal_adherence_facts`                    | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | No access needed                   |
-| `public.daily_target_snapshots`                  | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | No access needed                   |
-| `public.history_dispatch_outbox`                 | None   | None                                   | `ALL`          | Insert via RPC only           | `SELECT`/`UPDATE` via service role |
-| Read-model views (§14, if materialized as views) | None   | `SELECT` (own, via `security_invoker`) | `ALL`          | Not applicable                | Not applicable                     |
-| `public.ingest_workout_completion_v1`            | None   | None                                   | `EXECUTE`      | Calls via service role        | No                                 |
-| `public.adjust_workout_session_v1`               | None   | None                                   | `EXECUTE`      | Calls via service role        | No                                 |
-| Outbox claim/recovery functions                  | None   | None                                   | `EXECUTE`      | No                            | Calls via service role             |
+**Least privilege (frozen).** No entity in this domain receives `ALL` for any
+role. Every grant is the explicit minimum set of operations required by the
+trusted functions and workers that touch it.
+
+| Entity                                           | `anon` | `authenticated`                        | `service_role`                             | Trusted server route/function | Outbox worker                      |
+| ------------------------------------------------ | ------ | -------------------------------------- | ------------------------------------------ | ----------------------------- | ---------------------------------- |
+| `public.workout_sessions`                        | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_exercises`               | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_sets`                    | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_adjustments`             | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
+| `public.hydration_facts`                         | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
+| `public.meal_adherence_facts`                    | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
+| `public.daily_target_snapshots`                  | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
+| `public.history_dispatch_outbox`                 | None   | None                                   | `SELECT`, `INSERT`, `UPDATE`, `DELETE`\*   | Insert via RPC only           | `SELECT`/`UPDATE` via service role |
+| Read-model views (§14, if materialized as views) | None   | `SELECT` (own, via `security_invoker`) | `SELECT`                                   | Not applicable                | Not applicable                     |
+| `public.ingest_workout_completion_v1`            | None   | None                                   | `EXECUTE`                                  | Calls via service role        | No                                 |
+| `public.adjust_workout_session_v1`               | None   | None                                   | `EXECUTE`                                  | Calls via service role        | No                                 |
+| Outbox claim/recovery functions                  | None   | None                                   | `EXECUTE`                                  | No                            | Calls via service role             |
+| Outbox retention-maintenance function            | None   | None                                   | `EXECUTE`                                  | No                            | Server-only maintenance boundary   |
+
+\* Outbox `DELETE` exists **only** to serve the 90-day `delivered`-row retention
+policy and is exercised only through the restricted server-only maintenance
+boundary described in §17. It confers no deletion right over canonical history,
+adjustments or auxiliary facts.
+
+**Immutability of history under these grants.** History, adjustment and
+auxiliary tables have **no** `UPDATE` and **no** `DELETE` grant for any role.
+Therefore no ordinary code path — trusted server, worker or client — can rewrite
+or erase a historical fact. The only row removal remains the `auth.users`
+deletion cascade (I14, §17). Mutable operational state exists exclusively in
+`public.history_dispatch_outbox`.
 
 **Anonymous users:** no grants, no policies, no function execution — no access
 of any kind.
 
 **Authenticated users:** own-row `SELECT` only on the seven exposed tables; no
 `INSERT`, `UPDATE` or `DELETE` on any history, adjustment or auxiliary table;
-no outbox access; no execution of any ingestion, adjustment or outbox
-function; no ability to supply an authoritative user ID.
+no outbox access; no execution of any ingestion, adjustment, outbox or
+maintenance function; no ability to supply an authoritative user ID.
 
 **Trusted server and service role:**
 
@@ -862,22 +879,37 @@ function; no ability to supply an authoritative user ID.
 - Calls only the restricted transactional functions.
 - Never exposes service-role credentials to the browser.
 
+**Service-role security clarification (explicit).**
+
+- Supabase `service_role` **bypasses RLS**. RLS therefore does not and cannot
+  constrain a service-role caller.
+- Service-role safety rests on three other mechanisms only: server-only
+  credential isolation (the key exists solely in the server runtime and never
+  reaches the browser), explicit least-privilege grants (above), and restricted
+  trusted functions that own all validation and ownership derivation.
+- RLS protects user-facing (`anon`, `authenticated`) access as defense in depth
+  and must never be described in this domain as restricting `service_role`.
+- Any statement elsewhere that "RLS prevents cross-user access" applies to
+  user-facing roles only; for service-role paths the equivalent guarantee comes
+  from server-derived `user_id` plus the composite ownership constraints (§6.3).
+
 **RLS:**
 
 - Enabled on every user-owned history and auxiliary-fact table, and on the
   outbox (which simply has no user-facing policy).
-- Ownership policy form: `(select auth.uid()) = user_id`.
+- Ownership policy form: `(select auth.uid()) = user_id` (optimized form,
+  evaluated once per statement).
 - Every RLS `user_id` path is indexed (§15).
 - Composite ownership constraints prevent cross-user child references
-  independently of RLS.
-- RLS is defense in depth; grants are designed separately and are the primary
-  access control.
+  independently of RLS and independently of the calling role.
+- Grants are designed separately from RLS and are the primary access control.
 
 **Views and functions:**
 
 - Exposed views use `security_invoker`; any view that cannot is not exposed.
-- Ingestion and adjustment functions use `SECURITY INVOKER`, an empty safe
-  `search_path` and fully qualified relation names.
+- Ingestion, adjustment, outbox and maintenance functions use
+  `SECURITY INVOKER`, an empty safe `search_path` and fully qualified relation
+  names.
 - Execution revoked from `PUBLIC`, `anon`, `authenticated`; granted only to
   `service_role`.
 - `SECURITY DEFINER` is not used anywhere in this domain to bypass
