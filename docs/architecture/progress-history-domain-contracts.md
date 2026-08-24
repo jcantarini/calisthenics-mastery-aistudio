@@ -933,11 +933,23 @@ Expected implementation sequence:
 3. Create trusted ingestion and adjustment functions.
 4. Add outbox claim/recovery infrastructure.
 5. Implement `WorkoutCompletionCoordinator`.
-6. Wire plan, timer and first-workout completion sources.
-7. Activate idempotent downstream consumers.
+6. Wire plan, timer and first-workout completion sources, including the source
+   adapter that normalizes generator difficulty values (§5.1) and generator
+   substitution representation (§6.1) before ingestion.
+7. Activate idempotent downstream consumers for `session_completed`.
 8. Add canonical read models and UI.
 9. Cut Progress and Weekly Report directly to canonical history.
-10. Isolate and retire legacy local history state.
+10. Ship consumer reversal/recompute support for `session_voided` and
+    `session_corrected` in Gamification, Goals and plan sync, then replay any
+    retained `retry_scheduled` / `dead_letter` adjustment events.
+11. Only after step 10 succeeds, enable user-facing void and correction
+    actions in the product.
+12. Isolate and retire legacy local history state.
+
+**Cutover gating rule (frozen).** History storage of adjustments may exist
+before consumer support, but user-facing void/correction actions must not be
+enabled until step 10 completes. No adjustment event is ever discarded or
+acknowledged as delivered to obtain a green dashboard (§12, §13.4).
 
 Rollback principles:
 
