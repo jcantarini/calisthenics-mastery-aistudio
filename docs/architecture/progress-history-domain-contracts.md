@@ -781,45 +781,85 @@ query consumer are forbidden.
 
 ### `public.workout_session_adjustments`
 
-| Object                                                              | Type        | Purpose / query contract                                   |
-| ------------------------------------------------------------------- | ----------- | ---------------------------------------------------------- |
-| `(target_session_id, user_id) → workout_sessions(id, user_id)`      | Foreign key | Same-user target                                           |
-| `(replacement_session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user replacement                                      |
-| `(id, user_id)`                                                     | Unique      | Composite-ownership target for outbox rows                 |
-| `(target_session_id)`                                               | Unique      | At most one direct adjustment per session (§7 determinism) |
-| `(replacement_session_id)` partial where not null                   | Index       | Reverse chain resolution                                   |
-| `(user_id, occurred_at DESC, id DESC)`                              | Index       | Audit timeline ordering                                    |
-| `user_id`                                                           | Index       | RLS ownership path (satisfied by the audit index)          |
+| Object                                                                        | Type        | Purpose / query contract                                          |
+| ----------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
+| `(target_session_id, user_id) → workout_sessions(id, user_id)`                | Foreign key | Same-user target                                                  |
+| `(replacement_session_id, user_id) → workout_sessions(id, user_id)`           | Foreign key | Same-user replacement                                             |
+| `(id, user_id)`                                                               | Unique      | Composite-ownership target for outbox rows                        |
+| `(user_id, adjustment_key)`                                                   | Unique      | Adjustment-command idempotency (§7.2)                             |
+| `(target_session_id)`                                                         | Unique      | At most one direct adjustment per session (§7 determinism)        |
+| `(replacement_session_id)` partial where not null                             | Unique      | A replacement session may serve at most one correction (§7.2)     |
+| `(target_session_id, user_id)`                                                | Index       | Composite-FK referential lookup and same-user chain resolution    |
+| `(replacement_session_id, user_id)` partial where not null                    | Index       | Composite-FK referential lookup and reverse chain resolution      |
+| `(user_id, occurred_at DESC, id DESC)`                                        | Index       | Audit timeline ordering; also satisfies the RLS `user_id` path    |
+
+The unique constraint on `(replacement_session_id)` (non-null rows only)
+replaces the previous non-unique lookup index. It is what makes correction
+chains a forest of simple paths: a replacement session cannot be shared by two
+corrections, so no branching or merging is possible.
 
 ### `public.history_dispatch_outbox`
 
-| Object                                                                                | Type        | Purpose / query contract                        |
-| ------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------- |
-| `(session_id, event_kind, consumer, adjustment_id)` (nulls treated distinctly)        | Unique      | One delivery row per logical event and consumer |
-| `(state, next_attempt_at, id)` partial where `state IN ('pending','retry_scheduled')` | Index       | Worker claim scan                               |
-| `(lease_expires_at)` partial where `state = 'processing'`                             | Index       | Lease-expiry sweeper                            |
-| `(session_id, user_id) → workout_sessions(id, user_id)`                               | Foreign key | Composite ownership to the subject session      |
-| `(adjustment_id, user_id) → workout_session_adjustments(id, user_id)`                 | Foreign key | Composite ownership for correction events       |
-| `(session_id)`                                                                        | Index       | FK index and per-session dispatch inspection    |
-| `(adjustment_id)` partial where not null                                              | Index       | FK index                                        |
-| `(state, updated_at)` partial where `state = 'dead_letter'`                           | Index       | Operator dead-letter review                     |
+| Object                                                                                | Type        | Purpose / query contract                                       |
+| ------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------- |
+| `(session_id, event_kind, consumer)` partial where `adjustment_id IS NULL`             | Unique      | One completion delivery per session/event/consumer (§12.1)     |
+| `(adjustment_id, event_kind, consumer)` partial where `adjustment_id IS NOT NULL`      | Unique      | One adjustment delivery per adjustment/event/consumer (§12.1)   |
+| `(state, next_attempt_at, id)` partial where `state IN ('pending','retry_scheduled')`  | Index       | Worker claim scan                                              |
+| `(lease_expires_at)` partial where `state = 'processing'`                              | Index       | Lease-expiry sweeper                                           |
+| `(session_id, user_id) → workout_sessions(id, user_id)`                                | Foreign key | Composite ownership to the subject session                     |
+| `(adjustment_id, user_id) → workout_session_adjustments(id, user_id)`                  | Foreign key | Composite ownership for adjustment events                      |
+| `user_id → auth.users(id) ON DELETE CASCADE`                                           | Foreign key | Ownership / account-deletion cascade                           |
+| `(user_id)`                                                                            | Index       | FK deletion performance, account-deletion cascade, diagnostics |
+| `(session_id, user_id)`                                                                | Index       | Composite-FK referential lookup; per-session dispatch review   |
+| `(adjustment_id, user_id)` partial where not null                                      | Index       | Composite-FK referential lookup for adjustment events          |
+| `(state, updated_at)` partial where `state = 'dead_letter'`                            | Index       | Operator dead-letter review                                    |
+| `(state, delivered_at)` partial where `state = 'delivered'`                            | Index       | 90-day retention maintenance boundary (§17)                    |
 
-No `user_id` lookup index is required: authenticated users never query this
-table.
+The `(user_id)` index is **required** even though authenticated users never
+query this table: PostgreSQL does not index the referencing side of
+`user_id → auth.users(id)` automatically, and an account deletion would
+otherwise force a sequential scan of the whole outbox. The earlier claim that no
+`user_id` index was required is withdrawn.
 
 ### Auxiliary facts
 
-| Table                    | Object                                                      | Type   | Purpose / query contract                                   |
-| ------------------------ | ----------------------------------------------------------- | ------ | ---------------------------------------------------------- |
-| `hydration_facts`        | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                       |
-| `hydration_facts`        | `(user_id, local_day)`                                      | Index  | Daily/weekly hydration totals                              |
-| `meal_adherence_facts`   | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                       |
-| `meal_adherence_facts`   | `(user_id, local_day, meal_key, occurred_at DESC, id DESC)` | Index  | Deterministic latest-observation selection (§8.2)          |
-| `daily_target_snapshots` | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                       |
-| `daily_target_snapshots` | `(user_id, local_day, captured_at DESC, id DESC)`           | Index  | Deterministic applicable-snapshot selection (§8.3)         |
-| All three                | `user_id`                                                   | Index  | RLS ownership path (satisfied by the leading column above) |
+| Table                    | Object                                                      | Type   | Purpose / query contract                                       |
+| ------------------------ | ----------------------------------------------------------- | ------ | -------------------------------------------------------------- |
+| `hydration_facts`        | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
+| `hydration_facts`        | `(user_id, local_day, kind, id)`                            | Index  | Effective-hydration totals after voids (§14.5)                 |
+| `hydration_facts`        | `(target_fact_id, user_id)` partial where not null           | Unique | Composite-FK lookup and at most one direct void per entry (§8.1) |
+| `hydration_facts`        | `(target_fact_id, user_id) → hydration_facts(id, user_id)`   | Foreign key | Same-user self-referential void target                     |
+| `hydration_facts`        | `(id, user_id)`                                             | Unique | Composite-ownership target for void events                     |
+| `meal_adherence_facts`   | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
+| `meal_adherence_facts`   | `(user_id, local_day, meal_key, occurred_at DESC, id DESC)`  | Index  | Deterministic latest-observation selection (§8.2)               |
+| `daily_target_snapshots` | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
+| `daily_target_snapshots` | `(user_id, local_day, captured_at DESC, id DESC)`            | Index  | Deterministic applicable-snapshot selection (§8.3)              |
+| All three                | `user_id`                                                   | Index  | RLS ownership path (satisfied by the leading column above)      |
+| All three                | `user_id → auth.users(id) ON DELETE CASCADE`                 | Foreign key | Ownership / account-deletion cascade (indexed as above)    |
 
-Every foreign-key path and every RLS ownership path listed above is indexed.
+`fact_fingerprint` is deliberately **not** indexed: it is only ever read after a
+row has already been located through `(user_id, ingestion_key)` (§11.3).
+
+### Composite foreign-key index review (frozen)
+
+| Referencing side                                                       | Composite FK group                | Index that satisfies referential lookup      | Justification                                                                                                                     |
+| ---------------------------------------------------------------------- | --------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `workout_session_exercises`                                            | `(session_id, user_id)`           | `(session_id, user_id)`                      | Full composite group indexed with the group's leading column first.                                                                |
+| `workout_session_sets`                                                 | `(session_exercise_id, user_id)`  | `(session_exercise_id, user_id)`             | Full composite group indexed.                                                                                                     |
+| `workout_session_adjustments` target                                   | `(target_session_id, user_id)`    | `(target_session_id, user_id)`               | Full composite group indexed; the additional unique on `(target_session_id)` alone enforces one-adjustment-per-session.            |
+| `workout_session_adjustments` replacement                              | `(replacement_session_id, user_id)` | `(replacement_session_id, user_id)` partial | Full composite group indexed for non-null rows, which are the only rows the FK constrains.                                          |
+| `history_dispatch_outbox` session                                      | `(session_id, user_id)`           | `(session_id, user_id)`                      | Full composite group indexed.                                                                                                     |
+| `history_dispatch_outbox` adjustment                                   | `(adjustment_id, user_id)`        | `(adjustment_id, user_id)` partial           | Full composite group indexed for non-null rows.                                                                                   |
+| `hydration_facts` void target                                          | `(target_fact_id, user_id)`       | `(target_fact_id, user_id)` partial unique   | Full composite group indexed for non-null rows and simultaneously enforces one direct void per entry.                              |
+| Every table's `user_id → auth.users(id)`                               | `(user_id)`                       | Leading-column index listed per table        | Each table has an index whose leading column is `user_id`; the outbox has a dedicated `(user_id)` index.                            |
+
+Where an index over a globally unique child identifier alone would have been
+used (for example `(session_id)` instead of `(session_id, user_id)`), the full
+composite group is indexed instead. No composite foreign key relies on partial
+coverage.
+
+Every foreign-key path and every RLS ownership path listed above is indexed,
+including `history_dispatch_outbox.user_id`.
 
 ---
 
@@ -831,28 +871,45 @@ Every foreign-key path and every RLS ownership path listed above is indexed.
 `daily_target_snapshots` (own rows only, `SELECT` only). They are **DISABLED**
 for `history_dispatch_outbox`. This is a definitive selection, not conditional.
 
-| Entity                                           | `anon` | `authenticated`                        | `service_role` | Trusted server route/function | Outbox worker                      |
-| ------------------------------------------------ | ------ | -------------------------------------- | -------------- | ----------------------------- | ---------------------------------- |
-| `public.workout_sessions`                        | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_exercises`               | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_sets`                    | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_adjustments`             | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | `SELECT` via service role          |
-| `public.hydration_facts`                         | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | No access needed                   |
-| `public.meal_adherence_facts`                    | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | No access needed                   |
-| `public.daily_target_snapshots`                  | None   | `SELECT` (own, RLS)                    | `ALL`          | Writes via RPC only           | No access needed                   |
-| `public.history_dispatch_outbox`                 | None   | None                                   | `ALL`          | Insert via RPC only           | `SELECT`/`UPDATE` via service role |
-| Read-model views (§14, if materialized as views) | None   | `SELECT` (own, via `security_invoker`) | `ALL`          | Not applicable                | Not applicable                     |
-| `public.ingest_workout_completion_v1`            | None   | None                                   | `EXECUTE`      | Calls via service role        | No                                 |
-| `public.adjust_workout_session_v1`               | None   | None                                   | `EXECUTE`      | Calls via service role        | No                                 |
-| Outbox claim/recovery functions                  | None   | None                                   | `EXECUTE`      | No                            | Calls via service role             |
+**Least privilege (frozen).** No entity in this domain receives `ALL` for any
+role. Every grant is the explicit minimum set of operations required by the
+trusted functions and workers that touch it.
+
+| Entity                                           | `anon` | `authenticated`                        | `service_role`                             | Trusted server route/function | Outbox worker                      |
+| ------------------------------------------------ | ------ | -------------------------------------- | ------------------------------------------ | ----------------------------- | ---------------------------------- |
+| `public.workout_sessions`                        | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_exercises`               | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_sets`                    | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_adjustments`             | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
+| `public.hydration_facts`                         | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
+| `public.meal_adherence_facts`                    | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
+| `public.daily_target_snapshots`                  | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
+| `public.history_dispatch_outbox`                 | None   | None                                   | `SELECT`, `INSERT`, `UPDATE`, `DELETE`\*   | Insert via RPC only           | `SELECT`/`UPDATE` via service role |
+| Read-model views (§14, if materialized as views) | None   | `SELECT` (own, via `security_invoker`) | `SELECT`                                   | Not applicable                | Not applicable                     |
+| `public.ingest_workout_completion_v1`            | None   | None                                   | `EXECUTE`                                  | Calls via service role        | No                                 |
+| `public.adjust_workout_session_v1`               | None   | None                                   | `EXECUTE`                                  | Calls via service role        | No                                 |
+| Outbox claim/recovery functions                  | None   | None                                   | `EXECUTE`                                  | No                            | Calls via service role             |
+| Outbox retention-maintenance function            | None   | None                                   | `EXECUTE`                                  | No                            | Server-only maintenance boundary   |
+
+\* Outbox `DELETE` exists **only** to serve the 90-day `delivered`-row retention
+policy and is exercised only through the restricted server-only maintenance
+boundary described in §17. It confers no deletion right over canonical history,
+adjustments or auxiliary facts.
+
+**Immutability of history under these grants.** History, adjustment and
+auxiliary tables have **no** `UPDATE` and **no** `DELETE` grant for any role.
+Therefore no ordinary code path — trusted server, worker or client — can rewrite
+or erase a historical fact. The only row removal remains the `auth.users`
+deletion cascade (I14, §17). Mutable operational state exists exclusively in
+`public.history_dispatch_outbox`.
 
 **Anonymous users:** no grants, no policies, no function execution — no access
 of any kind.
 
 **Authenticated users:** own-row `SELECT` only on the seven exposed tables; no
 `INSERT`, `UPDATE` or `DELETE` on any history, adjustment or auxiliary table;
-no outbox access; no execution of any ingestion, adjustment or outbox
-function; no ability to supply an authoritative user ID.
+no outbox access; no execution of any ingestion, adjustment, outbox or
+maintenance function; no ability to supply an authoritative user ID.
 
 **Trusted server and service role:**
 
@@ -862,22 +919,37 @@ function; no ability to supply an authoritative user ID.
 - Calls only the restricted transactional functions.
 - Never exposes service-role credentials to the browser.
 
+**Service-role security clarification (explicit).**
+
+- Supabase `service_role` **bypasses RLS**. RLS therefore does not and cannot
+  constrain a service-role caller.
+- Service-role safety rests on three other mechanisms only: server-only
+  credential isolation (the key exists solely in the server runtime and never
+  reaches the browser), explicit least-privilege grants (above), and restricted
+  trusted functions that own all validation and ownership derivation.
+- RLS protects user-facing (`anon`, `authenticated`) access as defense in depth
+  and must never be described in this domain as restricting `service_role`.
+- Any statement elsewhere that "RLS prevents cross-user access" applies to
+  user-facing roles only; for service-role paths the equivalent guarantee comes
+  from server-derived `user_id` plus the composite ownership constraints (§6.3).
+
 **RLS:**
 
 - Enabled on every user-owned history and auxiliary-fact table, and on the
   outbox (which simply has no user-facing policy).
-- Ownership policy form: `(select auth.uid()) = user_id`.
+- Ownership policy form: `(select auth.uid()) = user_id` (optimized form,
+  evaluated once per statement).
 - Every RLS `user_id` path is indexed (§15).
 - Composite ownership constraints prevent cross-user child references
-  independently of RLS.
-- RLS is defense in depth; grants are designed separately and are the primary
-  access control.
+  independently of RLS and independently of the calling role.
+- Grants are designed separately from RLS and are the primary access control.
 
 **Views and functions:**
 
 - Exposed views use `security_invoker`; any view that cannot is not exposed.
-- Ingestion and adjustment functions use `SECURITY INVOKER`, an empty safe
-  `search_path` and fully qualified relation names.
+- Ingestion, adjustment, outbox and maintenance functions use
+  `SECURITY INVOKER`, an empty safe `search_path` and fully qualified relation
+  names.
 - Execution revoked from `PUBLIC`, `anon`, `authenticated`; granted only to
   `service_role`.
 - `SECURITY DEFINER` is not used anywhere in this domain to bypass
@@ -893,16 +965,36 @@ No grants or policies are implemented in this sprint.
 rows, all set rows, all explicitly supplied auxiliary facts, and all required
 dispatch rows. Either everything commits or nothing is created.
 
-**Idempotent replay.** Return the existing session; create no children, no
-auxiliary facts and no dispatch rows; overwrite nothing; reject incompatible
-payload reuse with `PH_INGESTION_KEY_CONFLICT`.
+**Idempotent replay.** Look up `(user_id, ingestion_key)` first, compare the
+recomputed `command_fingerprint` (§11.1), and on equivalence return the existing
+session; create no children, no auxiliary facts and no dispatch rows; overwrite
+nothing. Reject incompatible payload reuse with `PH_INGESTION_KEY_CONFLICT`.
+Replay lookup precedes occurrence-window validation (§9.2), so a genuine replay
+never fails merely because the original occurrence window has elapsed.
 
-**Void (single transaction).** Create the append-only void adjustment and the
-required downstream dispatch rows. The original session is not edited.
+**Auxiliary-fact write (inside the same transaction).** For each supplied
+auxiliary fact, look up `(user_id, ingestion_key)`, compare the recomputed
+`fact_fingerprint` (§11.3), and either insert, treat as replay, or fail the whole
+transaction with `PH_AUXILIARY_FACT_KEY_CONFLICT`.
+
+**Void (single transaction).** Create the append-only void adjustment
+(`kind = void`) and the required downstream dispatch rows. The original session
+is not edited.
 
 **Correction (single transaction).** Create the replacement immutable session
 and its children, the append-only correction adjustment, and the required
 downstream dispatch rows. The original session is neither edited nor deleted.
+
+**Adjustment replay (single transaction).** Look up
+`(user_id, adjustment_key)`, compare the stored `command_fingerprint`, and
+return the existing adjustment on equivalence or
+`PH_ADJUSTMENT_KEY_CONFLICT` on divergence (§7.2). No replacement session is
+created on replay.
+
+**Hydration correction (single transaction).** Append one `void` event
+targeting the incorrect entry and one new `entry` event carrying the corrected
+volume. Both rows commit together or neither is created. The original row is
+never edited (§8.1).
 
 **Downstream failure.** Never rolls back committed history. Retry state is
 persisted in the outbox. Per-consumer progress remains independent.
@@ -910,15 +1002,20 @@ persisted in the outbox. Per-consumer progress remains independent.
 **Deletion and retention.**
 
 - No ordinary hard delete or update path exists for historical facts,
-  adjustments or auxiliary facts.
+  adjustments or auxiliary facts. No role — including `service_role` — receives
+  an ordinary `UPDATE` or `DELETE` grant on them (§16).
 - User/account deletion cascades from `auth.users` as the explicit
   legal/user-deletion exception.
 - Operational cleanup never erases canonical history because an outbox row was
   delivered or dead-lettered.
 - **Outbox retention:** `delivered` rows may be purged after 90 days;
   `dead_letter` rows are retained until an operator resolves them and are never
-  purged automatically. History retention is entirely independent of outbox
-  retention.
+  purged automatically. Purging happens **only** through a restricted
+  server-only maintenance boundary (a dedicated `service_role`-only maintenance
+  function whose scope is limited to `history_dispatch_outbox` rows in state
+  `delivered` older than the retention window). No deletion right over
+  canonical history, adjustments or auxiliary facts is granted or implied.
+  History retention is entirely independent of outbox retention.
 
 ---
 
@@ -933,11 +1030,23 @@ Expected implementation sequence:
 3. Create trusted ingestion and adjustment functions.
 4. Add outbox claim/recovery infrastructure.
 5. Implement `WorkoutCompletionCoordinator`.
-6. Wire plan, timer and first-workout completion sources.
-7. Activate idempotent downstream consumers.
+6. Wire plan, timer and first-workout completion sources, including the source
+   adapter that normalizes generator difficulty values (§5.1) and generator
+   substitution representation (§6.1) before ingestion.
+7. Activate idempotent downstream consumers for `session_completed`.
 8. Add canonical read models and UI.
 9. Cut Progress and Weekly Report directly to canonical history.
-10. Isolate and retire legacy local history state.
+10. Ship consumer reversal/recompute support for `session_voided` and
+    `session_corrected` in Gamification, Goals and plan sync, then replay any
+    retained `retry_scheduled` / `dead_letter` adjustment events.
+11. Only after step 10 succeeds, enable user-facing void and correction
+    actions in the product.
+12. Isolate and retire legacy local history state.
+
+**Cutover gating rule (frozen).** History storage of adjustments may exist
+before consumer support, but user-facing void/correction actions must not be
+enabled until step 10 completes. No adjustment event is ever discarded or
+acknowledged as delivered to obtain a green dashboard (§12, §13.4).
 
 Rollback principles:
 
@@ -960,6 +1069,28 @@ Rollback principles:
 This contract contains no unresolved open questions, deferred decisions or
 placeholder text. Every detail required for implementation is frozen above, and
 every choice remains inside ADR 0005's decisions.
+
+**Correction record (Sprint 8.0B-B2A-C1).** The independent validation of the
+8.0B-B2A draft identified sixteen contract defects. They are corrected in this
+revision: repository-compatible text exercise identifiers and substitution
+semantics (§3, §6.1, §9.4, §11, §14, §15); explicit difficulty normalization
+(§5.1, §9.1); a versioned structured prescription snapshot (§6.1.1, §9.5);
+complete nested command-payload input matrices (§9.3–§9.9); a
+semantically complete session fingerprint with frozen canonicalization (§11.1);
+independent auxiliary-fact fingerprints and conflict detection (§8, §11.3);
+append-only hydration void/entry semantics that no longer double-count
+(§8.1, §14.5, §15); adjustment-key idempotency, replacement-session
+uniqueness and the full `public.adjust_workout_session_v1` contract (§7.1–§7.3);
+null-safe outbox uniqueness through partial unique constraints (§12.1, §15);
+the outbox `user_id` index and composite foreign-key index review (§15);
+removal of unsafe no-op delivery acknowledgement (§12, §13.4, §18);
+least-privilege service-role grants with an explicit RLS/service-role
+clarification (§16); server-derived confirmation time and replay-safe
+occurrence-window validation (§9.2); complete read-model output matrices and
+aggregate formulas (§14); and a reconciled error taxonomy (§10).
+
+This revision remains a **Draft**. It has **not** been independently validated,
+ADR 0005 remains **Proposed**, and nothing has been implemented.
 
 Remaining blockers: **none.**
 
