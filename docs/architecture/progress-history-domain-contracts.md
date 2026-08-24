@@ -961,6 +961,28 @@ This contract contains no unresolved open questions, deferred decisions or
 placeholder text. Every detail required for implementation is frozen above, and
 every choice remains inside ADR 0005's decisions.
 
+**Correction record (Sprint 8.0B-B2A-C1).** The independent validation of the
+8.0B-B2A draft identified sixteen contract defects. They are corrected in this
+revision: repository-compatible text exercise identifiers and substitution
+semantics (§3, §6.1, §9.4, §11, §14, §15); explicit difficulty normalization
+(§5.1, §9.1); a versioned structured prescription snapshot (§6.1.1, §9.5);
+complete nested command-payload input matrices (§9.3–§9.9); a
+semantically complete session fingerprint with frozen canonicalization (§11.1);
+independent auxiliary-fact fingerprints and conflict detection (§8, §11.3);
+append-only hydration void/entry semantics that no longer double-count
+(§8.1, §14.5, §15); adjustment-key idempotency, replacement-session
+uniqueness and the full `public.adjust_workout_session_v1` contract (§7.1–§7.3);
+null-safe outbox uniqueness through partial unique constraints (§12.1, §15);
+the outbox `user_id` index and composite foreign-key index review (§15);
+removal of unsafe no-op delivery acknowledgement (§12, §13.4, §18);
+least-privilege service-role grants with an explicit RLS/service-role
+clarification (§16); server-derived confirmation time and replay-safe
+occurrence-window validation (§9.2); complete read-model output matrices and
+aggregate formulas (§14); and a reconciled error taxonomy (§10).
+
+This revision remains a **Draft**. It has **not** been independently validated,
+ADR 0005 remains **Proposed**, and nothing has been implemented.
+
 Remaining blockers: **none.**
 
 Acceptance path:
