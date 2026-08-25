@@ -758,26 +758,26 @@ calendars, training plans are already structured in Monday-anchored weeks
 
 ### `public.workout_session_exercises`
 
-| Object                                                  | Type        | Purpose / query contract                               |
-| ------------------------------------------------------- | ----------- | ------------------------------------------------------ |
-| `(session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user parent relationship                          |
-| `(id, user_id)`                                         | Unique      | Composite-ownership target for sets                    |
-| `(session_id, order_index)`                             | Unique      | Deterministic ordering, no duplicate positions         |
-| `(session_id)`                                          | Index       | FK index; session-detail fetch                         |
-| `user_id`                                               | Index       | RLS ownership path                                     |
-| `(user_id, exercise_id)` partial where not null         | Index       | Per-exercise history read model (§14 detail/aggregate) |
+| Object                                                  | Type        | Purpose / query contract                                          |
+| ------------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
+| `(session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user parent relationship                                     |
+| `(id, user_id)`                                         | Unique      | Composite-ownership target for sets                               |
+| `(session_id, order_index)`                             | Unique      | Deterministic ordering, no duplicate positions                    |
+| `(session_id, user_id)`                                 | Index       | Composite-FK referential lookup; session-detail fetch             |
+| `(user_id)`                                             | Index       | RLS ownership path and `auth.users` cascade                       |
+| `(user_id, exercise_id)` partial where not null         | Index       | Per-exercise history read model (§14 detail/aggregate); text key  |
 
 No further exercise indexes are added; speculative indexes without a defined
 query consumer are forbidden.
 
 ### `public.workout_session_sets`
 
-| Object                                                                    | Type        | Purpose / query contract      |
-| ------------------------------------------------------------------------- | ----------- | ----------------------------- |
-| `(session_exercise_id, user_id) → workout_session_exercises(id, user_id)` | Foreign key | Same-user parent relationship |
-| `(session_exercise_id, set_index)`                                        | Unique      | Deterministic set ordering    |
-| `(session_exercise_id)`                                                   | Index       | FK index; detail fetch        |
-| `user_id`                                                                 | Index       | RLS ownership path            |
+| Object                                                                    | Type        | Purpose / query contract                              |
+| ------------------------------------------------------------------------- | ----------- | ----------------------------------------------------- |
+| `(session_exercise_id, user_id) → workout_session_exercises(id, user_id)` | Foreign key | Same-user parent relationship                         |
+| `(session_exercise_id, set_index)`                                        | Unique      | Deterministic set ordering                            |
+| `(session_exercise_id, user_id)`                                          | Index       | Composite-FK referential lookup; detail fetch         |
+| `(user_id)`                                                               | Index       | RLS ownership path and `auth.users` cascade           |
 
 ### `public.workout_session_adjustments`
 
