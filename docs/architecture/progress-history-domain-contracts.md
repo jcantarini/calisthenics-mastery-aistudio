@@ -694,13 +694,214 @@ dependency.
 
 ## 14. Read models, ordering and pagination
 
+Every read model below specifies its authoritative tables, exact output fields,
+adjustment behaviour, ordering, pagination or bounded-window rule, localization
+fallback, empty state and implementation phase. No read model reads
+`planned_workouts`, `src/lib/store.ts` or current mutable profile values (I15).
+
 | Read model                       | Consumer/screen                   | Authoritative sources                                                       | Adjustment behaviour                                              | Ordering                                          | Pagination                     | Localization fallback                            | Empty state                     | Phase |
 | -------------------------------- | --------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------- | ------------------------------ | ------------------------------------------------ | ------------------------------- | ----- |
 | Workout history timeline item    | History list (`/progresso`)       | `workout_sessions`, `workout_session_adjustments`                           | Voided excluded; corrected replaced by replacement session        | `occurred_at DESC, id DESC`                       | Keyset on `(occurred_at, id)`  | Current catalog label, else neutral snapshot     | Neutral "no workouts yet" state | 8.3   |
 | Workout history session detail   | Session detail view               | `workout_sessions`, `..._exercises`, `..._sets`, `..._adjustments`          | Shows effective session; original remains readable for audit      | Exercises `order_index ASC`, sets `set_index ASC` | None (bounded children)        | Per exercise, catalog label else snapshot        | Not reachable when no session   | 8.3   |
 | Weekly progress summary          | Weekly Report (`/relatorio`)      | `workout_sessions`, `..._sets`, `..._adjustments`, `daily_target_snapshots` | Voided excluded from totals; corrections counted once (effective) | Weeks descending by week start                    | Bounded window (last 12 weeks) | Not applicable (aggregates)                      | Zeroed KPIs with neutral copy   | 8.3   |
 | Effective-session resolution     | Shared projection for all readers | `workout_sessions`, `workout_session_adjustments`                           | Follows `correction` chain; excludes terminal `void`              | Deterministic by chain                            | Not paginated                  | Not applicable                                   | Not applicable                  | 8.3   |
-| Auxiliary daily progress summary | Diet/diary daily and weekly views | `hydration_facts`, `meal_adherence_facts`, `daily_target_snapshots`         | Not applicable (no workout adjustments)                           | `local_day DESC`                                  | Keyset on `local_day`          | `meal_key` resolved to localized label at render | Zeroed daily totals             | 8.3   |
+| Auxiliary daily progress summary | Diet/diary daily and weekly views | `hydration_facts`, `meal_adherence_facts`, `daily_target_snapshots`         | Hydration voids applied; latest meal observation wins             | `local_day DESC`                                  | Keyset on `local_day`          | `meal_key` resolved to localized label at render | Zeroed daily totals             | 8.3   |
+
+### 14.1 Workout history timeline item — output matrix
+
+Authoritative tables: `public.workout_sessions`,
+`public.workout_session_adjustments`.
+
+| Output field                  | Logical type               | Nullable | Derivation                                                                                   |
+| ----------------------------- | -------------------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `session_id`                  | UUID                       | No       | Effective session ID from §14.4                                                              |
+| `root_session_id`             | UUID                       | No       | Root of the correction chain; equals `session_id` when never corrected                       |
+| `is_corrected_result`         | Boolean                    | No       | `true` when `session_id <> root_session_id`                                                  |
+| `occurred_at`                 | UTC timestamp              | No       | Effective session `occurred_at`                                                              |
+| `local_day`                   | Local date                 | No       | Effective session `local_day` (never recomputed)                                             |
+| `occurred_timezone`           | Constrained text           | No       | Effective session `occurred_timezone`                                                        |
+| `source`                      | Constrained text           | No       | Effective session `source`                                                                   |
+| `workout_title_snapshot`      | Constrained text           | No       | Stable title snapshot; never re-resolved                                                     |
+| `plan_name_snapshot`          | Constrained text           | Yes      | Immutable plan-name snapshot                                                                 |
+| `week_number_snapshot`        | Bounded integer            | Yes      | Immutable plan position                                                                      |
+| `day_number_snapshot`         | Bounded integer            | Yes      | Immutable plan position                                                                      |
+| `difficulty_snapshot`         | Constrained text           | Yes      | Canonical history value (`beginner`/`intermediate`/`advanced`), never re-derived             |
+| `exercise_summary`            | Ordered list of text       | No       | Up to 3 display labels resolved per §14.6, then `+N` overflow count                          |
+| `exercise_count`              | Bounded integer            | No       | Count of exercise rows on the effective session                                              |
+| `completed_set_count`         | Bounded integer            | No       | Count of sets meeting the completed-set rule (§6.2)                                          |
+| `actual_duration_seconds`     | Bounded integer            | Yes      | Measured duration only; never filled from the estimate                                       |
+| `estimated_duration_seconds`  | Bounded integer            | Yes      | Prescribed duration, exposed as a **separate** field                                         |
+| `calories_kcal`               | Decimal(7,2)               | Yes      | Stored value                                                                                 |
+| `calories_source`             | Constrained text           | No       | Stored provenance; UI must label estimates as estimates                                      |
+| `calorie_algorithm_version`   | Constrained text           | Yes      | Stored value when estimated                                                                  |
+| `adjustment_state`            | Constrained text           | No       | `none` \| `corrected` (effective replacement shown); voided sessions are excluded entirely   |
+| `cursor_occurred_at`          | UTC timestamp              | No       | Cursor component (equals `occurred_at`)                                                      |
+| `cursor_id`                   | UUID                       | No       | Cursor component (equals `session_id`)                                                       |
+| `cursor`                      | Constrained text           | No       | Opaque `v1:`-prefixed encoding of `(cursor_occurred_at, cursor_id)`                          |
+
+Page sizes (frozen): default **20** items, maximum **50** items. A requested
+size above the maximum is clamped, not rejected.
+
+### 14.2 Workout session detail — output matrix
+
+Authoritative tables: `public.workout_sessions`,
+`public.workout_session_exercises`, `public.workout_session_sets`,
+`public.workout_session_adjustments`.
+
+Session level:
+
+| Output field                                                                                                                                                                                                                | Derivation                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `session_id`, `root_session_id`, `occurred_at`, `local_day`, `occurred_timezone`, `occurred_timezone_source`, `source`                                                                                                      | Effective session columns                                             |
+| `source_plan_id`, `source_planned_workout_id`, `plan_name_snapshot`, `week_number_snapshot`, `day_number_snapshot`, `workout_title_snapshot`, `difficulty_snapshot`                                                         | Immutable provenance/snapshot scalars                                 |
+| `actual_duration_seconds`, `estimated_duration_seconds`                                                                                                                                                                     | Reported separately; never substituted for one another                |
+| `calories_kcal`, `calories_source`, `calorie_algorithm_version`, `calculation_weight_kg`                                                                                                                                    | Calorie provenance block                                              |
+| `notes`                                                                                                                                                                                                                     | Stored user note                                                      |
+| `effective_state`                                                                                                                                                                                                           | `effective` \| `voided` \| `superseded` (§14.4)                       |
+| `adjustment_audit`                                                                                                                                                                                                          | `{ adjustment_id, kind, reason, occurred_at, actor_type, target_session_id, replacement_session_id }` when an adjustment targets this session |
+| `chain_depth`                                                                                                                                                                                                               | Number of correction links traversed from the root                    |
+
+Exercise level (ordered by `order_index ASC`):
+
+| Output field                                                                    | Derivation                                                                             |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `session_exercise_id`, `order_index`, `status`, `notes`                         | Stored columns                                                                         |
+| `exercise_id`                                                                   | Stable text catalog identifier of the exercise actually performed, or null              |
+| `display_label`                                                                 | Resolved per §14.6                                                                     |
+| `exercise_key_snapshot`, `exercise_name_snapshot`                               | Neutral stored identity/fallback                                                        |
+| `substituted_for_exercise_id`, `substituted_for_display_label`                  | Original prescribed identity, rendered only inside an explicit "substituted for" affordance (§14.6) |
+| `prescription_snapshot`                                                         | Full versioned structured object (§6.1.1), never merged with actual performance         |
+| `sets`                                                                          | Ordered set list below                                                                 |
+
+Set level (ordered by `set_index ASC`):
+`set_id`, `set_index`, `reps`, `load_kg`, `assistance_level`,
+`duration_seconds`, `hold_seconds`, `distance_m`, `rpe`, `is_completed`,
+`performed_at` — all stored actual-performance values, never derived from the
+prescription snapshot.
+
+Bounded by construction (≤ 60 exercises, ≤ 100 sets each); no pagination.
+Empty state is unreachable: a session always has at least one completed set.
+
+### 14.3 Weekly progress summary — output matrix and formulas
+
+Authoritative tables: `public.workout_sessions`, `public.workout_session_sets`,
+`public.workout_session_adjustments`, `public.daily_target_snapshots`.
+
+Eligible population per week: effective sessions (§14.4) whose `local_day`
+falls in the Monday–Sunday week window; voided sessions and superseded
+originals are excluded entirely.
+
+| Output field                        | Logical type     | Exact formula                                                                                                                        |
+| ----------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `week_start_local_day`              | Local date       | Monday of the week (§14.7)                                                                                                           |
+| `week_end_local_day`                | Local date       | Sunday of the same week                                                                                                              |
+| `effective_workout_count`           | Integer          | Count of eligible effective sessions                                                                                                 |
+| `active_local_day_count`            | Integer          | Count of distinct `local_day` values among eligible sessions                                                                         |
+| `actual_duration_seconds_total`     | Integer          | Sum of `actual_duration_seconds` over eligible sessions, treating null as 0                                                          |
+| `actual_duration_sessions_counted`  | Integer          | Count of eligible sessions with non-null `actual_duration_seconds` (honesty denominator)                                             |
+| `estimated_duration_seconds_total`  | Integer          | Sum of `estimated_duration_seconds`, reported **separately**; never substituted for the actual total                                 |
+| `completed_set_count`               | Integer          | Count of sets of eligible sessions satisfying the completed-set rule (§6.2)                                                          |
+| `total_reps`                        | Integer          | Sum of `reps` over completed sets where `reps` is non-null                                                                           |
+| `reps_sets_counted`                 | Integer          | Count of completed sets contributing to `total_reps`                                                                                 |
+| `timed_duration_seconds_total`      | Integer          | Sum of `duration_seconds` over completed sets where non-null                                                                         |
+| `hold_seconds_total`                | Integer          | Sum of `hold_seconds` over completed sets where non-null                                                                             |
+| `distance_m_total`                  | Decimal(10,2)    | Sum of `distance_m` over completed sets where non-null                                                                               |
+| `calories_measured_total`           | Decimal(9,2)     | Sum of `calories_kcal` where `calories_source = 'measured'`                                                                          |
+| `calories_user_entered_total`       | Decimal(9,2)     | Sum of `calories_kcal` where `calories_source = 'user_entered'`                                                                      |
+| `calories_estimated_total`          | Decimal(9,2)     | Sum of `calories_kcal` where `calories_source = 'estimated'`                                                                         |
+| `calories_unknown_session_count`    | Integer          | Count of eligible sessions with `calories_source = 'unknown'`                                                                        |
+| `active_day_streak_days`            | Integer          | Longest run of consecutive `local_day` values with ≥ 1 eligible session, computed strictly inside this week window                    |
+| `applicable_daily_targets`          | List of objects  | Per `local_day` in the window, the applicable `daily_target_snapshots` row selected by §8.3 ordering, exposing `calorie_target_kcal`, `target_source`, `target_algorithm_version` |
+
+Frozen aggregate rules:
+
+- The undefined term "volume" is not used by this model. Repetitions, timed
+  seconds, hold seconds and distance are reported as separate totals because
+  they are not commensurable.
+- Estimated and measured calories are never summed into one number.
+- Estimated duration is never used to fill a missing actual duration.
+- Null measurements contribute 0 to a sum but are excluded from their
+  `*_counted` denominator, so partial data is never presented as complete.
+- Any streak longer than the current week window is not exposed by this model.
+
+Bounded window: the last 12 weeks, ordered by `week_start_local_day DESC`. No
+offset pagination. Empty state returns every numeric field as `0`, every list
+empty, and `applicable_daily_targets` empty.
+
+### 14.4 Effective-session resolution — output matrix
+
+Authoritative tables: `public.workout_sessions`,
+`public.workout_session_adjustments`.
+
+Definitions:
+
+- **Root session** — a session that is not the `replacement_session_id` of any
+  correction.
+- **Direct adjustment** — the at-most-one adjustment whose
+  `target_session_id` is the session (unique constraint, §15).
+- **Traversal** — from any session, follow `correction` links through
+  `replacement_session_id` until a session with no direct adjustment (the
+  effective session) or a `void` adjustment (the chain is voided) is reached.
+
+| Output field           | Logical type     | Meaning                                                                                                |
+| ---------------------- | ---------------- | -------------------------------------------------------------------------------------------------------- |
+| `root_session_id`      | UUID             | Chain root                                                                                             |
+| `effective_session_id` | UUID             | Terminal non-voided session; null when the chain terminates in a `void`                                |
+| `state`                | Constrained text | `effective` \| `voided` \| `chain_error`                                                               |
+| `chain_depth`          | Integer          | Number of correction links traversed (0 for an unadjusted session)                                     |
+| `chain_session_ids`    | Ordered list     | Root → terminal session IDs, for audit views only                                                      |
+| `terminal_adjustment`  | Object           | `{ adjustment_id, kind, reason, occurred_at, actor_type }` when the chain terminates in an adjustment  |
+| `integrity_error_code` | Constrained text | Null, or `PH_ADJUSTMENT_CHAIN_CORRUPT` when `state = 'chain_error'`                                    |
+
+Cycle, corruption and bound handling (frozen):
+
+- Uniqueness on `(target_session_id)` and on non-null
+  `(replacement_session_id)` makes branching, merging and cycles impossible by
+  construction (§15).
+- Should traversal nevertheless revisit a session, exceed the frozen maximum
+  depth of **32** links, or find a correction whose replacement is missing,
+  resolution returns `state = 'chain_error'`,
+  `integrity_error_code = PH_ADJUSTMENT_CHAIN_CORRUPT`, and
+  `effective_session_id = null`.
+- A `chain_error` result is **never** returned as ordinary valid data. The
+  timeline and weekly summary exclude it from totals and surface it as a
+  neutral integrity notice; the detail view shows the audit chain read-only.
+  No potentially incorrect session is silently presented as the effective one.
+
+### 14.5 Auxiliary daily progress summary — output matrix
+
+Authoritative tables: `public.hydration_facts`,
+`public.meal_adherence_facts`, `public.daily_target_snapshots`.
+
+| Output field                    | Logical type     | Derivation                                                                                                                    |
+| ------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `local_day`                     | Local date       | Grouping key; the historical local calendar day captured at ingestion, never recomputed for the current timezone              |
+| `timezone_note`                 | Constrained text | The `occurred_timezone` of the day's first effective hydration/meal fact, exposed so the UI can explain travel days           |
+| `hydration_total_ml`            | Integer          | Sum of `volume_ml` over rows with `kind = 'entry'` that are **not** targeted by any `kind = 'void'` row of the same user      |
+| `hydration_entry_count`         | Integer          | Count of those same effective entry rows                                                                                      |
+| `hydration_voided_entry_count`  | Integer          | Count of `entry` rows targeted by a void, exposed for transparency and never subtracted twice                                 |
+| `meal_adherence`                | List of objects  | One entry per `meal_key` observed that day: `{ meal_key, adhered, observed_at }`, using the §8.2 latest-observation rule      |
+| `meals_adhered_count`           | Integer          | Count of effective meal observations with `adhered = true`                                                                    |
+| `meals_observed_count`          | Integer          | Count of effective meal observations                                                                                          |
+| `applicable_daily_target`       | Object           | The §8.3 applicable snapshot: `{ calorie_target_kcal, target_source, target_algorithm_version, calculation_weight_kg }`, or null |
+
+Void rows never contribute a volume, positive or negative; they only remove
+their target entry from the effective set. Ordering is `local_day DESC`,
+keyset on `local_day` with a bounded maximum window of 92 days per request.
+Empty state returns `hydration_total_ml = 0`, all counts `0`, `meal_adherence`
+empty and `applicable_daily_target = null`.
+
+### 14.6 Exercise label resolution (frozen)
+
+- If `exercise_id` is non-null and resolves in the current catalog, display the
+  current localized catalog label for that identifier.
+- Otherwise display `exercise_name_snapshot` verbatim.
+- `substituted_for_exercise_id` is resolved **only** for the explicit
+  "substituted for X" affordance. A read model must never resolve the original
+  prescribed exercise's localized label and present it as the performed
+  exercise. When only `substituted_for_exercise_id` resolves and `exercise_id`
+  is null, the performed exercise is displayed from
+  `exercise_name_snapshot`.
 
 **Timeline pagination (frozen).**
 
@@ -713,6 +914,7 @@ cursor.occurred_at AND id < cursor.id)`.
   (`v1:` followed by the encoded tuple); a cursor with an unknown version is
   rejected and the client restarts from the first page.
 - Ties are broken exclusively by `id`.
+- Default page size 20, maximum 50.
 
 **Canonical-source rule.** After cutover, Progress, History and Weekly Report
 read canonical Progress History data only. They never reconstruct completed
@@ -726,11 +928,15 @@ values (I15).
 - Corrected sessions are replaced by their replacement session; one logical
   completion is counted once.
 - Original rows are preserved and remain available for audit views.
-- Exercise labels use the current localized catalog entry when `exercise_id`
-  resolves, otherwise the neutral `exercise_name_snapshot`.
+- Exercise labels follow §14.6.
 - Calories and derived metrics use the captured historical inputs
   (`calculation_weight_kg`, `calorie_algorithm_version`), never current profile
   values.
+- Difficulty is displayed from the canonical stored snapshot, localized at
+  render; the stored value never changes when the user's profile or locale
+  changes (§5.1).
+
+### 14.7 Week boundary
 
 **Week boundary (frozen).** Repository evidence is mixed across existing
 prototype surfaces, so this contract selects one deterministic rule: a
@@ -758,26 +964,26 @@ calendars, training plans are already structured in Monday-anchored weeks
 
 ### `public.workout_session_exercises`
 
-| Object                                                  | Type        | Purpose / query contract                               |
-| ------------------------------------------------------- | ----------- | ------------------------------------------------------ |
-| `(session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user parent relationship                          |
-| `(id, user_id)`                                         | Unique      | Composite-ownership target for sets                    |
-| `(session_id, order_index)`                             | Unique      | Deterministic ordering, no duplicate positions         |
-| `(session_id)`                                          | Index       | FK index; session-detail fetch                         |
-| `user_id`                                               | Index       | RLS ownership path                                     |
-| `(user_id, exercise_id)` partial where not null         | Index       | Per-exercise history read model (§14 detail/aggregate) |
+| Object                                                  | Type        | Purpose / query contract                                          |
+| ------------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
+| `(session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user parent relationship                                     |
+| `(id, user_id)`                                         | Unique      | Composite-ownership target for sets                               |
+| `(session_id, order_index)`                             | Unique      | Deterministic ordering, no duplicate positions                    |
+| `(session_id, user_id)`                                 | Index       | Composite-FK referential lookup; session-detail fetch             |
+| `(user_id)`                                             | Index       | RLS ownership path and `auth.users` cascade                       |
+| `(user_id, exercise_id)` partial where not null         | Index       | Per-exercise history read model (§14 detail/aggregate); text key  |
 
 No further exercise indexes are added; speculative indexes without a defined
 query consumer are forbidden.
 
 ### `public.workout_session_sets`
 
-| Object                                                                    | Type        | Purpose / query contract      |
-| ------------------------------------------------------------------------- | ----------- | ----------------------------- |
-| `(session_exercise_id, user_id) → workout_session_exercises(id, user_id)` | Foreign key | Same-user parent relationship |
-| `(session_exercise_id, set_index)`                                        | Unique      | Deterministic set ordering    |
-| `(session_exercise_id)`                                                   | Index       | FK index; detail fetch        |
-| `user_id`                                                                 | Index       | RLS ownership path            |
+| Object                                                                    | Type        | Purpose / query contract                              |
+| ------------------------------------------------------------------------- | ----------- | ----------------------------------------------------- |
+| `(session_exercise_id, user_id) → workout_session_exercises(id, user_id)` | Foreign key | Same-user parent relationship                         |
+| `(session_exercise_id, set_index)`                                        | Unique      | Deterministic set ordering                            |
+| `(session_exercise_id, user_id)`                                          | Index       | Composite-FK referential lookup; detail fetch         |
+| `(user_id)`                                                               | Index       | RLS ownership path and `auth.users` cascade           |
 
 ### `public.workout_session_adjustments`
 
