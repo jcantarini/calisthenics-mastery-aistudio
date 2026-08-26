@@ -78,6 +78,9 @@ worker, service or UI implementation.
 | Error codes         | Stable uppercase `PH_*` identifiers; codes are never reused with a different meaning.                              |
 | Timestamps metadata | `created_at` (server clock, write-once) on every table; `updated_at` only on mutable operational state (outbox).   |
 | Text bounds         | Every free-text field has an explicit maximum length; unbounded text is forbidden.                                 |
+| Catalog identifiers | Exercise and focus catalog identities are **constrained text**, not UUIDs (repository evidence: `e1`, `e2`, `e3`), matching `^[A-Za-z0-9_.:-]{1,64}$`, stored as immutable scalars with no foreign key. |
+| Structured objects  | Any stored object field is versioned, has an exact nested field matrix, a maximum serialized size and a canonical serialization (§6.1.1).                                                              |
+| Fingerprints        | Every fingerprint is SHA-256 hex (64 lowercase characters) over a canonical UTF-8 NFC JSON serialization with sorted keys (§11.1).                                                                     |
 
 ---
 
@@ -154,6 +157,35 @@ route names are never used as source values.
 `app_version`, `notes`. Copied from trusted application state: plan provenance
 and all snapshot fields, `estimated_duration_seconds`, calorie fields.
 
+### 5.1 Difficulty normalization (frozen)
+
+Repository evidence (`src/services/workout-generator/workoutTypes.ts`,
+`Difficulty`) shows the Training domain uses Portuguese source values, while
+Progress History stores canonical, language-neutral history values.
+
+| Repository value | Canonical history value |
+| ---------------- | ----------------------- |
+| `iniciante`      | `beginner`              |
+| `intermediario`  | `intermediate`          |
+| `avancado`       | `advanced`              |
+
+Frozen rules:
+
+- `workout_sessions.difficulty_snapshot` stores **only** the canonical history
+  value (`beginner` \| `intermediate` \| `advanced`).
+- The trusted coordinator performs the mapping **before** ingestion; the
+  ingestion command accepts only canonical values.
+- An unknown or unmapped source value is **rejected** with
+  `PH_INVALID_DIFFICULTY` (§10). It is never silently defaulted to `beginner`
+  or to null.
+- The mapping preserves meaning only. The canonical value is not a translated
+  UI label; read models localize it at render time (§14).
+- A later change to the user's profile, plan or locale never alters the stored
+  snapshot.
+- `difficulty_snapshot` participates in the session command fingerprint
+  (§11.1), so ingesting the same key with a different difficulty is an
+  ingestion-key conflict, not a replay.
+
 ---
 
 ## 6. Session exercise and set contracts
@@ -166,11 +198,11 @@ and all snapshot fields, `estimated_duration_seconds`, calorie fields.
 | `session_id`                  | UUID                        | Required | Server                     | Write-once | FK `(session_id, user_id) → workout_sessions(id, user_id)` ON DELETE CASCADE | Same-user parent link                   |
 | `user_id`                     | UUID                        | Required | Server-derived             | Write-once | Must equal parent `user_id`                                                  | Ownership and RLS                       |
 | `order_index`                 | Bounded integer             | Required | Client-observed            | Write-once | Zero-based, contiguous, unique per session                                   | Deterministic ordering                  |
-| `exercise_id`                 | UUID                        | Nullable | Catalog reference snapshot | Write-once | No FK to a mutable catalog; null when unmatched                              | Current-catalog label resolution        |
+| `exercise_id`                 | Constrained text (max 64)   | Nullable | Catalog identifier snapshot | Write-once | Matches `^[A-Za-z0-9_.:-]{1,64}$`; **no FK**; null when the performed exercise has no canonical catalog identity | Current-catalog label resolution        |
 | `exercise_key_snapshot`       | Constrained text (max 80)   | Required | Snapshot at ingestion      | Write-once | Non-empty neutral, non-translated identity key                               | Stable identity independent of language |
 | `exercise_name_snapshot`      | Constrained text (max 160)  | Required | Snapshot at ingestion      | Write-once | Neutral (source-language canonical) name, not a localized UI string          | Fallback display                        |
-| `prescription_snapshot`       | Constrained text (max 400)  | Required | Snapshot of prescription   | Write-once | Neutral encoded prescription (e.g. sets/reps/tempo/rest)                     | Historical prescription fact            |
-| `substituted_for_exercise_id` | UUID                        | Nullable | Client-observed            | Write-once | No FK; present only when the user swapped an exercise                        | Substitution provenance                 |
+| `prescription_snapshot`       | Structured object (§6.1.1)  | Required | Snapshot of prescription   | Write-once | Versioned bounded object per §6.1.1; canonical serialization ≤ 2048 bytes    | Historical prescription fact            |
+| `substituted_for_exercise_id` | Constrained text (max 64)   | Nullable | Client-observed            | Write-once | Same pattern as `exercise_id`; **no FK**; present only when a substitution occurred | Substitution provenance           |
 | `status`                      | Constrained text            | Required | Client-observed            | Write-once | `completed` \| `partially_completed` \| `skipped`                            | Execution outcome                       |
 | `notes`                       | Constrained text (max 1000) | Nullable | User-entered               | Write-once | —                                                                            | User annotation                         |
 | `created_at`                  | UTC timestamp               | Required | Database clock             | Write-once | Default now                                                                  | Audit                                   |
@@ -185,8 +217,79 @@ Frozen rules:
   never canonical identity.
 - **Localization fallback:** if `exercise_id` resolves in the current catalog,
   read models display the current localized label; otherwise they display
-  `exercise_name_snapshot` verbatim.
+  `exercise_name_snapshot` verbatim (§14.6).
 - A `skipped` exercise may have zero sets or only non-completed sets.
+
+**Exercise identity is repository-compatible constrained text.** Repository
+evidence (`src/services/workout-generator/workoutTypes.ts`,
+`WorkoutExercise.id`) shows the existing catalog uses stable short string
+identifiers such as `e1`, `e2`, `e3` — not UUIDs. `exercise_id` and
+`substituted_for_exercise_id` are therefore bounded text identifiers. They are
+immutable scalars with **no** database foreign key, so catalog evolution never
+rewrites or deletes historical identity.
+
+**Substitution semantics (frozen).**
+
+- `exercise_id` identifies the exercise **actually performed**, and only when
+  that performed exercise has a stable canonical catalog identity.
+- `substituted_for_exercise_id` identifies the **originally prescribed**
+  exercise, and is non-null only when a substitution occurred.
+- When the performed replacement has no canonical catalog identity,
+  `exercise_id` is null; `substituted_for_exercise_id` may still be present.
+- The performed replacement always requires its own
+  `exercise_key_snapshot` and `exercise_name_snapshot`; a substitution never
+  reuses the original exercise's neutral snapshots.
+- `exercise_id` and `substituted_for_exercise_id` must differ when both are
+  non-null.
+- A read model must never resolve the original exercise's localized catalog
+  label and display it as the performed exercise (§14.6).
+- Repository evidence shows the current generator may retain the original
+  exercise `id` while changing `name` and recording `substitutedFrom`. The
+  future coordinator / source adapter **must normalize** that representation
+  into this contract before trusted ingestion: move the original identifier
+  into `substituted_for_exercise_id` and set `exercise_id` to the performed
+  exercise's canonical identifier, or null when it has none. This normalization
+  is a Sprint 8.2 source-wiring dependency and authorizes no code change here.
+- A payload violating any of these rules is rejected with
+  `PH_INVALID_EXERCISE_IDENTITY` (§10).
+
+#### 6.1.1 `prescription_snapshot` structured contract
+
+`prescription_snapshot` is a bounded, versioned structured object — never
+arbitrary unversioned text and never an undefined object. It records the
+**prescription** only; actual performance lives exclusively in
+`workout_session_sets` and never overwrites, merges into or back-fills this
+snapshot.
+
+| Field                | Logical type               | Required | Constraints and allowed values                                                              | Purpose                                     |
+| -------------------- | -------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `version`            | Bounded integer            | Required | Currently `1`; an unsupported value is rejected with `PH_INVALID_PRESCRIPTION_SNAPSHOT`     | Snapshot-shape evolution                    |
+| `planned_sets`       | Bounded integer            | Required | `>= 0`, `<= 100`                                                                            | Prescribed set count                        |
+| `reps_text`          | Constrained text (max 40)  | Required | Non-empty, trimmed, neutral source text (e.g. `8-12`, `AMRAP`, `30s`); never translated     | Prescribed repetition scheme as written     |
+| `rest_text`          | Constrained text (max 40)  | Nullable | Trimmed neutral source text (e.g. `60s`, `90-120s`); null when the source prescribed none   | Prescribed rest as written                  |
+| `rest_seconds`       | Bounded integer            | Nullable | `>= 0`, `<= 3600`; present **only** when `rest_text` is deterministically a single duration | Normalized rest for aggregation             |
+| `tempo`              | Constrained text (max 24)  | Nullable | Trimmed neutral tempo notation (e.g. `3-1-1-0`) when the source supplies it                 | Prescribed tempo                            |
+| `focus_key`          | Constrained text (max 64)  | Nullable | Matches `^[A-Za-z0-9_.:-]{1,64}$`; neutral focus identifier                                 | Stable focus identity for read models       |
+| `focus_text`         | Constrained text (max 120) | Nullable | Trimmed neutral source text; required when `focus_key` is null and a focus was prescribed   | Neutral focus fallback                      |
+| `prescription_note`  | Constrained text (max 400) | Nullable | Trimmed neutral source text                                                                 | Explicit cue/note needed to preserve meaning |
+
+Frozen rules:
+
+- Required: `version`, `planned_sets`, `reps_text`. Every other field is
+  optional and, when not supplied, is **omitted** rather than sent as an
+  explicit null (§11.1 canonicalization).
+- `rest_seconds` is derived only when the source rest prescription is a single
+  unambiguous duration; a range or free text leaves it null and keeps
+  `rest_text`. `rest_seconds` never replaces `rest_text`.
+- No field of this object may be a translated UI string.
+- Canonical serialization: UTF-8 JSON, NFC-normalized, keys sorted
+  lexicographically ascending, no insignificant whitespace, integers without a
+  decimal part, omitted optionals absent. The canonical serialization must not
+  exceed **2048 bytes**; a larger payload is rejected with
+  `PH_INVALID_PRESCRIPTION_SNAPSHOT`.
+- The stored value is exactly the canonical serialization of the accepted
+  input, so the snapshot round-trips byte-identically for fingerprinting
+  (§11.1).
 
 ### 6.2 `public.workout_session_sets`
 
@@ -528,30 +631,101 @@ Rules:
   `PH_INGESTION_KEY_CONFLICT`; nothing is written and nothing is overwritten.
 - `notes` and every other stored field are never overwritten during replay.
 
-**Fingerprint definition.** `command_fingerprint` is SHA-256 over a canonical
-serialization of exactly these fields: `command_version`, `ingestion_key`,
-`source`, `occurred_at` (UTC, second precision), `timezone`,
-`timezone_source`, plan provenance identifiers, `workout_title`,
-`actual_duration_seconds`, calorie object (`kcal`, `source`,
-`algorithm_version`, `calculation_weight_kg`), and the exercise list reduced to
-`(order_index, exercise_key_snapshot, status)` with, per exercise, its set list
-reduced to `(set_index, reps, load_kg, duration_seconds, hold_seconds,
-distance_m, is_completed)`. Excluded from the fingerprint: `notes`,
-`app_version`, `confirmed_at`, `auxiliary_facts`, RPE and free-text fields.
-Canonicalization sorts object keys lexicographically and orders list items by
-their index field, so non-semantic ordering differences never produce a
-conflict.
+### 11.1 Session command fingerprint (frozen)
 
-**Independent idempotency.**
+**Completeness rule.** `command_fingerprint` covers **every** client-supplied
+or trusted-snapshot value whose change would alter a stored immutable
+historical fact. Any such change must therefore produce
+`PH_INGESTION_KEY_CONFLICT` and can never be accepted as a silent replay. The
+earlier narrower definition, which excluded difficulty, duration, plan and
+display snapshots, prescription snapshots, substitution identity, exercise and
+set status, assistance, RPE, performed time, notes and auxiliary facts, is
+withdrawn.
 
-- Auxiliary facts: `(user_id, ingestion_key)` per auxiliary table; a replayed
-  auxiliary fact is skipped without error and without duplicating rows.
-- Adjustment commands: idempotent on `(user_id, target_session_id, kind)`; a
-  repeated identical adjustment returns the existing adjustment, while a
-  different terminal adjustment for the same target returns
-  `PH_ADJUSTMENT_CONFLICT`.
+Included, in full:
+
+| Group                | Fingerprinted values                                                                                                                                                                                                       |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Command identity     | `command_version`, `ingestion_key`, `source`                                                                                                                                                                               |
+| Occurrence           | `occurred_at`, `timezone`, `timezone_source`, `completion_confirmed`                                                                                                                                                       |
+| Plan provenance      | `plan_provenance.plan_id`, `.planned_workout_id`, `.plan_name`, `.week_number`, `.day_number`                                                                                                                              |
+| Session snapshots    | `workout_title`, `difficulty`, `estimated_duration_seconds`, `actual_duration_seconds`, `notes`                                                                                                                            |
+| Calories             | `calories.kcal`, `.source`, `.algorithm_version`, `.calculation_weight_kg`                                                                                                                                                 |
+| Exercise identity    | Per exercise: `order_index`, `exercise_id`, `exercise_key_snapshot`, `exercise_name_snapshot`, `substituted_for_exercise_id`, `status`, `notes`                                                                            |
+| Prescription         | Per exercise: the full canonical `prescription_snapshot` serialization (§6.1.1)                                                                                                                                            |
+| Set performance      | Per set: `set_index`, `reps`, `load_kg`, `assistance_level`, `duration_seconds`, `hold_seconds`, `distance_m`, `rpe`, `is_completed`, `performed_at`                                                                       |
+| Auxiliary facts      | Per supplied fact, in every auxiliary list: its `ingestion_key`, its fact type, and its full canonical fact value (the same inputs as its `fact_fingerprint`, §11.3), including hydration `kind` and `target_fact_id`      |
+
+Excluded, exhaustively — and only because none of these is a client-authored
+immutable historical fact:
+
+- Server-generated row IDs (`id` of every table).
+- Server-derived `user_id`.
+- Database timestamps (`created_at`, `updated_at`).
+- Server-generated `contract_version` and `event_version`.
+- Pure transport metadata never persisted as a historical fact (request ID,
+  trace headers, retry counters).
+- The server-recorded confirmation-receipt time (`confirmation_received_at`,
+  §9.2), because the server derives it from its own clock on the first accepted
+  write.
+- `app_version`, which is explicitly classified as **non-semantic
+  diagnostics**: it is stored for support purposes only and a retry from an
+  upgraded client must still replay rather than conflict.
+
+**Canonicalization (frozen).**
+
+| Concern            | Rule                                                                                                                                       |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Encoding           | UTF-8 JSON, Unicode **NFC** normalization applied to every string before hashing                                                            |
+| Object keys        | Sorted lexicographically ascending by code point; no insignificant whitespace                                                               |
+| List order         | Exercises ordered by `order_index` ascending, sets by `set_index` ascending, auxiliary facts by their `ingestion_key` ascending             |
+| Null vs omitted    | An optional field that is absent and an optional field explicitly `null` canonicalize **identically** (both omitted), so transport-only differences never conflict |
+| Decimals           | Fixed scale per the field's declared scale, plain decimal notation, no exponent, no trailing zero beyond the declared scale, `-0` forbidden |
+| Integers           | Plain, no decimal point                                                                                                                     |
+| Timestamps         | UTC, ISO-8601 with `Z`, truncated to **second** precision                                                                                   |
+| Local dates        | `YYYY-MM-DD`                                                                                                                                |
+| Booleans           | `true` / `false` literals                                                                                                                   |
+| Text               | Trimmed of leading/trailing whitespace; interior whitespace preserved verbatim                                                              |
+| Hash               | SHA-256, lowercase hex, 64 characters                                                                                                       |
+
+A materially changed immutable fact therefore always yields a different
+fingerprint and `PH_INGESTION_KEY_CONFLICT`, never a silent replay.
+
+### 11.2 Independent idempotency
+
+- Auxiliary facts: `(user_id, ingestion_key)` per auxiliary table, combined
+  with the independent `fact_fingerprint` comparison of §11.3.
+- Adjustment commands: `(user_id, adjustment_key)` with an independent
+  `command_fingerprint` (§7.2).
 - Consumer idempotency (§13) is independent of ingestion idempotency: each
   consumer deduplicates on the delivered event identity.
+
+### 11.3 Auxiliary-fact fingerprints and conflict detection (frozen)
+
+Unique `(user_id, ingestion_key)` alone cannot detect a **reused key carrying a
+different value**. Every auxiliary table therefore carries a required,
+immutable `fact_fingerprint` (constrained text, 64 lowercase hex, SHA-256,
+write-once, server-computed).
+
+| Fact table               | Canonical fact-fingerprint inputs                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `local_day`                    |
+| `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `local_day`                                    |
+| `daily_target_snapshots` | `ingestion_key`, `local_day`, `calorie_target_kcal`, `target_source`, `target_algorithm_version`, `calculation_weight_kg`, `captured_at` |
+
+Canonicalization is exactly §11.1's.
+
+Frozen resolution rules:
+
+- Same key **+ equivalent** `fact_fingerprint` → idempotent replay: the
+  existing row is returned, nothing is written, no error.
+- Same key **+ different** `fact_fingerprint` → stable conflict
+  `PH_AUXILIARY_FACT_CONFLICT` (§10). The whole ingestion transaction fails; no
+  partial history is committed.
+- A changed value is **never** silently skipped and never overwrites the stored
+  fact.
+- Auxiliary-fact conflicts are reported independently of
+  `PH_INGESTION_KEY_CONFLICT` so the failing fact is diagnosable.
 
 ---
 
