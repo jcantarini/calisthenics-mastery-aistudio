@@ -78,6 +78,9 @@ worker, service or UI implementation.
 | Error codes         | Stable uppercase `PH_*` identifiers; codes are never reused with a different meaning.                              |
 | Timestamps metadata | `created_at` (server clock, write-once) on every table; `updated_at` only on mutable operational state (outbox).   |
 | Text bounds         | Every free-text field has an explicit maximum length; unbounded text is forbidden.                                 |
+| Catalog identifiers | Exercise and focus catalog identities are **constrained text**, not UUIDs (repository evidence: `e1`, `e2`, `e3`), matching `^[A-Za-z0-9_.:-]{1,64}$`, stored as immutable scalars with no foreign key. |
+| Structured objects  | Any stored object field is versioned, has an exact nested field matrix, a maximum serialized size and a canonical serialization (§6.1.1).                                                              |
+| Fingerprints        | Every fingerprint is SHA-256 hex (64 lowercase characters) over a canonical UTF-8 NFC JSON serialization with sorted keys (§11.1).                                                                     |
 
 ---
 
