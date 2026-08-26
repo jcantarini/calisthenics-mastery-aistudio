@@ -631,30 +631,101 @@ Rules:
   `PH_INGESTION_KEY_CONFLICT`; nothing is written and nothing is overwritten.
 - `notes` and every other stored field are never overwritten during replay.
 
-**Fingerprint definition.** `command_fingerprint` is SHA-256 over a canonical
-serialization of exactly these fields: `command_version`, `ingestion_key`,
-`source`, `occurred_at` (UTC, second precision), `timezone`,
-`timezone_source`, plan provenance identifiers, `workout_title`,
-`actual_duration_seconds`, calorie object (`kcal`, `source`,
-`algorithm_version`, `calculation_weight_kg`), and the exercise list reduced to
-`(order_index, exercise_key_snapshot, status)` with, per exercise, its set list
-reduced to `(set_index, reps, load_kg, duration_seconds, hold_seconds,
-distance_m, is_completed)`. Excluded from the fingerprint: `notes`,
-`app_version`, `confirmed_at`, `auxiliary_facts`, RPE and free-text fields.
-Canonicalization sorts object keys lexicographically and orders list items by
-their index field, so non-semantic ordering differences never produce a
-conflict.
+### 11.1 Session command fingerprint (frozen)
 
-**Independent idempotency.**
+**Completeness rule.** `command_fingerprint` covers **every** client-supplied
+or trusted-snapshot value whose change would alter a stored immutable
+historical fact. Any such change must therefore produce
+`PH_INGESTION_KEY_CONFLICT` and can never be accepted as a silent replay. The
+earlier narrower definition, which excluded difficulty, duration, plan and
+display snapshots, prescription snapshots, substitution identity, exercise and
+set status, assistance, RPE, performed time, notes and auxiliary facts, is
+withdrawn.
 
-- Auxiliary facts: `(user_id, ingestion_key)` per auxiliary table; a replayed
-  auxiliary fact is skipped without error and without duplicating rows.
-- Adjustment commands: idempotent on `(user_id, target_session_id, kind)`; a
-  repeated identical adjustment returns the existing adjustment, while a
-  different terminal adjustment for the same target returns
-  `PH_ADJUSTMENT_CONFLICT`.
+Included, in full:
+
+| Group                | Fingerprinted values                                                                                                                                                                                                       |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Command identity     | `command_version`, `ingestion_key`, `source`                                                                                                                                                                               |
+| Occurrence           | `occurred_at`, `timezone`, `timezone_source`, `completion_confirmed`                                                                                                                                                       |
+| Plan provenance      | `plan_provenance.plan_id`, `.planned_workout_id`, `.plan_name`, `.week_number`, `.day_number`                                                                                                                              |
+| Session snapshots    | `workout_title`, `difficulty`, `estimated_duration_seconds`, `actual_duration_seconds`, `notes`                                                                                                                            |
+| Calories             | `calories.kcal`, `.source`, `.algorithm_version`, `.calculation_weight_kg`                                                                                                                                                 |
+| Exercise identity    | Per exercise: `order_index`, `exercise_id`, `exercise_key_snapshot`, `exercise_name_snapshot`, `substituted_for_exercise_id`, `status`, `notes`                                                                            |
+| Prescription         | Per exercise: the full canonical `prescription_snapshot` serialization (§6.1.1)                                                                                                                                            |
+| Set performance      | Per set: `set_index`, `reps`, `load_kg`, `assistance_level`, `duration_seconds`, `hold_seconds`, `distance_m`, `rpe`, `is_completed`, `performed_at`                                                                       |
+| Auxiliary facts      | Per supplied fact, in every auxiliary list: its `ingestion_key`, its fact type, and its full canonical fact value (the same inputs as its `fact_fingerprint`, §11.3), including hydration `kind` and `target_fact_id`      |
+
+Excluded, exhaustively — and only because none of these is a client-authored
+immutable historical fact:
+
+- Server-generated row IDs (`id` of every table).
+- Server-derived `user_id`.
+- Database timestamps (`created_at`, `updated_at`).
+- Server-generated `contract_version` and `event_version`.
+- Pure transport metadata never persisted as a historical fact (request ID,
+  trace headers, retry counters).
+- The server-recorded confirmation-receipt time (`confirmation_received_at`,
+  §9.2), because the server derives it from its own clock on the first accepted
+  write.
+- `app_version`, which is explicitly classified as **non-semantic
+  diagnostics**: it is stored for support purposes only and a retry from an
+  upgraded client must still replay rather than conflict.
+
+**Canonicalization (frozen).**
+
+| Concern            | Rule                                                                                                                                       |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Encoding           | UTF-8 JSON, Unicode **NFC** normalization applied to every string before hashing                                                            |
+| Object keys        | Sorted lexicographically ascending by code point; no insignificant whitespace                                                               |
+| List order         | Exercises ordered by `order_index` ascending, sets by `set_index` ascending, auxiliary facts by their `ingestion_key` ascending             |
+| Null vs omitted    | An optional field that is absent and an optional field explicitly `null` canonicalize **identically** (both omitted), so transport-only differences never conflict |
+| Decimals           | Fixed scale per the field's declared scale, plain decimal notation, no exponent, no trailing zero beyond the declared scale, `-0` forbidden |
+| Integers           | Plain, no decimal point                                                                                                                     |
+| Timestamps         | UTC, ISO-8601 with `Z`, truncated to **second** precision                                                                                   |
+| Local dates        | `YYYY-MM-DD`                                                                                                                                |
+| Booleans           | `true` / `false` literals                                                                                                                   |
+| Text               | Trimmed of leading/trailing whitespace; interior whitespace preserved verbatim                                                              |
+| Hash               | SHA-256, lowercase hex, 64 characters                                                                                                       |
+
+A materially changed immutable fact therefore always yields a different
+fingerprint and `PH_INGESTION_KEY_CONFLICT`, never a silent replay.
+
+### 11.2 Independent idempotency
+
+- Auxiliary facts: `(user_id, ingestion_key)` per auxiliary table, combined
+  with the independent `fact_fingerprint` comparison of §11.3.
+- Adjustment commands: `(user_id, adjustment_key)` with an independent
+  `command_fingerprint` (§7.2).
 - Consumer idempotency (§13) is independent of ingestion idempotency: each
   consumer deduplicates on the delivered event identity.
+
+### 11.3 Auxiliary-fact fingerprints and conflict detection (frozen)
+
+Unique `(user_id, ingestion_key)` alone cannot detect a **reused key carrying a
+different value**. Every auxiliary table therefore carries a required,
+immutable `fact_fingerprint` (constrained text, 64 lowercase hex, SHA-256,
+write-once, server-computed).
+
+| Fact table               | Canonical fact-fingerprint inputs                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `local_day`                    |
+| `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `local_day`                                    |
+| `daily_target_snapshots` | `ingestion_key`, `local_day`, `calorie_target_kcal`, `target_source`, `target_algorithm_version`, `calculation_weight_kg`, `captured_at` |
+
+Canonicalization is exactly §11.1's.
+
+Frozen resolution rules:
+
+- Same key **+ equivalent** `fact_fingerprint` → idempotent replay: the
+  existing row is returned, nothing is written, no error.
+- Same key **+ different** `fact_fingerprint` → stable conflict
+  `PH_AUXILIARY_FACT_CONFLICT` (§10). The whole ingestion transaction fails; no
+  partial history is committed.
+- A changed value is **never** silently skipped and never overwrites the stored
+  fact.
+- Auxiliary-fact conflicts are reported independently of
+  `PH_INGESTION_KEY_CONFLICT` so the failing fact is diagnosable.
 
 ---
 
