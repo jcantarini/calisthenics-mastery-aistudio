@@ -166,11 +166,11 @@ and all snapshot fields, `estimated_duration_seconds`, calorie fields.
 | `session_id`                  | UUID                        | Required | Server                     | Write-once | FK `(session_id, user_id) → workout_sessions(id, user_id)` ON DELETE CASCADE | Same-user parent link                   |
 | `user_id`                     | UUID                        | Required | Server-derived             | Write-once | Must equal parent `user_id`                                                  | Ownership and RLS                       |
 | `order_index`                 | Bounded integer             | Required | Client-observed            | Write-once | Zero-based, contiguous, unique per session                                   | Deterministic ordering                  |
-| `exercise_id`                 | UUID                        | Nullable | Catalog reference snapshot | Write-once | No FK to a mutable catalog; null when unmatched                              | Current-catalog label resolution        |
+| `exercise_id`                 | Constrained text (max 64)   | Nullable | Catalog identifier snapshot | Write-once | Matches `^[A-Za-z0-9_.:-]{1,64}$`; **no FK**; null when the performed exercise has no canonical catalog identity | Current-catalog label resolution        |
 | `exercise_key_snapshot`       | Constrained text (max 80)   | Required | Snapshot at ingestion      | Write-once | Non-empty neutral, non-translated identity key                               | Stable identity independent of language |
 | `exercise_name_snapshot`      | Constrained text (max 160)  | Required | Snapshot at ingestion      | Write-once | Neutral (source-language canonical) name, not a localized UI string          | Fallback display                        |
-| `prescription_snapshot`       | Constrained text (max 400)  | Required | Snapshot of prescription   | Write-once | Neutral encoded prescription (e.g. sets/reps/tempo/rest)                     | Historical prescription fact            |
-| `substituted_for_exercise_id` | UUID                        | Nullable | Client-observed            | Write-once | No FK; present only when the user swapped an exercise                        | Substitution provenance                 |
+| `prescription_snapshot`       | Structured object (§6.1.1)  | Required | Snapshot of prescription   | Write-once | Versioned bounded object per §6.1.1; canonical serialization ≤ 2048 bytes    | Historical prescription fact            |
+| `substituted_for_exercise_id` | Constrained text (max 64)   | Nullable | Client-observed            | Write-once | Same pattern as `exercise_id`; **no FK**; present only when a substitution occurred | Substitution provenance           |
 | `status`                      | Constrained text            | Required | Client-observed            | Write-once | `completed` \| `partially_completed` \| `skipped`                            | Execution outcome                       |
 | `notes`                       | Constrained text (max 1000) | Nullable | User-entered               | Write-once | —                                                                            | User annotation                         |
 | `created_at`                  | UTC timestamp               | Required | Database clock             | Write-once | Default now                                                                  | Audit                                   |
@@ -185,8 +185,79 @@ Frozen rules:
   never canonical identity.
 - **Localization fallback:** if `exercise_id` resolves in the current catalog,
   read models display the current localized label; otherwise they display
-  `exercise_name_snapshot` verbatim.
+  `exercise_name_snapshot` verbatim (§14.6).
 - A `skipped` exercise may have zero sets or only non-completed sets.
+
+**Exercise identity is repository-compatible constrained text.** Repository
+evidence (`src/services/workout-generator/workoutTypes.ts`,
+`WorkoutExercise.id`) shows the existing catalog uses stable short string
+identifiers such as `e1`, `e2`, `e3` — not UUIDs. `exercise_id` and
+`substituted_for_exercise_id` are therefore bounded text identifiers. They are
+immutable scalars with **no** database foreign key, so catalog evolution never
+rewrites or deletes historical identity.
+
+**Substitution semantics (frozen).**
+
+- `exercise_id` identifies the exercise **actually performed**, and only when
+  that performed exercise has a stable canonical catalog identity.
+- `substituted_for_exercise_id` identifies the **originally prescribed**
+  exercise, and is non-null only when a substitution occurred.
+- When the performed replacement has no canonical catalog identity,
+  `exercise_id` is null; `substituted_for_exercise_id` may still be present.
+- The performed replacement always requires its own
+  `exercise_key_snapshot` and `exercise_name_snapshot`; a substitution never
+  reuses the original exercise's neutral snapshots.
+- `exercise_id` and `substituted_for_exercise_id` must differ when both are
+  non-null.
+- A read model must never resolve the original exercise's localized catalog
+  label and display it as the performed exercise (§14.6).
+- Repository evidence shows the current generator may retain the original
+  exercise `id` while changing `name` and recording `substitutedFrom`. The
+  future coordinator / source adapter **must normalize** that representation
+  into this contract before trusted ingestion: move the original identifier
+  into `substituted_for_exercise_id` and set `exercise_id` to the performed
+  exercise's canonical identifier, or null when it has none. This normalization
+  is a Sprint 8.2 source-wiring dependency and authorizes no code change here.
+- A payload violating any of these rules is rejected with
+  `PH_INVALID_EXERCISE_IDENTITY` (§10).
+
+#### 6.1.1 `prescription_snapshot` structured contract
+
+`prescription_snapshot` is a bounded, versioned structured object — never
+arbitrary unversioned text and never an undefined object. It records the
+**prescription** only; actual performance lives exclusively in
+`workout_session_sets` and never overwrites, merges into or back-fills this
+snapshot.
+
+| Field                | Logical type               | Required | Constraints and allowed values                                                              | Purpose                                     |
+| -------------------- | -------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `version`            | Bounded integer            | Required | Currently `1`; an unsupported value is rejected with `PH_INVALID_PRESCRIPTION_SNAPSHOT`     | Snapshot-shape evolution                    |
+| `planned_sets`       | Bounded integer            | Required | `>= 0`, `<= 100`                                                                            | Prescribed set count                        |
+| `reps_text`          | Constrained text (max 40)  | Required | Non-empty, trimmed, neutral source text (e.g. `8-12`, `AMRAP`, `30s`); never translated     | Prescribed repetition scheme as written     |
+| `rest_text`          | Constrained text (max 40)  | Nullable | Trimmed neutral source text (e.g. `60s`, `90-120s`); null when the source prescribed none   | Prescribed rest as written                  |
+| `rest_seconds`       | Bounded integer            | Nullable | `>= 0`, `<= 3600`; present **only** when `rest_text` is deterministically a single duration | Normalized rest for aggregation             |
+| `tempo`              | Constrained text (max 24)  | Nullable | Trimmed neutral tempo notation (e.g. `3-1-1-0`) when the source supplies it                 | Prescribed tempo                            |
+| `focus_key`          | Constrained text (max 64)  | Nullable | Matches `^[A-Za-z0-9_.:-]{1,64}$`; neutral focus identifier                                 | Stable focus identity for read models       |
+| `focus_text`         | Constrained text (max 120) | Nullable | Trimmed neutral source text; required when `focus_key` is null and a focus was prescribed   | Neutral focus fallback                      |
+| `prescription_note`  | Constrained text (max 400) | Nullable | Trimmed neutral source text                                                                 | Explicit cue/note needed to preserve meaning |
+
+Frozen rules:
+
+- Required: `version`, `planned_sets`, `reps_text`. Every other field is
+  optional and, when not supplied, is **omitted** rather than sent as an
+  explicit null (§11.1 canonicalization).
+- `rest_seconds` is derived only when the source rest prescription is a single
+  unambiguous duration; a range or free text leaves it null and keeps
+  `rest_text`. `rest_seconds` never replaces `rest_text`.
+- No field of this object may be a translated UI string.
+- Canonical serialization: UTF-8 JSON, NFC-normalized, keys sorted
+  lexicographically ascending, no insignificant whitespace, integers without a
+  decimal part, omitted optionals absent. The canonical serialization must not
+  exceed **2048 bytes**; a larger payload is rejected with
+  `PH_INVALID_PRESCRIPTION_SNAPSHOT`.
+- The stored value is exactly the canonical serialization of the accepted
+  input, so the snapshot round-trips byte-identically for fingerprinting
+  (§11.1).
 
 ### 6.2 `public.workout_session_sets`
 
