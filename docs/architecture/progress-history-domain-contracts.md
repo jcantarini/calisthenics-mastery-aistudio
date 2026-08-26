@@ -154,6 +154,35 @@ route names are never used as source values.
 `app_version`, `notes`. Copied from trusted application state: plan provenance
 and all snapshot fields, `estimated_duration_seconds`, calorie fields.
 
+### 5.1 Difficulty normalization (frozen)
+
+Repository evidence (`src/services/workout-generator/workoutTypes.ts`,
+`Difficulty`) shows the Training domain uses Portuguese source values, while
+Progress History stores canonical, language-neutral history values.
+
+| Repository value | Canonical history value |
+| ---------------- | ----------------------- |
+| `iniciante`      | `beginner`              |
+| `intermediario`  | `intermediate`          |
+| `avancado`       | `advanced`              |
+
+Frozen rules:
+
+- `workout_sessions.difficulty_snapshot` stores **only** the canonical history
+  value (`beginner` \| `intermediate` \| `advanced`).
+- The trusted coordinator performs the mapping **before** ingestion; the
+  ingestion command accepts only canonical values.
+- An unknown or unmapped source value is **rejected** with
+  `PH_INVALID_DIFFICULTY` (§10). It is never silently defaulted to `beginner`
+  or to null.
+- The mapping preserves meaning only. The canonical value is not a translated
+  UI label; read models localize it at render time (§14).
+- A later change to the user's profile, plan or locale never alters the stored
+  snapshot.
+- `difficulty_snapshot` participates in the session command fingerprint
+  (§11.1), so ingesting the same key with a different difficulty is an
+  ingestion-key conflict, not a replay.
+
 ---
 
 ## 6. Session exercise and set contracts
