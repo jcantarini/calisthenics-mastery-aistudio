@@ -598,15 +598,37 @@ The result never contains raw database errors, SQL text or stack traces.
 | Retryable downstream         | `PH_DISPATCH_DELIVERY_FAILURE`     | Yes       | Internal-only                            |
 | Retryable downstream         | `PH_DISPATCH_CONSUMER_UNAVAILABLE` | Yes       | Internal-only                            |
 
+Disambiguation of the codes added by this revision:
+
+| Code                                | Exactly one condition                                                                                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `PH_INVALID_DIFFICULTY`             | The command's `difficulty` is not one of the canonical history values, i.e. the coordinator failed to normalize it (§5.1).      |
+| `PH_INVALID_EXERCISE_IDENTITY`      | An exercise identifier violates §6.1: bad pattern/length, equal performed and substituted identifiers, or a substitution without its own neutral snapshots. |
+| `PH_INVALID_PRESCRIPTION_SNAPSHOT`  | The `prescription_snapshot` object violates §6.1.1: unsupported `version`, missing required field, out-of-bounds value or oversized serialization. |
+| `PH_INVALID_EXERCISE`               | An exercise row is invalid for a reason **other** than identity or prescription (ordering, status vocabulary, set-count bounds). |
+| `PH_AUXILIARY_FACT_CONFLICT`        | An auxiliary `ingestion_key` is reused with a different `fact_fingerprint` (§11.3).                                             |
+| `PH_INVALID_AUXILIARY_FACT`         | An auxiliary fact is structurally invalid (bad kind/target/volume combination, bounds, unknown meal key) — not a key conflict.  |
+| `PH_INGESTION_KEY_CONFLICT`         | A session `ingestion_key` is reused with a different session `command_fingerprint` (§11.1).                                     |
+| `PH_ADJUSTMENT_KEY_CONFLICT`        | An `adjustment_key` is reused with a different adjustment `command_fingerprint` (§7.2).                                         |
+| `PH_ADJUSTMENT_CONFLICT`            | The adjustment is structurally allowed but conflicts with existing graph state: the target already has a direct adjustment, or the proposed replacement session already serves another correction. |
+| `PH_INVALID_ADJUSTMENT`             | The adjustment command is invalid on its own terms (unknown kind, missing target, cross-user target, target equal to replacement, missing replacement for a correction). |
+| `PH_ADJUSTMENT_CHAIN_CORRUPT`       | Effective-session resolution detected a revisit, a missing replacement or the maximum chain depth (§14.4).                      |
+| `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | A consumer cannot yet apply the delivered void/correction semantics; the event stays durable and is never marked delivered (§12, §13). |
+
 Rules:
 
+- No two conditions share a code, and no code is reused with a second meaning.
 - Downstream failure codes never surface in the ingestion result; ingestion
   succeeds once history and dispatch rows commit.
 - Internal-only codes are logged server-side and mapped to a generic localized
-  message for the user.
+  message for the user; client-display-safe codes may be localized and shown.
+- Retryability is a property of the code, as tabulated above; only persistence
+  and dispatch codes are retryable.
 - Sensitive database errors and stack traces are never stored in user-visible
   result fields or in the outbox `last_error_summary` (which is sanitized to a
   bounded, code-plus-safe-text form).
+- `PH_DISPATCH_SEMANTICS_UNSUPPORTED` is a delivery **failure**. It is never
+  translated into a successful delivery or a no-op acknowledgement (§12).
 
 ---
 
