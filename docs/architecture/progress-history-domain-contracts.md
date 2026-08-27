@@ -513,42 +513,195 @@ Security and execution requirements for the future function:
   transaction.
 - Returns the existing session on a valid idempotent replay.
 
-### 9.1 Command input matrix
+**Command payload matrices are distinct from database-row matrices.** §5, §6
+and §8 describe stored rows, which include server-owned fields. The matrices
+in §9.1 and §9.3–§9.9 describe the **client-supplied command** only. A nested
+object of the command is defined solely by its own matrix here; "per §6.1"
+never implies that the client may send row-level fields.
 
-| Field                        | Logical type                | Required                              | Constraints and allowed values                                            |
-| ---------------------------- | --------------------------- | ------------------------------------- | ------------------------------------------------------------------------- |
-| `command_version`            | Bounded integer             | Required                              | Must be `1`                                                               |
-| `ingestion_key`              | Constrained text (max 128)  | Required                              | Matches a frozen key form (§11)                                           |
-| `source`                     | Constrained text            | Required                              | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`   |
-| `occurred_at`                | UTC timestamp               | Required                              | Window rule of §5                                                         |
-| `timezone`                   | Constrained text (max 64)   | Required                              | Valid IANA zone                                                           |
-| `timezone_source`            | Constrained text            | Required                              | `device` \| `user_setting` \| `assumed_utc`                               |
-| `completion_confirmed`       | Boolean                     | Required                              | Must be `true`; an unconfirmed command is rejected                        |
-| `confirmed_at`               | UTC timestamp               | Required                              | `>= occurred_at - 24 h` and `<= server now + 5 min`                       |
-| `plan_provenance`            | Structured object           | Required when `source = plan_workout` | `{ plan_id, planned_workout_id, plan_name, week_number, day_number }`     |
-| `workout_title`              | Constrained text (max 160)  | Required                              | Neutral, non-translated                                                   |
-| `difficulty`                 | Constrained text            | Optional                              | `beginner` \| `intermediate` \| `advanced`                                |
-| `estimated_duration_seconds` | Bounded integer             | Optional                              | `>= 0`, `<= 86400`                                                        |
-| `actual_duration_seconds`    | Bounded integer             | Optional                              | `>= 0`, `<= 86400`                                                        |
-| `calories`                   | Structured object           | Required                              | `{ kcal, source, algorithm_version, calculation_weight_kg }` per §5 rules |
-| `exercises`                  | Ordered list of objects     | Required                              | 1–60 items; each per §6.1 plus its `sets` list                            |
-| `exercises[].sets`           | Ordered list of objects     | Required                              | 0–100 items per exercise; each per §6.2                                   |
-| `auxiliary_facts`            | Structured object           | Optional                              | `{ hydration[0..20], meal_adherence[0..12], daily_target[0..2] }` per §8  |
-| `notes`                      | Constrained text (max 2000) | Optional                              | —                                                                         |
-| `app_version`                | Constrained text (max 32)   | Required                              | Non-empty                                                                 |
+**Forbidden in every level of the command payload.** The client never supplies:
+row IDs (`id`, `session_id`, `session_exercise_id`, `target_fact_id` of a row it
+did not create through this contract), `user_id` or any other authoritative
+user identifier, `created_at` / `updated_at`, `contract_version` /
+`event_version`, `command_fingerprint` / `fact_fingerprint`, any outbox field,
+`local_day`, `confirmation_received_at`, or actor authority. Presence of any of
+these is a contract violation and the command is rejected.
 
-**No `user_id` field exists in the command payload.** Presence of any
-authoritative user identifier in the payload is a contract violation and the
-command is rejected.
+### 9.1 Command input matrix (top level)
+
+| Field                        | Logical type                | Required                              | Origin          | Constraints, bounds and cross-field validation                                                                            |
+| ---------------------------- | --------------------------- | ------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `command_version`            | Bounded integer             | Required                              | Client          | Must be `1`, else `PH_INVALID_COMMAND_VERSION`                                                                            |
+| `ingestion_key`              | Constrained text (max 128)  | Required                              | Client          | Matches a frozen key form (§11); trimmed; must be consistent with `source`                                                |
+| `source`                     | Constrained text            | Required                              | Client          | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`                                                   |
+| `occurred_at`                | UTC timestamp               | Required                              | Client-observed | New-write window rule of §5 and §9.2                                                                                      |
+| `timezone`                   | Constrained text (max 64)   | Required                              | Client-observed | Valid IANA zone                                                                                                           |
+| `timezone_source`            | Constrained text            | Required                              | Client          | `device` \| `user_setting` \| `assumed_utc`                                                                               |
+| `completion_confirmed`       | Boolean                     | Required                              | Client          | Must be `true`; the explicit user-action signal (§9.2)                                                                    |
+| `plan_provenance`            | Structured object (§9.3)    | Required when `source = plan_workout` | Client/trusted  | Forbidden when `source <> plan_workout`                                                                                   |
+| `workout_title`              | Constrained text (max 160)  | Required                              | Trusted state   | Non-empty, trimmed, neutral and non-translated                                                                            |
+| `difficulty`                 | Constrained text            | Optional                              | Trusted state   | Canonical history value only (§5.1), else `PH_INVALID_DIFFICULTY`                                                         |
+| `estimated_duration_seconds` | Bounded integer             | Optional                              | Trusted state   | `>= 0`, `<= 86400`; never substituted for the actual duration                                                             |
+| `actual_duration_seconds`    | Bounded integer             | Optional                              | Client-observed | `>= 0`, `<= 86400`                                                                                                        |
+| `calories`                   | Structured object (§9.4)    | Required                              | Trusted state   | Provenance rules of §5                                                                                                    |
+| `exercises`                  | Ordered list (§9.5)         | Required                              | Client-observed | 1–60 items; `order_index` zero-based, contiguous, unique                                                                  |
+| `auxiliary_facts`            | Structured object           | Optional                              | Client-observed | `{ hydration[0..20] (§9.8), meal_adherence[0..12] (§9.9), daily_target[0..2] (§9.9) }`                                    |
+| `notes`                      | Constrained text (max 2000) | Optional                              | User-entered    | Trimmed                                                                                                                   |
+| `app_version`                | Constrained text (max 32)   | Required                              | Client          | Non-empty; non-semantic diagnostics, excluded from the fingerprint (§11.1)                                                |
+
+**Nonzero-evidence rule.** The command must contain at least one exercise with
+at least one completed set (§6.2). `completion_confirmed` alone can never
+fabricate nonzero exercise evidence; a confirmed but empty command is rejected
+with `PH_EMPTY_WORKOUT`. No arbitrary timer-duration threshold is used as a
+substitute for evidence.
 
 **Payload limits (frozen).** Total serialized command ≤ 256 KiB; ≤ 60
 exercises; ≤ 100 sets per exercise; ≤ 2000 sets per command; ≤ 20 hydration
 facts, ≤ 12 meal-adherence facts, ≤ 2 daily-target snapshots per command. A
-command exceeding any limit is rejected with `PH_INVALID_COMMAND_VERSION`
-semantics replaced by the specific taxonomy entry `PH_PAYLOAD_TOO_LARGE`.
-Unbounded payloads are forbidden.
+command exceeding any limit is rejected with `PH_PAYLOAD_TOO_LARGE`. Unbounded
+payloads are forbidden.
 
-### 9.2 Result matrix
+### 9.2 Confirmation, occurrence window and replay timing (frozen)
+
+- The client supplies `completion_confirmed = true` as the explicit
+  user-action signal. It supplies **no** confirmation timestamp;
+  `confirmed_at` is removed from the command.
+- The trusted server records the confirmation-received time from **its own
+  clock** on the first accepted write, stored as the server-derived,
+  write-once session field `confirmation_received_at` (UTC timestamp,
+  required, server-generated). It is never client-supplied and never
+  fingerprinted (§11.1).
+- Confirmation is a signal of intent only; it cannot substitute for completed
+  sets (§9.1 nonzero-evidence rule).
+- **Occurrence-window validation applies only when creating a new session.**
+  The `occurred_at` freshness rule of §5 is a new-write rule.
+- Processing order for every ingestion call is fixed: (1) validate command
+  shape and version; (2) look up `(user_id, ingestion_key)`; (3) if a row
+  exists, verify ownership and compare `command_fingerprint`; (4) return
+  `outcome = replayed` on equivalence, or `PH_INGESTION_KEY_CONFLICT` on
+  divergence; (5) only when no row exists, apply the occurrence-window and
+  remaining new-write validations.
+- Consequently a valid replay of an already-persisted command still returns the
+  existing session long after the original occurrence window has elapsed, and
+  is never rejected merely because it is now old.
+
+### 9.3 `plan_provenance` input matrix
+
+| Field                | Logical type               | Required | Origin        | Constraints                                                        |
+| -------------------- | -------------------------- | -------- | ------------- | ------------------------------------------------------------------ |
+| `plan_id`            | UUID                       | Required | Trusted state | Stored as an immutable scalar; no FK                               |
+| `planned_workout_id` | UUID                       | Required | Trusted state | Must be the workout referenced by the `planned-workout:` key form  |
+| `plan_name`          | Constrained text (max 160) | Optional | Trusted state | Trimmed neutral snapshot                                           |
+| `week_number`        | Bounded integer            | Optional | Trusted state | `>= 1`, `<= 520`                                                   |
+| `day_number`         | Bounded integer            | Optional | Trusted state | `>= 1`, `<= 7`                                                     |
+
+Server-derived for this object: nothing. Forbidden: any row ID from
+`workout_sessions`, any `user_id`.
+
+### 9.4 `calories` input matrix
+
+| Field                     | Logical type              | Required                                | Origin              | Constraints                                                          |
+| ------------------------- | ------------------------- | --------------------------------------- | ------------------- | ---------------------------------------------------------------------- |
+| `kcal`                    | Decimal(7,2)              | Required unless `source = unknown`      | Derived/user-entered | `>= 0`, `<= 20000`                                                    |
+| `source`                  | Constrained text          | Required                                | Trusted state       | `estimated` \| `measured` \| `user_entered` \| `unknown`              |
+| `algorithm_version`       | Constrained text (max 32) | Required when `source = estimated`      | Trusted state       | Forbidden for any other source                                        |
+| `calculation_weight_kg`   | Decimal(5,2)              | Required when `source = estimated`      | Profile snapshot    | `> 0`, `<= 500`                                                       |
+
+Violations of these cross-field rules yield
+`PH_INVALID_CALORIE_PROVENANCE`.
+
+### 9.5 `exercises[]` input matrix
+
+| Field                         | Logical type                | Required | Origin          | Constraints                                                                                     |
+| ----------------------------- | --------------------------- | -------- | --------------- | ------------------------------------------------------------------------------------------------- |
+| `order_index`                 | Bounded integer             | Required | Client-observed | Zero-based, contiguous from `0`, unique within the command                                      |
+| `exercise_id`                 | Constrained text (max 64)   | Optional | Trusted state   | `^[A-Za-z0-9_.:-]{1,64}$`; identifies the exercise **performed**; omitted when none (§6.1)      |
+| `exercise_key_snapshot`       | Constrained text (max 80)   | Required | Trusted state   | Non-empty neutral key of the performed exercise                                                 |
+| `exercise_name_snapshot`      | Constrained text (max 160)  | Required | Trusted state   | Non-empty neutral name of the performed exercise; never a translated UI string                  |
+| `substituted_for_exercise_id` | Constrained text (max 64)   | Optional | Trusted state   | Same pattern; the originally prescribed exercise; must differ from `exercise_id` when both present |
+| `prescription_snapshot`       | Structured object (§9.6)    | Required | Trusted state   | Per §6.1.1                                                                                      |
+| `status`                      | Constrained text            | Required | Client-observed | `completed` \| `partially_completed` \| `skipped`                                               |
+| `notes`                       | Constrained text (max 1000) | Optional | User-entered    | Trimmed                                                                                         |
+| `sets`                        | Ordered list (§9.7)         | Required | Client-observed | 0–100 items; may be empty only when `status = skipped`                                          |
+
+Server-derived for each stored exercise row: `id`, `session_id`, `user_id`,
+`created_at`, `contract_version`. None of these may appear in the payload.
+
+### 9.6 `exercises[].prescription_snapshot` input matrix
+
+Exactly the field matrix of §6.1.1 (`version`, `planned_sets`, `reps_text`,
+`rest_text`, `rest_seconds`, `tempo`, `focus_key`, `focus_text`,
+`prescription_note`), all client/trusted-state supplied, with no server-derived
+fields. The server canonicalizes and re-serializes the accepted object before
+storage; the stored value is byte-identical to that canonical form. An invalid
+object yields `PH_INVALID_PRESCRIPTION_SNAPSHOT`.
+
+### 9.7 `exercises[].sets[]` input matrix
+
+| Field              | Logical type    | Required | Origin          | Constraints                                                                                  |
+| ------------------ | --------------- | -------- | --------------- | ---------------------------------------------------------------------------------------------- |
+| `set_index`        | Bounded integer | Required | Client-observed | Zero-based, contiguous from `0`, unique within its exercise                                  |
+| `reps`             | Bounded integer | Optional | Client-observed | `>= 0`, `<= 1000`                                                                            |
+| `load_kg`          | Decimal(6,2)    | Optional | Client-observed | `>= 0`, `<= 1000`                                                                            |
+| `assistance_level` | Constrained text | Optional | Client-observed | Frozen vocabulary of §6.2                                                                    |
+| `duration_seconds` | Bounded integer | Optional | Client-observed | `>= 0`, `<= 86400`                                                                           |
+| `hold_seconds`     | Bounded integer | Optional | Client-observed | `>= 0`, `<= 86400`                                                                           |
+| `distance_m`       | Decimal(8,2)    | Optional | Client-observed | `>= 0`, `<= 100000`                                                                          |
+| `rpe`              | Decimal(3,1)    | Optional | Client-observed | `>= 1.0`, `<= 10.0`                                                                          |
+| `is_completed`     | Boolean         | Required | Client-observed | A completed set requires at least one nonzero performance measure (§6.2)                     |
+| `performed_at`     | UTC timestamp   | Optional | Client-observed | Within the session's occurrence window; non-decreasing across `set_index` within an exercise |
+
+Server-derived for each stored set row: `id`, `session_exercise_id`,
+`user_id`, `created_at`, `contract_version`. Violations yield
+`PH_INVALID_SET`.
+
+### 9.8 `auxiliary_facts.hydration[]` input matrix
+
+| Field           | Logical type               | Required                    | Origin          | Constraints                                                                     |
+| --------------- | -------------------------- | --------------------------- | --------------- | --------------------------------------------------------------------------------- |
+| `ingestion_key` | Constrained text (max 128) | Required                    | Client          | Frozen hydration key form (§8.1); unique within the command                     |
+| `kind`          | Constrained text           | Required                    | Client          | `entry` \| `void`                                                               |
+| `volume_ml`     | Bounded integer            | Required when `kind = entry` | Client-observed | `> 0`, `<= 10000`; forbidden when `kind = void`                                 |
+| `target_fact_id` | UUID                      | Required when `kind = void` | Client          | Must reference an existing same-user hydration `entry` row; forbidden for `entry` |
+| `occurred_at`   | UTC timestamp              | Required                    | Client-observed | Session occurrence window rules of §8.1                                         |
+| `timezone`      | Constrained text (max 64)  | Required                    | Client-observed | Valid IANA zone                                                                 |
+
+`target_fact_id` is the single permitted client-supplied row identifier in the
+whole command, because a void is meaningless without its target; the server
+still verifies same-user ownership and rejects a cross-user target with
+`PH_CROSS_USER_VIOLATION`. Server-derived: `id`, `user_id`, `local_day`,
+`fact_fingerprint`, `created_at`, `contract_version`.
+
+### 9.9 `auxiliary_facts.meal_adherence[]` and `auxiliary_facts.daily_target[]` input matrices
+
+`meal_adherence[]`:
+
+| Field           | Logical type               | Required | Origin          | Constraints                                                    |
+| --------------- | -------------------------- | -------- | --------------- | ------------------------------------------------------------------ |
+| `ingestion_key` | Constrained text (max 128) | Required | Client          | Frozen key form (§8.2); unique within the command              |
+| `meal_key`      | Constrained text (max 64)  | Required | Trusted state   | `^[A-Za-z0-9_.:-]{1,64}$`; neutral meal identifier, never a label |
+| `adhered`       | Boolean                    | Required | Client-observed | —                                                              |
+| `occurred_at`   | UTC timestamp              | Required | Client-observed | Window rules of §8.2                                           |
+| `timezone`      | Constrained text (max 64)  | Required | Client-observed | Valid IANA zone                                                |
+
+`daily_target[]`:
+
+| Field                     | Logical type               | Required                           | Origin        | Constraints                                     |
+| ------------------------- | -------------------------- | ---------------------------------- | ------------- | --------------------------------------------------- |
+| `ingestion_key`           | Constrained text (max 128) | Required                           | Client        | Frozen key form (§8.3); unique within the command |
+| `calorie_target_kcal`     | Decimal(7,2)               | Required                           | Trusted state | `> 0`, `<= 20000`                               |
+| `target_source`           | Constrained text           | Required                           | Trusted state | Frozen vocabulary of §8.3                       |
+| `target_algorithm_version` | Constrained text (max 32) | Required when the target is derived | Trusted state | Forbidden otherwise                             |
+| `calculation_weight_kg`   | Decimal(5,2)               | Optional                           | Trusted state | `> 0`, `<= 500`                                 |
+| `captured_at`             | UTC timestamp              | Required                           | Trusted state | Within the session occurrence window            |
+| `timezone`                | Constrained text (max 64)  | Required                           | Client-observed | Valid IANA zone                               |
+
+For both lists the server derives `id`, `user_id`, `local_day`,
+`fact_fingerprint`, `created_at` and `contract_version`. Structural violations
+yield `PH_INVALID_AUXILIARY_FACT`; a reused key with a different value yields
+`PH_AUXILIARY_FACT_CONFLICT` (§11.3).
+
+### 9.10 Result matrix
 
 | Field                | Logical type     | Required | Meaning                                                                      |
 | -------------------- | ---------------- | -------- | ---------------------------------------------------------------------------- |
@@ -587,19 +740,48 @@ The result never contains raw database errors, SQL text or stack traces.
 | Domain validation            | `PH_INVALID_AUXILIARY_FACT`        | No        | Yes                                      |
 | Domain validation            | `PH_INVALID_ADJUSTMENT`            | No        | Yes                                      |
 | Idempotency / state conflict | `PH_ADJUSTMENT_CONFLICT`           | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_DIFFICULTY`            | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_EXERCISE_IDENTITY`     | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_PRESCRIPTION_SNAPSHOT` | No        | Internal-only                            |
+| Idempotency conflict         | `PH_AUXILIARY_FACT_CONFLICT`       | No        | Yes                                      |
+| Idempotency / state conflict | `PH_ADJUSTMENT_KEY_CONFLICT`       | No        | Yes                                      |
+| Data integrity               | `PH_ADJUSTMENT_CHAIN_CORRUPT`      | No        | Internal-only                            |
+| Retryable downstream         | `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | Yes      | Internal-only                            |
 | Persistence                  | `PH_PERSISTENCE_FAILURE`           | Yes       | Yes (generic message)                    |
 | Retryable downstream         | `PH_DISPATCH_DELIVERY_FAILURE`     | Yes       | Internal-only                            |
 | Retryable downstream         | `PH_DISPATCH_CONSUMER_UNAVAILABLE` | Yes       | Internal-only                            |
 
+Disambiguation of the codes added by this revision:
+
+| Code                                | Exactly one condition                                                                                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `PH_INVALID_DIFFICULTY`             | The command's `difficulty` is not one of the canonical history values, i.e. the coordinator failed to normalize it (§5.1).      |
+| `PH_INVALID_EXERCISE_IDENTITY`      | An exercise identifier violates §6.1: bad pattern/length, equal performed and substituted identifiers, or a substitution without its own neutral snapshots. |
+| `PH_INVALID_PRESCRIPTION_SNAPSHOT`  | The `prescription_snapshot` object violates §6.1.1: unsupported `version`, missing required field, out-of-bounds value or oversized serialization. |
+| `PH_INVALID_EXERCISE`               | An exercise row is invalid for a reason **other** than identity or prescription (ordering, status vocabulary, set-count bounds). |
+| `PH_AUXILIARY_FACT_CONFLICT`        | An auxiliary `ingestion_key` is reused with a different `fact_fingerprint` (§11.3).                                             |
+| `PH_INVALID_AUXILIARY_FACT`         | An auxiliary fact is structurally invalid (bad kind/target/volume combination, bounds, unknown meal key) — not a key conflict.  |
+| `PH_INGESTION_KEY_CONFLICT`         | A session `ingestion_key` is reused with a different session `command_fingerprint` (§11.1).                                     |
+| `PH_ADJUSTMENT_KEY_CONFLICT`        | An `adjustment_key` is reused with a different adjustment `command_fingerprint` (§7.2).                                         |
+| `PH_ADJUSTMENT_CONFLICT`            | The adjustment is structurally allowed but conflicts with existing graph state: the target already has a direct adjustment, or the proposed replacement session already serves another correction. |
+| `PH_INVALID_ADJUSTMENT`             | The adjustment command is invalid on its own terms (unknown kind, missing target, cross-user target, target equal to replacement, missing replacement for a correction). |
+| `PH_ADJUSTMENT_CHAIN_CORRUPT`       | Effective-session resolution detected a revisit, a missing replacement or the maximum chain depth (§14.4).                      |
+| `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | A consumer cannot yet apply the delivered void/correction semantics; the event stays durable and is never marked delivered (§12, §13). |
+
 Rules:
 
+- No two conditions share a code, and no code is reused with a second meaning.
 - Downstream failure codes never surface in the ingestion result; ingestion
   succeeds once history and dispatch rows commit.
 - Internal-only codes are logged server-side and mapped to a generic localized
-  message for the user.
+  message for the user; client-display-safe codes may be localized and shown.
+- Retryability is a property of the code, as tabulated above; only persistence
+  and dispatch codes are retryable.
 - Sensitive database errors and stack traces are never stored in user-visible
   result fields or in the outbox `last_error_summary` (which is sanitized to a
   bounded, code-plus-safe-text form).
+- `PH_DISPATCH_SEMANTICS_UNSUPPORTED` is a delivery **failure**. It is never
+  translated into a successful delivery or a no-op acknowledgement (§12).
 
 ---
 
