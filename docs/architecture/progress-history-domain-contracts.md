@@ -587,6 +587,13 @@ The result never contains raw database errors, SQL text or stack traces.
 | Domain validation            | `PH_INVALID_AUXILIARY_FACT`        | No        | Yes                                      |
 | Domain validation            | `PH_INVALID_ADJUSTMENT`            | No        | Yes                                      |
 | Idempotency / state conflict | `PH_ADJUSTMENT_CONFLICT`           | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_DIFFICULTY`            | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_EXERCISE_IDENTITY`     | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_PRESCRIPTION_SNAPSHOT` | No        | Internal-only                            |
+| Idempotency conflict         | `PH_AUXILIARY_FACT_CONFLICT`       | No        | Yes                                      |
+| Idempotency / state conflict | `PH_ADJUSTMENT_KEY_CONFLICT`       | No        | Yes                                      |
+| Data integrity               | `PH_ADJUSTMENT_CHAIN_CORRUPT`      | No        | Internal-only                            |
+| Retryable downstream         | `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | Yes      | Internal-only                            |
 | Persistence                  | `PH_PERSISTENCE_FAILURE`           | Yes       | Yes (generic message)                    |
 | Retryable downstream         | `PH_DISPATCH_DELIVERY_FAILURE`     | Yes       | Internal-only                            |
 | Retryable downstream         | `PH_DISPATCH_CONSUMER_UNAVAILABLE` | Yes       | Internal-only                            |
