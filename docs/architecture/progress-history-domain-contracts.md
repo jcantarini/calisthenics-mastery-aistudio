@@ -58,29 +58,29 @@ worker, service or UI implementation.
 
 ## 3. Naming, types and versioning conventions
 
-| Concern             | Frozen convention                                                                                                  |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Schema              | All entities live in `public`.                                                                                     |
-| Table names         | Plural, snake*case, domain-prefixed where ambiguous (`workout_session*\*`, `history_dispatch_outbox`).             |
-| Primary key         | `id`, UUID, server-generated at insert.                                                                            |
-| Ownership column    | `user_id`, UUID, references `auth.users(id) ON DELETE CASCADE`, never nullable.                                    |
-| UTC instants        | Logical type "UTC timestamp" — timezone-aware instant stored in UTC.                                               |
-| Local dates         | Logical type "local date" — calendar day, no time, no zone; precomputed at ingestion, never recomputed.            |
-| Timezone names      | Constrained text holding a valid IANA zone name (e.g. `Europe/Berlin`), max 64 characters.                         |
-| Enumerations        | Constrained text with an explicitly frozen allowed-value list in this contract (implementation may use a check).   |
-| Money/quantity      | Decimal with explicit scale stated per field; never floating binary for stored user-visible quantities.            |
-| Non-negativity      | Every quantity field listed as non-negative is constrained `>= 0`; positive-only fields are constrained `> 0`.     |
-| Ordering indexes    | All `order_index` / `set_index` values are **zero-based**, contiguous, unique within their parent.                 |
-| Contract version    | `contract_version`, bounded integer, current value `1`, present on every fact and adjustment row.                  |
-| Event version       | `event_version`, bounded integer, current value `1`, present on every outbox row and delivered envelope.           |
-| Command version     | `command_version`, bounded integer, current supported value `1`.                                                   |
-| Function versioning | Version suffix in the function name (`..._v1`); a breaking change creates `..._v2`, never mutates `_v1` semantics. |
-| Error codes         | Stable uppercase `PH_*` identifiers; codes are never reused with a different meaning.                              |
-| Timestamps metadata | `created_at` (server clock, write-once) on every table; `updated_at` only on mutable operational state (outbox).   |
-| Text bounds         | Every free-text field has an explicit maximum length; unbounded text is forbidden.                                 |
+| Concern             | Frozen convention                                                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Schema              | All entities live in `public`.                                                                                                                                                                          |
+| Table names         | Plural, snake*case, domain-prefixed where ambiguous (`workout_session*\*`, `history_dispatch_outbox`).                                                                                                  |
+| Primary key         | `id`, UUID, server-generated at insert.                                                                                                                                                                 |
+| Ownership column    | `user_id`, UUID, references `auth.users(id) ON DELETE CASCADE`, never nullable.                                                                                                                         |
+| UTC instants        | Logical type "UTC timestamp" — timezone-aware instant stored in UTC.                                                                                                                                    |
+| Local dates         | Logical type "local date" — calendar day, no time, no zone; precomputed at ingestion, never recomputed.                                                                                                 |
+| Timezone names      | Constrained text holding a valid IANA zone name (e.g. `Europe/Berlin`), max 64 characters.                                                                                                              |
+| Enumerations        | Constrained text with an explicitly frozen allowed-value list in this contract (implementation may use a check).                                                                                        |
+| Money/quantity      | Decimal with explicit scale stated per field; never floating binary for stored user-visible quantities.                                                                                                 |
+| Non-negativity      | Every quantity field listed as non-negative is constrained `>= 0`; positive-only fields are constrained `> 0`.                                                                                          |
+| Ordering indexes    | All `order_index` / `set_index` values are **zero-based**, contiguous, unique within their parent.                                                                                                      |
+| Contract version    | `contract_version`, bounded integer, current value `1`, present on every fact and adjustment row.                                                                                                       |
+| Event version       | `event_version`, bounded integer, current value `1`, present on every outbox row and delivered envelope.                                                                                                |
+| Command version     | `command_version`, bounded integer, current supported value `1`.                                                                                                                                        |
+| Function versioning | Version suffix in the function name (`..._v1`); a breaking change creates `..._v2`, never mutates `_v1` semantics.                                                                                      |
+| Error codes         | Stable uppercase `PH_*` identifiers; codes are never reused with a different meaning.                                                                                                                   |
+| Timestamps metadata | `created_at` (server clock, write-once) on every table; `updated_at` only on mutable operational state (outbox).                                                                                        |
+| Text bounds         | Every free-text field has an explicit maximum length; unbounded text is forbidden.                                                                                                                      |
 | Catalog identifiers | Exercise and focus catalog identities are **constrained text**, not UUIDs (repository evidence: `e1`, `e2`, `e3`), matching `^[A-Za-z0-9_.:-]{1,64}$`, stored as immutable scalars with no foreign key. |
-| Structured objects  | Any stored object field is versioned, has an exact nested field matrix, a maximum serialized size and a canonical serialization (§6.1.1).                                                              |
-| Fingerprints        | Every fingerprint is SHA-256 hex (64 lowercase characters) over a canonical UTF-8 NFC JSON serialization with sorted keys (§11.1).                                                                     |
+| Structured objects  | Any stored object field is versioned, has an exact nested field matrix, a maximum serialized size and a canonical serialization (§6.1.1).                                                               |
+| Fingerprints        | Every fingerprint is SHA-256 hex (64 lowercase characters) over a canonical UTF-8 NFC JSON serialization with sorted keys (§11.1).                                                                      |
 
 ---
 
@@ -137,7 +137,8 @@ workout.
 | `calorie_algorithm_version`  | Constrained text (max 32)   | Nullable | Server-supplied                          | Write-once | Required when `calories_source = 'estimated'`; forbidden otherwise              | Reproducibility of estimates                      |
 | `calculation_weight_kg`      | Decimal(5,2)                | Nullable | Snapshot of profile at ingestion         | Write-once | `> 0` when present; required when `calories_source = 'estimated'`               | Historical calculation input                      |
 | `notes`                      | Constrained text (max 2000) | Nullable | User-entered                             | Write-once | Never overwritten on replay                                                     | User annotation                                   |
-| `app_version`                | Constrained text (max 32)   | Required | Client-declared                          | Write-once | Non-empty                                                                       | Diagnostics and provenance                        |
+| `app_version`                | Constrained text (max 32)   | Required | Client-declared                          | Write-once | Non-empty; non-semantic diagnostics only                                        | Diagnostics and provenance                        |
+| `confirmation_received_at`   | UTC timestamp               | Required | Server clock at first accepted write     | Write-once | Never client-supplied; not fingerprinted (§9.2, §11.1)                          | When the trusted server received the confirmation |
 | `contract_version`           | Bounded integer             | Required | Server-set                               | Write-once | Currently `1`                                                                   | Schema/contract evolution                         |
 
 **Time semantics.** `occurred_at` is the event instant; `created_at` is the
@@ -192,21 +193,21 @@ Frozen rules:
 
 ### 6.1 `public.workout_session_exercises`
 
-| Field                         | Logical type                | Required | Source/owner               | Mutability | Constraints and allowed values                                               | Purpose                                 |
-| ----------------------------- | --------------------------- | -------- | -------------------------- | ---------- | ---------------------------------------------------------------------------- | --------------------------------------- |
-| `id`                          | UUID                        | Required | Server-generated           | Write-once | Primary key                                                                  | Exercise-row identity                   |
-| `session_id`                  | UUID                        | Required | Server                     | Write-once | FK `(session_id, user_id) → workout_sessions(id, user_id)` ON DELETE CASCADE | Same-user parent link                   |
-| `user_id`                     | UUID                        | Required | Server-derived             | Write-once | Must equal parent `user_id`                                                  | Ownership and RLS                       |
-| `order_index`                 | Bounded integer             | Required | Client-observed            | Write-once | Zero-based, contiguous, unique per session                                   | Deterministic ordering                  |
+| Field                         | Logical type                | Required | Source/owner                | Mutability | Constraints and allowed values                                                                                   | Purpose                                 |
+| ----------------------------- | --------------------------- | -------- | --------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `id`                          | UUID                        | Required | Server-generated            | Write-once | Primary key                                                                                                      | Exercise-row identity                   |
+| `session_id`                  | UUID                        | Required | Server                      | Write-once | FK `(session_id, user_id) → workout_sessions(id, user_id)` ON DELETE CASCADE                                     | Same-user parent link                   |
+| `user_id`                     | UUID                        | Required | Server-derived              | Write-once | Must equal parent `user_id`                                                                                      | Ownership and RLS                       |
+| `order_index`                 | Bounded integer             | Required | Client-observed             | Write-once | Zero-based, contiguous, unique per session                                                                       | Deterministic ordering                  |
 | `exercise_id`                 | Constrained text (max 64)   | Nullable | Catalog identifier snapshot | Write-once | Matches `^[A-Za-z0-9_.:-]{1,64}$`; **no FK**; null when the performed exercise has no canonical catalog identity | Current-catalog label resolution        |
-| `exercise_key_snapshot`       | Constrained text (max 80)   | Required | Snapshot at ingestion      | Write-once | Non-empty neutral, non-translated identity key                               | Stable identity independent of language |
-| `exercise_name_snapshot`      | Constrained text (max 160)  | Required | Snapshot at ingestion      | Write-once | Neutral (source-language canonical) name, not a localized UI string          | Fallback display                        |
-| `prescription_snapshot`       | Structured object (§6.1.1)  | Required | Snapshot of prescription   | Write-once | Versioned bounded object per §6.1.1; canonical serialization ≤ 2048 bytes    | Historical prescription fact            |
-| `substituted_for_exercise_id` | Constrained text (max 64)   | Nullable | Client-observed            | Write-once | Same pattern as `exercise_id`; **no FK**; present only when a substitution occurred | Substitution provenance           |
-| `status`                      | Constrained text            | Required | Client-observed            | Write-once | `completed` \| `partially_completed` \| `skipped`                            | Execution outcome                       |
-| `notes`                       | Constrained text (max 1000) | Nullable | User-entered               | Write-once | —                                                                            | User annotation                         |
-| `created_at`                  | UTC timestamp               | Required | Database clock             | Write-once | Default now                                                                  | Audit                                   |
-| `contract_version`            | Bounded integer             | Required | Server-set                 | Write-once | Currently `1`                                                                | Contract evolution                      |
+| `exercise_key_snapshot`       | Constrained text (max 80)   | Required | Snapshot at ingestion       | Write-once | Non-empty neutral, non-translated identity key                                                                   | Stable identity independent of language |
+| `exercise_name_snapshot`      | Constrained text (max 160)  | Required | Snapshot at ingestion       | Write-once | Neutral (source-language canonical) name, not a localized UI string                                              | Fallback display                        |
+| `prescription_snapshot`       | Structured object (§6.1.1)  | Required | Snapshot of prescription    | Write-once | Versioned bounded object per §6.1.1; canonical serialization ≤ 2048 bytes                                        | Historical prescription fact            |
+| `substituted_for_exercise_id` | Constrained text (max 64)   | Nullable | Client-observed             | Write-once | Same pattern as `exercise_id`; **no FK**; present only when a substitution occurred                              | Substitution provenance                 |
+| `status`                      | Constrained text            | Required | Client-observed             | Write-once | `completed` \| `partially_completed` \| `skipped`                                                                | Execution outcome                       |
+| `notes`                       | Constrained text (max 1000) | Nullable | User-entered                | Write-once | —                                                                                                                | User annotation                         |
+| `created_at`                  | UTC timestamp               | Required | Database clock              | Write-once | Default now                                                                                                      | Audit                                   |
+| `contract_version`            | Bounded integer             | Required | Server-set                  | Write-once | Currently `1`                                                                                                    | Contract evolution                      |
 
 Frozen rules:
 
@@ -261,17 +262,17 @@ arbitrary unversioned text and never an undefined object. It records the
 `workout_session_sets` and never overwrites, merges into or back-fills this
 snapshot.
 
-| Field                | Logical type               | Required | Constraints and allowed values                                                              | Purpose                                     |
-| -------------------- | -------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `version`            | Bounded integer            | Required | Currently `1`; an unsupported value is rejected with `PH_INVALID_PRESCRIPTION_SNAPSHOT`     | Snapshot-shape evolution                    |
-| `planned_sets`       | Bounded integer            | Required | `>= 0`, `<= 100`                                                                            | Prescribed set count                        |
-| `reps_text`          | Constrained text (max 40)  | Required | Non-empty, trimmed, neutral source text (e.g. `8-12`, `AMRAP`, `30s`); never translated     | Prescribed repetition scheme as written     |
-| `rest_text`          | Constrained text (max 40)  | Nullable | Trimmed neutral source text (e.g. `60s`, `90-120s`); null when the source prescribed none   | Prescribed rest as written                  |
-| `rest_seconds`       | Bounded integer            | Nullable | `>= 0`, `<= 3600`; present **only** when `rest_text` is deterministically a single duration | Normalized rest for aggregation             |
-| `tempo`              | Constrained text (max 24)  | Nullable | Trimmed neutral tempo notation (e.g. `3-1-1-0`) when the source supplies it                 | Prescribed tempo                            |
-| `focus_key`          | Constrained text (max 64)  | Nullable | Matches `^[A-Za-z0-9_.:-]{1,64}$`; neutral focus identifier                                 | Stable focus identity for read models       |
-| `focus_text`         | Constrained text (max 120) | Nullable | Trimmed neutral source text; required when `focus_key` is null and a focus was prescribed   | Neutral focus fallback                      |
-| `prescription_note`  | Constrained text (max 400) | Nullable | Trimmed neutral source text                                                                 | Explicit cue/note needed to preserve meaning |
+| Field               | Logical type               | Required | Constraints and allowed values                                                              | Purpose                                      |
+| ------------------- | -------------------------- | -------- | ------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `version`           | Bounded integer            | Required | Currently `1`; an unsupported value is rejected with `PH_INVALID_PRESCRIPTION_SNAPSHOT`     | Snapshot-shape evolution                     |
+| `planned_sets`      | Bounded integer            | Required | `>= 0`, `<= 100`                                                                            | Prescribed set count                         |
+| `reps_text`         | Constrained text (max 40)  | Required | Non-empty, trimmed, neutral source text (e.g. `8-12`, `AMRAP`, `30s`); never translated     | Prescribed repetition scheme as written      |
+| `rest_text`         | Constrained text (max 40)  | Nullable | Trimmed neutral source text (e.g. `60s`, `90-120s`); null when the source prescribed none   | Prescribed rest as written                   |
+| `rest_seconds`      | Bounded integer            | Nullable | `>= 0`, `<= 3600`; present **only** when `rest_text` is deterministically a single duration | Normalized rest for aggregation              |
+| `tempo`             | Constrained text (max 24)  | Nullable | Trimmed neutral tempo notation (e.g. `3-1-1-0`) when the source supplies it                 | Prescribed tempo                             |
+| `focus_key`         | Constrained text (max 64)  | Nullable | Matches `^[A-Za-z0-9_.:-]{1,64}$`; neutral focus identifier                                 | Stable focus identity for read models        |
+| `focus_text`        | Constrained text (max 120) | Nullable | Trimmed neutral source text; required when `focus_key` is null and a focus was prescribed   | Neutral focus fallback                       |
+| `prescription_note` | Constrained text (max 400) | Nullable | Trimmed neutral source text                                                                 | Explicit cue/note needed to preserve meaning |
 
 Frozen rules:
 
@@ -529,25 +530,25 @@ these is a contract violation and the command is rejected.
 
 ### 9.1 Command input matrix (top level)
 
-| Field                        | Logical type                | Required                              | Origin          | Constraints, bounds and cross-field validation                                                                            |
-| ---------------------------- | --------------------------- | ------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `command_version`            | Bounded integer             | Required                              | Client          | Must be `1`, else `PH_INVALID_COMMAND_VERSION`                                                                            |
-| `ingestion_key`              | Constrained text (max 128)  | Required                              | Client          | Matches a frozen key form (§11); trimmed; must be consistent with `source`                                                |
-| `source`                     | Constrained text            | Required                              | Client          | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`                                                   |
-| `occurred_at`                | UTC timestamp               | Required                              | Client-observed | New-write window rule of §5 and §9.2                                                                                      |
-| `timezone`                   | Constrained text (max 64)   | Required                              | Client-observed | Valid IANA zone                                                                                                           |
-| `timezone_source`            | Constrained text            | Required                              | Client          | `device` \| `user_setting` \| `assumed_utc`                                                                               |
-| `completion_confirmed`       | Boolean                     | Required                              | Client          | Must be `true`; the explicit user-action signal (§9.2)                                                                    |
-| `plan_provenance`            | Structured object (§9.3)    | Required when `source = plan_workout` | Client/trusted  | Forbidden when `source <> plan_workout`                                                                                   |
-| `workout_title`              | Constrained text (max 160)  | Required                              | Trusted state   | Non-empty, trimmed, neutral and non-translated                                                                            |
-| `difficulty`                 | Constrained text            | Optional                              | Trusted state   | Canonical history value only (§5.1), else `PH_INVALID_DIFFICULTY`                                                         |
-| `estimated_duration_seconds` | Bounded integer             | Optional                              | Trusted state   | `>= 0`, `<= 86400`; never substituted for the actual duration                                                             |
-| `actual_duration_seconds`    | Bounded integer             | Optional                              | Client-observed | `>= 0`, `<= 86400`                                                                                                        |
-| `calories`                   | Structured object (§9.4)    | Required                              | Trusted state   | Provenance rules of §5                                                                                                    |
-| `exercises`                  | Ordered list (§9.5)         | Required                              | Client-observed | 1–60 items; `order_index` zero-based, contiguous, unique                                                                  |
-| `auxiliary_facts`            | Structured object           | Optional                              | Client-observed | `{ hydration[0..20] (§9.8), meal_adherence[0..12] (§9.9), daily_target[0..2] (§9.9) }`                                    |
-| `notes`                      | Constrained text (max 2000) | Optional                              | User-entered    | Trimmed                                                                                                                   |
-| `app_version`                | Constrained text (max 32)   | Required                              | Client          | Non-empty; non-semantic diagnostics, excluded from the fingerprint (§11.1)                                                |
+| Field                        | Logical type                | Required                              | Origin          | Constraints, bounds and cross-field validation                                         |
+| ---------------------------- | --------------------------- | ------------------------------------- | --------------- | -------------------------------------------------------------------------------------- |
+| `command_version`            | Bounded integer             | Required                              | Client          | Must be `1`, else `PH_INVALID_COMMAND_VERSION`                                         |
+| `ingestion_key`              | Constrained text (max 128)  | Required                              | Client          | Matches a frozen key form (§11); trimmed; must be consistent with `source`             |
+| `source`                     | Constrained text            | Required                              | Client          | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`                |
+| `occurred_at`                | UTC timestamp               | Required                              | Client-observed | New-write window rule of §5 and §9.2                                                   |
+| `timezone`                   | Constrained text (max 64)   | Required                              | Client-observed | Valid IANA zone                                                                        |
+| `timezone_source`            | Constrained text            | Required                              | Client          | `device` \| `user_setting` \| `assumed_utc`                                            |
+| `completion_confirmed`       | Boolean                     | Required                              | Client          | Must be `true`; the explicit user-action signal (§9.2)                                 |
+| `plan_provenance`            | Structured object (§9.3)    | Required when `source = plan_workout` | Client/trusted  | Forbidden when `source <> plan_workout`                                                |
+| `workout_title`              | Constrained text (max 160)  | Required                              | Trusted state   | Non-empty, trimmed, neutral and non-translated                                         |
+| `difficulty`                 | Constrained text            | Optional                              | Trusted state   | Canonical history value only (§5.1), else `PH_INVALID_DIFFICULTY`                      |
+| `estimated_duration_seconds` | Bounded integer             | Optional                              | Trusted state   | `>= 0`, `<= 86400`; never substituted for the actual duration                          |
+| `actual_duration_seconds`    | Bounded integer             | Optional                              | Client-observed | `>= 0`, `<= 86400`                                                                     |
+| `calories`                   | Structured object (§9.4)    | Required                              | Trusted state   | Provenance rules of §5                                                                 |
+| `exercises`                  | Ordered list (§9.5)         | Required                              | Client-observed | 1–60 items; `order_index` zero-based, contiguous, unique                               |
+| `auxiliary_facts`            | Structured object           | Optional                              | Client-observed | `{ hydration[0..20] (§9.8), meal_adherence[0..12] (§9.9), daily_target[0..2] (§9.9) }` |
+| `notes`                      | Constrained text (max 2000) | Optional                              | User-entered    | Trimmed                                                                                |
+| `app_version`                | Constrained text (max 32)   | Required                              | Client          | Non-empty; non-semantic diagnostics, excluded from the fingerprint (§11.1)             |
 
 **Nonzero-evidence rule.** The command must contain at least one exercise with
 at least one completed set (§6.2). `completion_confirmed` alone can never
@@ -587,42 +588,42 @@ payloads are forbidden.
 
 ### 9.3 `plan_provenance` input matrix
 
-| Field                | Logical type               | Required | Origin        | Constraints                                                        |
-| -------------------- | -------------------------- | -------- | ------------- | ------------------------------------------------------------------ |
-| `plan_id`            | UUID                       | Required | Trusted state | Stored as an immutable scalar; no FK                               |
-| `planned_workout_id` | UUID                       | Required | Trusted state | Must be the workout referenced by the `planned-workout:` key form  |
-| `plan_name`          | Constrained text (max 160) | Optional | Trusted state | Trimmed neutral snapshot                                           |
-| `week_number`        | Bounded integer            | Optional | Trusted state | `>= 1`, `<= 520`                                                   |
-| `day_number`         | Bounded integer            | Optional | Trusted state | `>= 1`, `<= 7`                                                     |
+| Field                | Logical type               | Required | Origin        | Constraints                                                       |
+| -------------------- | -------------------------- | -------- | ------------- | ----------------------------------------------------------------- |
+| `plan_id`            | UUID                       | Required | Trusted state | Stored as an immutable scalar; no FK                              |
+| `planned_workout_id` | UUID                       | Required | Trusted state | Must be the workout referenced by the `planned-workout:` key form |
+| `plan_name`          | Constrained text (max 160) | Optional | Trusted state | Trimmed neutral snapshot                                          |
+| `week_number`        | Bounded integer            | Optional | Trusted state | `>= 1`, `<= 520`                                                  |
+| `day_number`         | Bounded integer            | Optional | Trusted state | `>= 1`, `<= 7`                                                    |
 
 Server-derived for this object: nothing. Forbidden: any row ID from
 `workout_sessions`, any `user_id`.
 
 ### 9.4 `calories` input matrix
 
-| Field                     | Logical type              | Required                                | Origin              | Constraints                                                          |
-| ------------------------- | ------------------------- | --------------------------------------- | ------------------- | ---------------------------------------------------------------------- |
-| `kcal`                    | Decimal(7,2)              | Required unless `source = unknown`      | Derived/user-entered | `>= 0`, `<= 20000`                                                    |
-| `source`                  | Constrained text          | Required                                | Trusted state       | `estimated` \| `measured` \| `user_entered` \| `unknown`              |
-| `algorithm_version`       | Constrained text (max 32) | Required when `source = estimated`      | Trusted state       | Forbidden for any other source                                        |
-| `calculation_weight_kg`   | Decimal(5,2)              | Required when `source = estimated`      | Profile snapshot    | `> 0`, `<= 500`                                                       |
+| Field                   | Logical type              | Required                           | Origin               | Constraints                                              |
+| ----------------------- | ------------------------- | ---------------------------------- | -------------------- | -------------------------------------------------------- |
+| `kcal`                  | Decimal(7,2)              | Required unless `source = unknown` | Derived/user-entered | `>= 0`, `<= 20000`                                       |
+| `source`                | Constrained text          | Required                           | Trusted state        | `estimated` \| `measured` \| `user_entered` \| `unknown` |
+| `algorithm_version`     | Constrained text (max 32) | Required when `source = estimated` | Trusted state        | Forbidden for any other source                           |
+| `calculation_weight_kg` | Decimal(5,2)              | Required when `source = estimated` | Profile snapshot     | `> 0`, `<= 500`                                          |
 
 Violations of these cross-field rules yield
 `PH_INVALID_CALORIE_PROVENANCE`.
 
 ### 9.5 `exercises[]` input matrix
 
-| Field                         | Logical type                | Required | Origin          | Constraints                                                                                     |
-| ----------------------------- | --------------------------- | -------- | --------------- | ------------------------------------------------------------------------------------------------- |
-| `order_index`                 | Bounded integer             | Required | Client-observed | Zero-based, contiguous from `0`, unique within the command                                      |
-| `exercise_id`                 | Constrained text (max 64)   | Optional | Trusted state   | `^[A-Za-z0-9_.:-]{1,64}$`; identifies the exercise **performed**; omitted when none (§6.1)      |
-| `exercise_key_snapshot`       | Constrained text (max 80)   | Required | Trusted state   | Non-empty neutral key of the performed exercise                                                 |
-| `exercise_name_snapshot`      | Constrained text (max 160)  | Required | Trusted state   | Non-empty neutral name of the performed exercise; never a translated UI string                  |
+| Field                         | Logical type                | Required | Origin          | Constraints                                                                                        |
+| ----------------------------- | --------------------------- | -------- | --------------- | -------------------------------------------------------------------------------------------------- |
+| `order_index`                 | Bounded integer             | Required | Client-observed | Zero-based, contiguous from `0`, unique within the command                                         |
+| `exercise_id`                 | Constrained text (max 64)   | Optional | Trusted state   | `^[A-Za-z0-9_.:-]{1,64}$`; identifies the exercise **performed**; omitted when none (§6.1)         |
+| `exercise_key_snapshot`       | Constrained text (max 80)   | Required | Trusted state   | Non-empty neutral key of the performed exercise                                                    |
+| `exercise_name_snapshot`      | Constrained text (max 160)  | Required | Trusted state   | Non-empty neutral name of the performed exercise; never a translated UI string                     |
 | `substituted_for_exercise_id` | Constrained text (max 64)   | Optional | Trusted state   | Same pattern; the originally prescribed exercise; must differ from `exercise_id` when both present |
-| `prescription_snapshot`       | Structured object (§9.6)    | Required | Trusted state   | Per §6.1.1                                                                                      |
-| `status`                      | Constrained text            | Required | Client-observed | `completed` \| `partially_completed` \| `skipped`                                               |
-| `notes`                       | Constrained text (max 1000) | Optional | User-entered    | Trimmed                                                                                         |
-| `sets`                        | Ordered list (§9.7)         | Required | Client-observed | 0–100 items; may be empty only when `status = skipped`                                          |
+| `prescription_snapshot`       | Structured object (§9.6)    | Required | Trusted state   | Per §6.1.1                                                                                         |
+| `status`                      | Constrained text            | Required | Client-observed | `completed` \| `partially_completed` \| `skipped`                                                  |
+| `notes`                       | Constrained text (max 1000) | Optional | User-entered    | Trimmed                                                                                            |
+| `sets`                        | Ordered list (§9.7)         | Required | Client-observed | 0–100 items; may be empty only when `status = skipped`                                             |
 
 Server-derived for each stored exercise row: `id`, `session_id`, `user_id`,
 `created_at`, `contract_version`. None of these may appear in the payload.
@@ -638,18 +639,18 @@ object yields `PH_INVALID_PRESCRIPTION_SNAPSHOT`.
 
 ### 9.7 `exercises[].sets[]` input matrix
 
-| Field              | Logical type    | Required | Origin          | Constraints                                                                                  |
-| ------------------ | --------------- | -------- | --------------- | ---------------------------------------------------------------------------------------------- |
-| `set_index`        | Bounded integer | Required | Client-observed | Zero-based, contiguous from `0`, unique within its exercise                                  |
-| `reps`             | Bounded integer | Optional | Client-observed | `>= 0`, `<= 1000`                                                                            |
-| `load_kg`          | Decimal(6,2)    | Optional | Client-observed | `>= 0`, `<= 1000`                                                                            |
+| Field              | Logical type     | Required | Origin          | Constraints                                                                                  |
+| ------------------ | ---------------- | -------- | --------------- | -------------------------------------------------------------------------------------------- |
+| `set_index`        | Bounded integer  | Required | Client-observed | Zero-based, contiguous from `0`, unique within its exercise                                  |
+| `reps`             | Bounded integer  | Optional | Client-observed | `>= 0`, `<= 1000`                                                                            |
+| `load_kg`          | Decimal(6,2)     | Optional | Client-observed | `>= 0`, `<= 1000`                                                                            |
 | `assistance_level` | Constrained text | Optional | Client-observed | Frozen vocabulary of §6.2                                                                    |
-| `duration_seconds` | Bounded integer | Optional | Client-observed | `>= 0`, `<= 86400`                                                                           |
-| `hold_seconds`     | Bounded integer | Optional | Client-observed | `>= 0`, `<= 86400`                                                                           |
-| `distance_m`       | Decimal(8,2)    | Optional | Client-observed | `>= 0`, `<= 100000`                                                                          |
-| `rpe`              | Decimal(3,1)    | Optional | Client-observed | `>= 1.0`, `<= 10.0`                                                                          |
-| `is_completed`     | Boolean         | Required | Client-observed | A completed set requires at least one nonzero performance measure (§6.2)                     |
-| `performed_at`     | UTC timestamp   | Optional | Client-observed | Within the session's occurrence window; non-decreasing across `set_index` within an exercise |
+| `duration_seconds` | Bounded integer  | Optional | Client-observed | `>= 0`, `<= 86400`                                                                           |
+| `hold_seconds`     | Bounded integer  | Optional | Client-observed | `>= 0`, `<= 86400`                                                                           |
+| `distance_m`       | Decimal(8,2)     | Optional | Client-observed | `>= 0`, `<= 100000`                                                                          |
+| `rpe`              | Decimal(3,1)     | Optional | Client-observed | `>= 1.0`, `<= 10.0`                                                                          |
+| `is_completed`     | Boolean          | Required | Client-observed | A completed set requires at least one nonzero performance measure (§6.2)                     |
+| `performed_at`     | UTC timestamp    | Optional | Client-observed | Within the session's occurrence window; non-decreasing across `set_index` within an exercise |
 
 Server-derived for each stored set row: `id`, `session_exercise_id`,
 `user_id`, `created_at`, `contract_version`. Violations yield
@@ -657,14 +658,14 @@ Server-derived for each stored set row: `id`, `session_exercise_id`,
 
 ### 9.8 `auxiliary_facts.hydration[]` input matrix
 
-| Field           | Logical type               | Required                    | Origin          | Constraints                                                                     |
-| --------------- | -------------------------- | --------------------------- | --------------- | --------------------------------------------------------------------------------- |
-| `ingestion_key` | Constrained text (max 128) | Required                    | Client          | Frozen hydration key form (§8.1); unique within the command                     |
-| `kind`          | Constrained text           | Required                    | Client          | `entry` \| `void`                                                               |
-| `volume_ml`     | Bounded integer            | Required when `kind = entry` | Client-observed | `> 0`, `<= 10000`; forbidden when `kind = void`                                 |
-| `target_fact_id` | UUID                      | Required when `kind = void` | Client          | Must reference an existing same-user hydration `entry` row; forbidden for `entry` |
-| `occurred_at`   | UTC timestamp              | Required                    | Client-observed | Session occurrence window rules of §8.1                                         |
-| `timezone`      | Constrained text (max 64)  | Required                    | Client-observed | Valid IANA zone                                                                 |
+| Field            | Logical type               | Required                     | Origin          | Constraints                                                                       |
+| ---------------- | -------------------------- | ---------------------------- | --------------- | --------------------------------------------------------------------------------- |
+| `ingestion_key`  | Constrained text (max 128) | Required                     | Client          | Frozen hydration key form (§8.1); unique within the command                       |
+| `kind`           | Constrained text           | Required                     | Client          | `entry` \| `void`                                                                 |
+| `volume_ml`      | Bounded integer            | Required when `kind = entry` | Client-observed | `> 0`, `<= 10000`; forbidden when `kind = void`                                   |
+| `target_fact_id` | UUID                       | Required when `kind = void`  | Client          | Must reference an existing same-user hydration `entry` row; forbidden for `entry` |
+| `occurred_at`    | UTC timestamp              | Required                     | Client-observed | Session occurrence window rules of §8.1                                           |
+| `timezone`       | Constrained text (max 64)  | Required                     | Client-observed | Valid IANA zone                                                                   |
 
 `target_fact_id` is the single permitted client-supplied row identifier in the
 whole command, because a void is meaningless without its target; the server
@@ -676,25 +677,25 @@ still verifies same-user ownership and rejects a cross-user target with
 
 `meal_adherence[]`:
 
-| Field           | Logical type               | Required | Origin          | Constraints                                                    |
-| --------------- | -------------------------- | -------- | --------------- | ------------------------------------------------------------------ |
-| `ingestion_key` | Constrained text (max 128) | Required | Client          | Frozen key form (§8.2); unique within the command              |
+| Field           | Logical type               | Required | Origin          | Constraints                                                       |
+| --------------- | -------------------------- | -------- | --------------- | ----------------------------------------------------------------- |
+| `ingestion_key` | Constrained text (max 128) | Required | Client          | Frozen key form (§8.2); unique within the command                 |
 | `meal_key`      | Constrained text (max 64)  | Required | Trusted state   | `^[A-Za-z0-9_.:-]{1,64}$`; neutral meal identifier, never a label |
-| `adhered`       | Boolean                    | Required | Client-observed | —                                                              |
-| `occurred_at`   | UTC timestamp              | Required | Client-observed | Window rules of §8.2                                           |
-| `timezone`      | Constrained text (max 64)  | Required | Client-observed | Valid IANA zone                                                |
+| `adhered`       | Boolean                    | Required | Client-observed | —                                                                 |
+| `occurred_at`   | UTC timestamp              | Required | Client-observed | Window rules of §8.2                                              |
+| `timezone`      | Constrained text (max 64)  | Required | Client-observed | Valid IANA zone                                                   |
 
 `daily_target[]`:
 
-| Field                     | Logical type               | Required                           | Origin        | Constraints                                     |
-| ------------------------- | -------------------------- | ---------------------------------- | ------------- | --------------------------------------------------- |
-| `ingestion_key`           | Constrained text (max 128) | Required                           | Client        | Frozen key form (§8.3); unique within the command |
-| `calorie_target_kcal`     | Decimal(7,2)               | Required                           | Trusted state | `> 0`, `<= 20000`                               |
-| `target_source`           | Constrained text           | Required                           | Trusted state | Frozen vocabulary of §8.3                       |
-| `target_algorithm_version` | Constrained text (max 32) | Required when the target is derived | Trusted state | Forbidden otherwise                             |
-| `calculation_weight_kg`   | Decimal(5,2)               | Optional                           | Trusted state | `> 0`, `<= 500`                                 |
-| `captured_at`             | UTC timestamp              | Required                           | Trusted state | Within the session occurrence window            |
-| `timezone`                | Constrained text (max 64)  | Required                           | Client-observed | Valid IANA zone                               |
+| Field                      | Logical type               | Required                            | Origin          | Constraints                                       |
+| -------------------------- | -------------------------- | ----------------------------------- | --------------- | ------------------------------------------------- |
+| `ingestion_key`            | Constrained text (max 128) | Required                            | Client          | Frozen key form (§8.3); unique within the command |
+| `calorie_target_kcal`      | Decimal(7,2)               | Required                            | Trusted state   | `> 0`, `<= 20000`                                 |
+| `target_source`            | Constrained text           | Required                            | Trusted state   | Frozen vocabulary of §8.3                         |
+| `target_algorithm_version` | Constrained text (max 32)  | Required when the target is derived | Trusted state   | Forbidden otherwise                               |
+| `calculation_weight_kg`    | Decimal(5,2)               | Optional                            | Trusted state   | `> 0`, `<= 500`                                   |
+| `captured_at`              | UTC timestamp              | Required                            | Trusted state   | Within the session occurrence window              |
+| `timezone`                 | Constrained text (max 64)  | Required                            | Client-observed | Valid IANA zone                                   |
 
 For both lists the server derives `id`, `user_id`, `local_day`,
 `fact_fingerprint`, `created_at` and `contract_version`. Structural violations
@@ -721,52 +722,52 @@ The result never contains raw database errors, SQL text or stack traces.
 
 ## 10. Validation and error taxonomy
 
-| Class                        | Code                               | Retryable | Client-display safe (after localization) |
-| ---------------------------- | ---------------------------------- | --------- | ---------------------------------------- |
-| Authentication / boundary    | `PH_UNAUTHENTICATED`               | No        | Yes                                      |
-| Domain validation            | `PH_INVALID_COMMAND_VERSION`       | No        | Internal-only                            |
-| Domain validation            | `PH_PAYLOAD_TOO_LARGE`             | No        | Yes                                      |
-| Domain validation            | `PH_INVALID_INGESTION_KEY`         | No        | Internal-only                            |
-| Idempotency conflict         | `PH_INGESTION_KEY_CONFLICT`        | No        | Yes                                      |
-| Domain validation            | `PH_UNSUPPORTED_SOURCE`            | No        | Internal-only                            |
-| Domain validation            | `PH_INVALID_OCCURRED_AT`           | No        | Yes                                      |
-| Domain validation            | `PH_INVALID_TIMEZONE`              | No        | Yes                                      |
-| Domain validation            | `PH_EMPTY_WORKOUT`                 | No        | Yes                                      |
-| Domain validation            | `PH_COMPLETION_NOT_CONFIRMED`      | No        | Yes                                      |
-| Domain validation            | `PH_INVALID_EXERCISE`              | No        | Yes                                      |
-| Domain validation            | `PH_INVALID_SET`                   | No        | Yes                                      |
-| Authorization / ownership    | `PH_CROSS_USER_VIOLATION`          | No        | Internal-only                            |
-| Domain validation            | `PH_INVALID_CALORIE_PROVENANCE`    | No        | Internal-only                            |
-| Domain validation            | `PH_INVALID_AUXILIARY_FACT`        | No        | Yes                                      |
-| Domain validation            | `PH_INVALID_ADJUSTMENT`            | No        | Yes                                      |
-| Idempotency / state conflict | `PH_ADJUSTMENT_CONFLICT`           | No        | Yes                                      |
-| Domain validation            | `PH_INVALID_DIFFICULTY`            | No        | Internal-only                            |
-| Domain validation            | `PH_INVALID_EXERCISE_IDENTITY`     | No        | Internal-only                            |
-| Domain validation            | `PH_INVALID_PRESCRIPTION_SNAPSHOT` | No        | Internal-only                            |
-| Idempotency conflict         | `PH_AUXILIARY_FACT_CONFLICT`       | No        | Yes                                      |
-| Idempotency / state conflict | `PH_ADJUSTMENT_KEY_CONFLICT`       | No        | Yes                                      |
-| Data integrity               | `PH_ADJUSTMENT_CHAIN_CORRUPT`      | No        | Internal-only                            |
-| Retryable downstream         | `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | Yes      | Internal-only                            |
-| Persistence                  | `PH_PERSISTENCE_FAILURE`           | Yes       | Yes (generic message)                    |
-| Retryable downstream         | `PH_DISPATCH_DELIVERY_FAILURE`     | Yes       | Internal-only                            |
-| Retryable downstream         | `PH_DISPATCH_CONSUMER_UNAVAILABLE` | Yes       | Internal-only                            |
+| Class                        | Code                                | Retryable | Client-display safe (after localization) |
+| ---------------------------- | ----------------------------------- | --------- | ---------------------------------------- |
+| Authentication / boundary    | `PH_UNAUTHENTICATED`                | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_COMMAND_VERSION`        | No        | Internal-only                            |
+| Domain validation            | `PH_PAYLOAD_TOO_LARGE`              | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_INGESTION_KEY`          | No        | Internal-only                            |
+| Idempotency conflict         | `PH_INGESTION_KEY_CONFLICT`         | No        | Yes                                      |
+| Domain validation            | `PH_UNSUPPORTED_SOURCE`             | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_OCCURRED_AT`            | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_TIMEZONE`               | No        | Yes                                      |
+| Domain validation            | `PH_EMPTY_WORKOUT`                  | No        | Yes                                      |
+| Domain validation            | `PH_COMPLETION_NOT_CONFIRMED`       | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_EXERCISE`               | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_SET`                    | No        | Yes                                      |
+| Authorization / ownership    | `PH_CROSS_USER_VIOLATION`           | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_CALORIE_PROVENANCE`     | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_AUXILIARY_FACT`         | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_ADJUSTMENT`             | No        | Yes                                      |
+| Idempotency / state conflict | `PH_ADJUSTMENT_CONFLICT`            | No        | Yes                                      |
+| Domain validation            | `PH_INVALID_DIFFICULTY`             | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_EXERCISE_IDENTITY`      | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_PRESCRIPTION_SNAPSHOT`  | No        | Internal-only                            |
+| Idempotency conflict         | `PH_AUXILIARY_FACT_CONFLICT`        | No        | Yes                                      |
+| Idempotency / state conflict | `PH_ADJUSTMENT_KEY_CONFLICT`        | No        | Yes                                      |
+| Data integrity               | `PH_ADJUSTMENT_CHAIN_CORRUPT`       | No        | Internal-only                            |
+| Retryable downstream         | `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | Yes       | Internal-only                            |
+| Persistence                  | `PH_PERSISTENCE_FAILURE`            | Yes       | Yes (generic message)                    |
+| Retryable downstream         | `PH_DISPATCH_DELIVERY_FAILURE`      | Yes       | Internal-only                            |
+| Retryable downstream         | `PH_DISPATCH_CONSUMER_UNAVAILABLE`  | Yes       | Internal-only                            |
 
 Disambiguation of the codes added by this revision:
 
-| Code                                | Exactly one condition                                                                                                          |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `PH_INVALID_DIFFICULTY`             | The command's `difficulty` is not one of the canonical history values, i.e. the coordinator failed to normalize it (§5.1).      |
-| `PH_INVALID_EXERCISE_IDENTITY`      | An exercise identifier violates §6.1: bad pattern/length, equal performed and substituted identifiers, or a substitution without its own neutral snapshots. |
-| `PH_INVALID_PRESCRIPTION_SNAPSHOT`  | The `prescription_snapshot` object violates §6.1.1: unsupported `version`, missing required field, out-of-bounds value or oversized serialization. |
-| `PH_INVALID_EXERCISE`               | An exercise row is invalid for a reason **other** than identity or prescription (ordering, status vocabulary, set-count bounds). |
-| `PH_AUXILIARY_FACT_CONFLICT`        | An auxiliary `ingestion_key` is reused with a different `fact_fingerprint` (§11.3).                                             |
-| `PH_INVALID_AUXILIARY_FACT`         | An auxiliary fact is structurally invalid (bad kind/target/volume combination, bounds, unknown meal key) — not a key conflict.  |
-| `PH_INGESTION_KEY_CONFLICT`         | A session `ingestion_key` is reused with a different session `command_fingerprint` (§11.1).                                     |
-| `PH_ADJUSTMENT_KEY_CONFLICT`        | An `adjustment_key` is reused with a different adjustment `command_fingerprint` (§7.2).                                         |
+| Code                                | Exactly one condition                                                                                                                                                                              |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PH_INVALID_DIFFICULTY`             | The command's `difficulty` is not one of the canonical history values, i.e. the coordinator failed to normalize it (§5.1).                                                                         |
+| `PH_INVALID_EXERCISE_IDENTITY`      | An exercise identifier violates §6.1: bad pattern/length, equal performed and substituted identifiers, or a substitution without its own neutral snapshots.                                        |
+| `PH_INVALID_PRESCRIPTION_SNAPSHOT`  | The `prescription_snapshot` object violates §6.1.1: unsupported `version`, missing required field, out-of-bounds value or oversized serialization.                                                 |
+| `PH_INVALID_EXERCISE`               | An exercise row is invalid for a reason **other** than identity or prescription (ordering, status vocabulary, set-count bounds).                                                                   |
+| `PH_AUXILIARY_FACT_CONFLICT`        | An auxiliary `ingestion_key` is reused with a different `fact_fingerprint` (§11.3).                                                                                                                |
+| `PH_INVALID_AUXILIARY_FACT`         | An auxiliary fact is structurally invalid (bad kind/target/volume combination, bounds, unknown meal key) — not a key conflict.                                                                     |
+| `PH_INGESTION_KEY_CONFLICT`         | A session `ingestion_key` is reused with a different session `command_fingerprint` (§11.1).                                                                                                        |
+| `PH_ADJUSTMENT_KEY_CONFLICT`        | An `adjustment_key` is reused with a different adjustment `command_fingerprint` (§7.2).                                                                                                            |
 | `PH_ADJUSTMENT_CONFLICT`            | The adjustment is structurally allowed but conflicts with existing graph state: the target already has a direct adjustment, or the proposed replacement session already serves another correction. |
-| `PH_INVALID_ADJUSTMENT`             | The adjustment command is invalid on its own terms (unknown kind, missing target, cross-user target, target equal to replacement, missing replacement for a correction). |
-| `PH_ADJUSTMENT_CHAIN_CORRUPT`       | Effective-session resolution detected a revisit, a missing replacement or the maximum chain depth (§14.4).                      |
-| `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | A consumer cannot yet apply the delivered void/correction semantics; the event stays durable and is never marked delivered (§12, §13). |
+| `PH_INVALID_ADJUSTMENT`             | The adjustment command is invalid on its own terms (unknown kind, missing target, cross-user target, target equal to replacement, missing replacement for a correction).                           |
+| `PH_ADJUSTMENT_CHAIN_CORRUPT`       | Effective-session resolution detected a revisit, a missing replacement or the maximum chain depth (§14.4).                                                                                         |
+| `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | A consumer cannot yet apply the delivered void/correction semantics; the event stays durable and is never marked delivered (§12, §13).                                                             |
 
 Rules:
 
@@ -826,17 +827,17 @@ withdrawn.
 
 Included, in full:
 
-| Group                | Fingerprinted values                                                                                                                                                                                                       |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Command identity     | `command_version`, `ingestion_key`, `source`                                                                                                                                                                               |
-| Occurrence           | `occurred_at`, `timezone`, `timezone_source`, `completion_confirmed`                                                                                                                                                       |
-| Plan provenance      | `plan_provenance.plan_id`, `.planned_workout_id`, `.plan_name`, `.week_number`, `.day_number`                                                                                                                              |
-| Session snapshots    | `workout_title`, `difficulty`, `estimated_duration_seconds`, `actual_duration_seconds`, `notes`                                                                                                                            |
-| Calories             | `calories.kcal`, `.source`, `.algorithm_version`, `.calculation_weight_kg`                                                                                                                                                 |
-| Exercise identity    | Per exercise: `order_index`, `exercise_id`, `exercise_key_snapshot`, `exercise_name_snapshot`, `substituted_for_exercise_id`, `status`, `notes`                                                                            |
-| Prescription         | Per exercise: the full canonical `prescription_snapshot` serialization (§6.1.1)                                                                                                                                            |
-| Set performance      | Per set: `set_index`, `reps`, `load_kg`, `assistance_level`, `duration_seconds`, `hold_seconds`, `distance_m`, `rpe`, `is_completed`, `performed_at`                                                                       |
-| Auxiliary facts      | Per supplied fact, in every auxiliary list: its `ingestion_key`, its fact type, and its full canonical fact value (the same inputs as its `fact_fingerprint`, §11.3), including hydration `kind` and `target_fact_id`      |
+| Group             | Fingerprinted values                                                                                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Command identity  | `command_version`, `ingestion_key`, `source`                                                                                                                                                                          |
+| Occurrence        | `occurred_at`, `timezone`, `timezone_source`, `completion_confirmed`                                                                                                                                                  |
+| Plan provenance   | `plan_provenance.plan_id`, `.planned_workout_id`, `.plan_name`, `.week_number`, `.day_number`                                                                                                                         |
+| Session snapshots | `workout_title`, `difficulty`, `estimated_duration_seconds`, `actual_duration_seconds`, `notes`                                                                                                                       |
+| Calories          | `calories.kcal`, `.source`, `.algorithm_version`, `.calculation_weight_kg`                                                                                                                                            |
+| Exercise identity | Per exercise: `order_index`, `exercise_id`, `exercise_key_snapshot`, `exercise_name_snapshot`, `substituted_for_exercise_id`, `status`, `notes`                                                                       |
+| Prescription      | Per exercise: the full canonical `prescription_snapshot` serialization (§6.1.1)                                                                                                                                       |
+| Set performance   | Per set: `set_index`, `reps`, `load_kg`, `assistance_level`, `duration_seconds`, `hold_seconds`, `distance_m`, `rpe`, `is_completed`, `performed_at`                                                                  |
+| Auxiliary facts   | Per supplied fact, in every auxiliary list: its `ingestion_key`, its fact type, and its full canonical fact value (the same inputs as its `fact_fingerprint`, §11.3), including hydration `kind` and `target_fact_id` |
 
 Excluded, exhaustively — and only because none of these is a client-authored
 immutable historical fact:
@@ -856,19 +857,19 @@ immutable historical fact:
 
 **Canonicalization (frozen).**
 
-| Concern            | Rule                                                                                                                                       |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Encoding           | UTF-8 JSON, Unicode **NFC** normalization applied to every string before hashing                                                            |
-| Object keys        | Sorted lexicographically ascending by code point; no insignificant whitespace                                                               |
-| List order         | Exercises ordered by `order_index` ascending, sets by `set_index` ascending, auxiliary facts by their `ingestion_key` ascending             |
-| Null vs omitted    | An optional field that is absent and an optional field explicitly `null` canonicalize **identically** (both omitted), so transport-only differences never conflict |
-| Decimals           | Fixed scale per the field's declared scale, plain decimal notation, no exponent, no trailing zero beyond the declared scale, `-0` forbidden |
-| Integers           | Plain, no decimal point                                                                                                                     |
-| Timestamps         | UTC, ISO-8601 with `Z`, truncated to **second** precision                                                                                   |
-| Local dates        | `YYYY-MM-DD`                                                                                                                                |
-| Booleans           | `true` / `false` literals                                                                                                                   |
-| Text               | Trimmed of leading/trailing whitespace; interior whitespace preserved verbatim                                                              |
-| Hash               | SHA-256, lowercase hex, 64 characters                                                                                                       |
+| Concern         | Rule                                                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Encoding        | UTF-8 JSON, Unicode **NFC** normalization applied to every string before hashing                                                                                   |
+| Object keys     | Sorted lexicographically ascending by code point; no insignificant whitespace                                                                                      |
+| List order      | Exercises ordered by `order_index` ascending, sets by `set_index` ascending, auxiliary facts by their `ingestion_key` ascending                                    |
+| Null vs omitted | An optional field that is absent and an optional field explicitly `null` canonicalize **identically** (both omitted), so transport-only differences never conflict |
+| Decimals        | Fixed scale per the field's declared scale, plain decimal notation, no exponent, no trailing zero beyond the declared scale, `-0` forbidden                        |
+| Integers        | Plain, no decimal point                                                                                                                                            |
+| Timestamps      | UTC, ISO-8601 with `Z`, truncated to **second** precision                                                                                                          |
+| Local dates     | `YYYY-MM-DD`                                                                                                                                                       |
+| Booleans        | `true` / `false` literals                                                                                                                                          |
+| Text            | Trimmed of leading/trailing whitespace; interior whitespace preserved verbatim                                                                                     |
+| Hash            | SHA-256, lowercase hex, 64 characters                                                                                                                              |
 
 A materially changed immutable fact therefore always yields a different
 fingerprint and `PH_INGESTION_KEY_CONFLICT`, never a silent replay.
@@ -889,10 +890,10 @@ different value**. Every auxiliary table therefore carries a required,
 immutable `fact_fingerprint` (constrained text, 64 lowercase hex, SHA-256,
 write-once, server-computed).
 
-| Fact table               | Canonical fact-fingerprint inputs                                                                                          |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `local_day`                    |
-| `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `local_day`                                    |
+| Fact table               | Canonical fact-fingerprint inputs                                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `local_day`                                  |
+| `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `local_day`                                                  |
 | `daily_target_snapshots` | `ingestion_key`, `local_day`, `calorie_target_kcal`, `target_source`, `target_algorithm_version`, `calculation_weight_kg`, `captured_at` |
 
 Canonicalization is exactly §11.1's.
@@ -939,16 +940,20 @@ Frozen resolution rules:
 
 **State machine.**
 
-| From              | To                | Trigger                                                      |
-| ----------------- | ----------------- | ------------------------------------------------------------ |
-| —                 | `pending`         | Row created atomically with the history event                |
-| `pending`         | `processing`      | Atomic worker claim (`next_attempt_at <= now`)               |
-| `retry_scheduled` | `processing`      | Atomic worker claim after backoff elapsed                    |
-| `processing`      | `delivered`       | Consumer acknowledged successfully                           |
-| `processing`      | `retry_scheduled` | Retryable failure and `attempt_count < 10`                   |
-| `processing`      | `dead_letter`     | Non-retryable failure, or `attempt_count >= 10`              |
-| `processing`      | `retry_scheduled` | Lease expiry recovery by a sweeper (abandoned worker)        |
-| `dead_letter`     | `pending`         | Explicit operator manual replay (resets lease, keeps counts) |
+| From              | To                | Trigger                                                                                                      |
+| ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| —                 | `pending`         | Row created atomically with the history event                                                                |
+| `pending`         | `processing`      | Atomic worker claim (`next_attempt_at <= now`)                                                               |
+| `retry_scheduled` | `processing`      | Atomic worker claim after backoff elapsed                                                                    |
+| `processing`      | `delivered`       | Consumer applied, or idempotently confirmed it already applied, its **complete** semantic obligation (§13.4) |
+| `processing`      | `retry_scheduled` | Retryable failure and `attempt_count < 10`                                                                   |
+| `processing`      | `retry_scheduled` | `PH_DISPATCH_SEMANTICS_UNSUPPORTED`: the consumer cannot yet apply void/correction semantics                 |
+| `processing`      | `dead_letter`     | Non-retryable failure, or `attempt_count >= 10`                                                              |
+| `processing`      | `retry_scheduled` | Lease expiry recovery by a sweeper (abandoned worker)                                                        |
+| `dead_letter`     | `pending`         | Explicit operator manual replay (resets lease, keeps counts)                                                 |
+
+A row is **never** marked `delivered` merely because the consumer has no
+implementation for its semantics; see §13.4.
 
 Frozen operational rules:
 
@@ -968,10 +973,31 @@ retry_scheduled)` and `next_attempt_at <= now`), locks them skipping locked
 - **History is never deleted** because a delivery failed or dead-lettered.
 - **No user access:** `anon` and `authenticated` receive no grants and no RLS
   policy on this table.
-- **Duplicate protection:** unique `(session_id, event_kind, consumer,
-adjustment_id)` — treating a null `adjustment_id` as a distinct logical
-  value — so one logical history event yields at most one delivery row per
-  consumer.
+
+### 12.1 Duplicate protection under PostgreSQL null semantics (frozen)
+
+The earlier single unique constraint `(session_id, event_kind, consumer,
+adjustment_id)` is **withdrawn**: under ordinary PostgreSQL unique-null
+semantics two null `adjustment_id` rows are never equal, so it would not
+prevent duplicate completion deliveries. It is replaced by two **partial
+unique constraints**:
+
+| Event class       | Uniqueness                                                                       |
+| ----------------- | -------------------------------------------------------------------------------- |
+| Completion events | Unique `(session_id, event_kind, consumer)` where `adjustment_id IS NULL`        |
+| Adjustment events | Unique `(adjustment_id, event_kind, consumer)` where `adjustment_id IS NOT NULL` |
+
+Guarantees: at most one completion delivery per session/event/consumer, and at
+most one adjustment delivery per adjustment/event/consumer. Both hold without
+relying on null comparison.
+
+Subject resolution, frozen exactly:
+
+| `event_kind`        | `session_id` is…                                                                  | `adjustment_id`              |
+| ------------------- | --------------------------------------------------------------------------------- | ---------------------------- |
+| `session_completed` | the completed session                                                             | **forbidden** (must be null) |
+| `session_voided`    | the target / original session                                                     | **mandatory**                |
+| `session_corrected` | the target / original session; the replacement is resolved through the adjustment | **mandatory**                |
 
 **Plan synchronization.** A `training_plan_sync` row is created only when the
 subject session carries a non-null `source_planned_workout_id`. When it is
@@ -1036,15 +1062,34 @@ amounts, goal increments, level deltas) are never copied into the outbox.
 - `goal_progress_events` remains mutable operational state under its existing
   retry contract; further hardening is outside ADR 0005.
 
-**Implementation dependency (recorded, not weakening the contract).** The
-current Gamification and Goals consumers implement forward progress only; they
-have no reversal path for void or correction events. The durable delivery
-contract stands as specified: void and correction outbox rows are created from
-day one. Until reversal handling ships (Sprint 8.2 for Gamification and Goals
-consumer updates), those rows are delivered to consumers that must at minimum
-acknowledge them idempotently as no-ops and record the unhandled event for
-later recomputation. No history write is skipped or delayed because of this
-dependency.
+### 13.4 Delivery-completeness rule (frozen)
+
+The earlier allowance for consumers to acknowledge void and correction events
+as no-ops "until reversal ships" is **withdrawn**: it would discard the durable
+obligation to reverse or recompute downstream projections.
+
+- An outbox row may become `delivered` **only** after the consumer has applied,
+  or idempotently confirmed it already applied, its **complete** semantic
+  obligation for that event.
+- A consumer that cannot yet apply void or correction semantics must fail the
+  delivery with `PH_DISPATCH_SEMANTICS_UNSUPPORTED`. The row stays in
+  `retry_scheduled` and, after the bounded attempt budget, moves to
+  `dead_letter`.
+- The outbox row itself is the durable recovery record; it is retained and
+  never deleted while the obligation is outstanding.
+- A no-op acknowledgement is valid **only** when the consumer can prove the
+  event has no applicable domain consequence for it (for example a goal that
+  never counted the voided session). "Handling is not implemented yet" is never
+  such a proof.
+- **Implementation dependency.** Consumer support for void and correction must
+  ship **before** the product enables user-facing void/correction actions.
+  History storage and the adjustment RPC may exist earlier, but no correction
+  event may be silently lost.
+- When consumer support ships, retained `dead_letter` and pending rows are
+  reprocessed through operator manual replay, so no obligation is skipped.
+- No history write is ever skipped, delayed or rolled back because of this
+  dependency, and Progress History still never edits Gamification or Goals
+  directly.
 
 ---
 
@@ -1068,32 +1113,32 @@ fallback, empty state and implementation phase. No read model reads
 Authoritative tables: `public.workout_sessions`,
 `public.workout_session_adjustments`.
 
-| Output field                  | Logical type               | Nullable | Derivation                                                                                   |
-| ----------------------------- | -------------------------- | -------- | -------------------------------------------------------------------------------------------- |
-| `session_id`                  | UUID                       | No       | Effective session ID from §14.4                                                              |
-| `root_session_id`             | UUID                       | No       | Root of the correction chain; equals `session_id` when never corrected                       |
-| `is_corrected_result`         | Boolean                    | No       | `true` when `session_id <> root_session_id`                                                  |
-| `occurred_at`                 | UTC timestamp              | No       | Effective session `occurred_at`                                                              |
-| `local_day`                   | Local date                 | No       | Effective session `local_day` (never recomputed)                                             |
-| `occurred_timezone`           | Constrained text           | No       | Effective session `occurred_timezone`                                                        |
-| `source`                      | Constrained text           | No       | Effective session `source`                                                                   |
-| `workout_title_snapshot`      | Constrained text           | No       | Stable title snapshot; never re-resolved                                                     |
-| `plan_name_snapshot`          | Constrained text           | Yes      | Immutable plan-name snapshot                                                                 |
-| `week_number_snapshot`        | Bounded integer            | Yes      | Immutable plan position                                                                      |
-| `day_number_snapshot`         | Bounded integer            | Yes      | Immutable plan position                                                                      |
-| `difficulty_snapshot`         | Constrained text           | Yes      | Canonical history value (`beginner`/`intermediate`/`advanced`), never re-derived             |
-| `exercise_summary`            | Ordered list of text       | No       | Up to 3 display labels resolved per §14.6, then `+N` overflow count                          |
-| `exercise_count`              | Bounded integer            | No       | Count of exercise rows on the effective session                                              |
-| `completed_set_count`         | Bounded integer            | No       | Count of sets meeting the completed-set rule (§6.2)                                          |
-| `actual_duration_seconds`     | Bounded integer            | Yes      | Measured duration only; never filled from the estimate                                       |
-| `estimated_duration_seconds`  | Bounded integer            | Yes      | Prescribed duration, exposed as a **separate** field                                         |
-| `calories_kcal`               | Decimal(7,2)               | Yes      | Stored value                                                                                 |
-| `calories_source`             | Constrained text           | No       | Stored provenance; UI must label estimates as estimates                                      |
-| `calorie_algorithm_version`   | Constrained text           | Yes      | Stored value when estimated                                                                  |
-| `adjustment_state`            | Constrained text           | No       | `none` \| `corrected` (effective replacement shown); voided sessions are excluded entirely   |
-| `cursor_occurred_at`          | UTC timestamp              | No       | Cursor component (equals `occurred_at`)                                                      |
-| `cursor_id`                   | UUID                       | No       | Cursor component (equals `session_id`)                                                       |
-| `cursor`                      | Constrained text           | No       | Opaque `v1:`-prefixed encoding of `(cursor_occurred_at, cursor_id)`                          |
+| Output field                 | Logical type         | Nullable | Derivation                                                                                 |
+| ---------------------------- | -------------------- | -------- | ------------------------------------------------------------------------------------------ |
+| `session_id`                 | UUID                 | No       | Effective session ID from §14.4                                                            |
+| `root_session_id`            | UUID                 | No       | Root of the correction chain; equals `session_id` when never corrected                     |
+| `is_corrected_result`        | Boolean              | No       | `true` when `session_id <> root_session_id`                                                |
+| `occurred_at`                | UTC timestamp        | No       | Effective session `occurred_at`                                                            |
+| `local_day`                  | Local date           | No       | Effective session `local_day` (never recomputed)                                           |
+| `occurred_timezone`          | Constrained text     | No       | Effective session `occurred_timezone`                                                      |
+| `source`                     | Constrained text     | No       | Effective session `source`                                                                 |
+| `workout_title_snapshot`     | Constrained text     | No       | Stable title snapshot; never re-resolved                                                   |
+| `plan_name_snapshot`         | Constrained text     | Yes      | Immutable plan-name snapshot                                                               |
+| `week_number_snapshot`       | Bounded integer      | Yes      | Immutable plan position                                                                    |
+| `day_number_snapshot`        | Bounded integer      | Yes      | Immutable plan position                                                                    |
+| `difficulty_snapshot`        | Constrained text     | Yes      | Canonical history value (`beginner`/`intermediate`/`advanced`), never re-derived           |
+| `exercise_summary`           | Ordered list of text | No       | Up to 3 display labels resolved per §14.6, then `+N` overflow count                        |
+| `exercise_count`             | Bounded integer      | No       | Count of exercise rows on the effective session                                            |
+| `completed_set_count`        | Bounded integer      | No       | Count of sets meeting the completed-set rule (§6.2)                                        |
+| `actual_duration_seconds`    | Bounded integer      | Yes      | Measured duration only; never filled from the estimate                                     |
+| `estimated_duration_seconds` | Bounded integer      | Yes      | Prescribed duration, exposed as a **separate** field                                       |
+| `calories_kcal`              | Decimal(7,2)         | Yes      | Stored value                                                                               |
+| `calories_source`            | Constrained text     | No       | Stored provenance; UI must label estimates as estimates                                    |
+| `calorie_algorithm_version`  | Constrained text     | Yes      | Stored value when estimated                                                                |
+| `adjustment_state`           | Constrained text     | No       | `none` \| `corrected` (effective replacement shown); voided sessions are excluded entirely |
+| `cursor_occurred_at`         | UTC timestamp        | No       | Cursor component (equals `occurred_at`)                                                    |
+| `cursor_id`                  | UUID                 | No       | Cursor component (equals `session_id`)                                                     |
+| `cursor`                     | Constrained text     | No       | Opaque `v1:`-prefixed encoding of `(cursor_occurred_at, cursor_id)`                        |
 
 Page sizes (frozen): default **20** items, maximum **50** items. A requested
 size above the maximum is clamped, not rejected.
@@ -1106,28 +1151,28 @@ Authoritative tables: `public.workout_sessions`,
 
 Session level:
 
-| Output field                                                                                                                                                                                                                | Derivation                                                            |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `session_id`, `root_session_id`, `occurred_at`, `local_day`, `occurred_timezone`, `occurred_timezone_source`, `source`                                                                                                      | Effective session columns                                             |
-| `source_plan_id`, `source_planned_workout_id`, `plan_name_snapshot`, `week_number_snapshot`, `day_number_snapshot`, `workout_title_snapshot`, `difficulty_snapshot`                                                         | Immutable provenance/snapshot scalars                                 |
-| `actual_duration_seconds`, `estimated_duration_seconds`                                                                                                                                                                     | Reported separately; never substituted for one another                |
-| `calories_kcal`, `calories_source`, `calorie_algorithm_version`, `calculation_weight_kg`                                                                                                                                    | Calorie provenance block                                              |
-| `notes`                                                                                                                                                                                                                     | Stored user note                                                      |
-| `effective_state`                                                                                                                                                                                                           | `effective` \| `voided` \| `superseded` (§14.4)                       |
-| `adjustment_audit`                                                                                                                                                                                                          | `{ adjustment_id, kind, reason, occurred_at, actor_type, target_session_id, replacement_session_id }` when an adjustment targets this session |
-| `chain_depth`                                                                                                                                                                                                               | Number of correction links traversed from the root                    |
+| Output field                                                                                                                                                        | Derivation                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session_id`, `root_session_id`, `occurred_at`, `local_day`, `occurred_timezone`, `occurred_timezone_source`, `source`                                              | Effective session columns                                                                                                                     |
+| `source_plan_id`, `source_planned_workout_id`, `plan_name_snapshot`, `week_number_snapshot`, `day_number_snapshot`, `workout_title_snapshot`, `difficulty_snapshot` | Immutable provenance/snapshot scalars                                                                                                         |
+| `actual_duration_seconds`, `estimated_duration_seconds`                                                                                                             | Reported separately; never substituted for one another                                                                                        |
+| `calories_kcal`, `calories_source`, `calorie_algorithm_version`, `calculation_weight_kg`                                                                            | Calorie provenance block                                                                                                                      |
+| `notes`                                                                                                                                                             | Stored user note                                                                                                                              |
+| `effective_state`                                                                                                                                                   | `effective` \| `voided` \| `superseded` (§14.4)                                                                                               |
+| `adjustment_audit`                                                                                                                                                  | `{ adjustment_id, kind, reason, occurred_at, actor_type, target_session_id, replacement_session_id }` when an adjustment targets this session |
+| `chain_depth`                                                                                                                                                       | Number of correction links traversed from the root                                                                                            |
 
 Exercise level (ordered by `order_index ASC`):
 
-| Output field                                                                    | Derivation                                                                             |
-| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `session_exercise_id`, `order_index`, `status`, `notes`                         | Stored columns                                                                         |
-| `exercise_id`                                                                   | Stable text catalog identifier of the exercise actually performed, or null              |
-| `display_label`                                                                 | Resolved per §14.6                                                                     |
-| `exercise_key_snapshot`, `exercise_name_snapshot`                               | Neutral stored identity/fallback                                                        |
-| `substituted_for_exercise_id`, `substituted_for_display_label`                  | Original prescribed identity, rendered only inside an explicit "substituted for" affordance (§14.6) |
-| `prescription_snapshot`                                                         | Full versioned structured object (§6.1.1), never merged with actual performance         |
-| `sets`                                                                          | Ordered set list below                                                                 |
+| Output field                                                   | Derivation                                                                                          |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `session_exercise_id`, `order_index`, `status`, `notes`        | Stored columns                                                                                      |
+| `exercise_id`                                                  | Stable text catalog identifier of the exercise actually performed, or null                          |
+| `display_label`                                                | Resolved per §14.6                                                                                  |
+| `exercise_key_snapshot`, `exercise_name_snapshot`              | Neutral stored identity/fallback                                                                    |
+| `substituted_for_exercise_id`, `substituted_for_display_label` | Original prescribed identity, rendered only inside an explicit "substituted for" affordance (§14.6) |
+| `prescription_snapshot`                                        | Full versioned structured object (§6.1.1), never merged with actual performance                     |
+| `sets`                                                         | Ordered set list below                                                                              |
 
 Set level (ordered by `set_index ASC`):
 `set_id`, `set_index`, `reps`, `load_kg`, `assistance_level`,
@@ -1147,27 +1192,27 @@ Eligible population per week: effective sessions (§14.4) whose `local_day`
 falls in the Monday–Sunday week window; voided sessions and superseded
 originals are excluded entirely.
 
-| Output field                        | Logical type     | Exact formula                                                                                                                        |
-| ----------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `week_start_local_day`              | Local date       | Monday of the week (§14.7)                                                                                                           |
-| `week_end_local_day`                | Local date       | Sunday of the same week                                                                                                              |
-| `effective_workout_count`           | Integer          | Count of eligible effective sessions                                                                                                 |
-| `active_local_day_count`            | Integer          | Count of distinct `local_day` values among eligible sessions                                                                         |
-| `actual_duration_seconds_total`     | Integer          | Sum of `actual_duration_seconds` over eligible sessions, treating null as 0                                                          |
-| `actual_duration_sessions_counted`  | Integer          | Count of eligible sessions with non-null `actual_duration_seconds` (honesty denominator)                                             |
-| `estimated_duration_seconds_total`  | Integer          | Sum of `estimated_duration_seconds`, reported **separately**; never substituted for the actual total                                 |
-| `completed_set_count`               | Integer          | Count of sets of eligible sessions satisfying the completed-set rule (§6.2)                                                          |
-| `total_reps`                        | Integer          | Sum of `reps` over completed sets where `reps` is non-null                                                                           |
-| `reps_sets_counted`                 | Integer          | Count of completed sets contributing to `total_reps`                                                                                 |
-| `timed_duration_seconds_total`      | Integer          | Sum of `duration_seconds` over completed sets where non-null                                                                         |
-| `hold_seconds_total`                | Integer          | Sum of `hold_seconds` over completed sets where non-null                                                                             |
-| `distance_m_total`                  | Decimal(10,2)    | Sum of `distance_m` over completed sets where non-null                                                                               |
-| `calories_measured_total`           | Decimal(9,2)     | Sum of `calories_kcal` where `calories_source = 'measured'`                                                                          |
-| `calories_user_entered_total`       | Decimal(9,2)     | Sum of `calories_kcal` where `calories_source = 'user_entered'`                                                                      |
-| `calories_estimated_total`          | Decimal(9,2)     | Sum of `calories_kcal` where `calories_source = 'estimated'`                                                                         |
-| `calories_unknown_session_count`    | Integer          | Count of eligible sessions with `calories_source = 'unknown'`                                                                        |
-| `active_day_streak_days`            | Integer          | Longest run of consecutive `local_day` values with ≥ 1 eligible session, computed strictly inside this week window                    |
-| `applicable_daily_targets`          | List of objects  | Per `local_day` in the window, the applicable `daily_target_snapshots` row selected by §8.3 ordering, exposing `calorie_target_kcal`, `target_source`, `target_algorithm_version` |
+| Output field                       | Logical type    | Exact formula                                                                                                                                                                     |
+| ---------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `week_start_local_day`             | Local date      | Monday of the week (§14.7)                                                                                                                                                        |
+| `week_end_local_day`               | Local date      | Sunday of the same week                                                                                                                                                           |
+| `effective_workout_count`          | Integer         | Count of eligible effective sessions                                                                                                                                              |
+| `active_local_day_count`           | Integer         | Count of distinct `local_day` values among eligible sessions                                                                                                                      |
+| `actual_duration_seconds_total`    | Integer         | Sum of `actual_duration_seconds` over eligible sessions, treating null as 0                                                                                                       |
+| `actual_duration_sessions_counted` | Integer         | Count of eligible sessions with non-null `actual_duration_seconds` (honesty denominator)                                                                                          |
+| `estimated_duration_seconds_total` | Integer         | Sum of `estimated_duration_seconds`, reported **separately**; never substituted for the actual total                                                                              |
+| `completed_set_count`              | Integer         | Count of sets of eligible sessions satisfying the completed-set rule (§6.2)                                                                                                       |
+| `total_reps`                       | Integer         | Sum of `reps` over completed sets where `reps` is non-null                                                                                                                        |
+| `reps_sets_counted`                | Integer         | Count of completed sets contributing to `total_reps`                                                                                                                              |
+| `timed_duration_seconds_total`     | Integer         | Sum of `duration_seconds` over completed sets where non-null                                                                                                                      |
+| `hold_seconds_total`               | Integer         | Sum of `hold_seconds` over completed sets where non-null                                                                                                                          |
+| `distance_m_total`                 | Decimal(10,2)   | Sum of `distance_m` over completed sets where non-null                                                                                                                            |
+| `calories_measured_total`          | Decimal(9,2)    | Sum of `calories_kcal` where `calories_source = 'measured'`                                                                                                                       |
+| `calories_user_entered_total`      | Decimal(9,2)    | Sum of `calories_kcal` where `calories_source = 'user_entered'`                                                                                                                   |
+| `calories_estimated_total`         | Decimal(9,2)    | Sum of `calories_kcal` where `calories_source = 'estimated'`                                                                                                                      |
+| `calories_unknown_session_count`   | Integer         | Count of eligible sessions with `calories_source = 'unknown'`                                                                                                                     |
+| `active_day_streak_days`           | Integer         | Longest run of consecutive `local_day` values with ≥ 1 eligible session, computed strictly inside this week window                                                                |
+| `applicable_daily_targets`         | List of objects | Per `local_day` in the window, the applicable `daily_target_snapshots` row selected by §8.3 ordering, exposing `calorie_target_kcal`, `target_source`, `target_algorithm_version` |
 
 Frozen aggregate rules:
 
@@ -1199,15 +1244,15 @@ Definitions:
   `replacement_session_id` until a session with no direct adjustment (the
   effective session) or a `void` adjustment (the chain is voided) is reached.
 
-| Output field           | Logical type     | Meaning                                                                                                |
-| ---------------------- | ---------------- | -------------------------------------------------------------------------------------------------------- |
-| `root_session_id`      | UUID             | Chain root                                                                                             |
-| `effective_session_id` | UUID             | Terminal non-voided session; null when the chain terminates in a `void`                                |
-| `state`                | Constrained text | `effective` \| `voided` \| `chain_error`                                                               |
-| `chain_depth`          | Integer          | Number of correction links traversed (0 for an unadjusted session)                                     |
-| `chain_session_ids`    | Ordered list     | Root → terminal session IDs, for audit views only                                                      |
-| `terminal_adjustment`  | Object           | `{ adjustment_id, kind, reason, occurred_at, actor_type }` when the chain terminates in an adjustment  |
-| `integrity_error_code` | Constrained text | Null, or `PH_ADJUSTMENT_CHAIN_CORRUPT` when `state = 'chain_error'`                                    |
+| Output field           | Logical type     | Meaning                                                                                               |
+| ---------------------- | ---------------- | ----------------------------------------------------------------------------------------------------- |
+| `root_session_id`      | UUID             | Chain root                                                                                            |
+| `effective_session_id` | UUID             | Terminal non-voided session; null when the chain terminates in a `void`                               |
+| `state`                | Constrained text | `effective` \| `voided` \| `chain_error`                                                              |
+| `chain_depth`          | Integer          | Number of correction links traversed (0 for an unadjusted session)                                    |
+| `chain_session_ids`    | Ordered list     | Root → terminal session IDs, for audit views only                                                     |
+| `terminal_adjustment`  | Object           | `{ adjustment_id, kind, reason, occurred_at, actor_type }` when the chain terminates in an adjustment |
+| `integrity_error_code` | Constrained text | Null, or `PH_ADJUSTMENT_CHAIN_CORRUPT` when `state = 'chain_error'`                                   |
 
 Cycle, corruption and bound handling (frozen):
 
@@ -1229,17 +1274,17 @@ Cycle, corruption and bound handling (frozen):
 Authoritative tables: `public.hydration_facts`,
 `public.meal_adherence_facts`, `public.daily_target_snapshots`.
 
-| Output field                    | Logical type     | Derivation                                                                                                                    |
-| ------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `local_day`                     | Local date       | Grouping key; the historical local calendar day captured at ingestion, never recomputed for the current timezone              |
-| `timezone_note`                 | Constrained text | The `occurred_timezone` of the day's first effective hydration/meal fact, exposed so the UI can explain travel days           |
-| `hydration_total_ml`            | Integer          | Sum of `volume_ml` over rows with `kind = 'entry'` that are **not** targeted by any `kind = 'void'` row of the same user      |
-| `hydration_entry_count`         | Integer          | Count of those same effective entry rows                                                                                      |
-| `hydration_voided_entry_count`  | Integer          | Count of `entry` rows targeted by a void, exposed for transparency and never subtracted twice                                 |
-| `meal_adherence`                | List of objects  | One entry per `meal_key` observed that day: `{ meal_key, adhered, observed_at }`, using the §8.2 latest-observation rule      |
-| `meals_adhered_count`           | Integer          | Count of effective meal observations with `adhered = true`                                                                    |
-| `meals_observed_count`          | Integer          | Count of effective meal observations                                                                                          |
-| `applicable_daily_target`       | Object           | The §8.3 applicable snapshot: `{ calorie_target_kcal, target_source, target_algorithm_version, calculation_weight_kg }`, or null |
+| Output field                   | Logical type     | Derivation                                                                                                                       |
+| ------------------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `local_day`                    | Local date       | Grouping key; the historical local calendar day captured at ingestion, never recomputed for the current timezone                 |
+| `timezone_note`                | Constrained text | The `occurred_timezone` of the day's first effective hydration/meal fact, exposed so the UI can explain travel days              |
+| `hydration_total_ml`           | Integer          | Sum of `volume_ml` over rows with `kind = 'entry'` that are **not** targeted by any `kind = 'void'` row of the same user         |
+| `hydration_entry_count`        | Integer          | Count of those same effective entry rows                                                                                         |
+| `hydration_voided_entry_count` | Integer          | Count of `entry` rows targeted by a void, exposed for transparency and never subtracted twice                                    |
+| `meal_adherence`               | List of objects  | One entry per `meal_key` observed that day: `{ meal_key, adhered, observed_at }`, using the §8.2 latest-observation rule         |
+| `meals_adhered_count`          | Integer          | Count of effective meal observations with `adhered = true`                                                                       |
+| `meals_observed_count`         | Integer          | Count of effective meal observations                                                                                             |
+| `applicable_daily_target`      | Object           | The §8.3 applicable snapshot: `{ calorie_target_kcal, target_source, target_algorithm_version, calculation_weight_kg }`, or null |
 
 Void rows never contribute a volume, positive or negative; they only remove
 their target entry from the effective set. Ordering is `local_day DESC`,
@@ -1320,40 +1365,40 @@ calendars, training plans are already structured in Monday-anchored weeks
 
 ### `public.workout_session_exercises`
 
-| Object                                                  | Type        | Purpose / query contract                                          |
-| ------------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
-| `(session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user parent relationship                                     |
-| `(id, user_id)`                                         | Unique      | Composite-ownership target for sets                               |
-| `(session_id, order_index)`                             | Unique      | Deterministic ordering, no duplicate positions                    |
-| `(session_id, user_id)`                                 | Index       | Composite-FK referential lookup; session-detail fetch             |
-| `(user_id)`                                             | Index       | RLS ownership path and `auth.users` cascade                       |
-| `(user_id, exercise_id)` partial where not null         | Index       | Per-exercise history read model (§14 detail/aggregate); text key  |
+| Object                                                  | Type        | Purpose / query contract                                         |
+| ------------------------------------------------------- | ----------- | ---------------------------------------------------------------- |
+| `(session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user parent relationship                                    |
+| `(id, user_id)`                                         | Unique      | Composite-ownership target for sets                              |
+| `(session_id, order_index)`                             | Unique      | Deterministic ordering, no duplicate positions                   |
+| `(session_id, user_id)`                                 | Index       | Composite-FK referential lookup; session-detail fetch            |
+| `(user_id)`                                             | Index       | RLS ownership path and `auth.users` cascade                      |
+| `(user_id, exercise_id)` partial where not null         | Index       | Per-exercise history read model (§14 detail/aggregate); text key |
 
 No further exercise indexes are added; speculative indexes without a defined
 query consumer are forbidden.
 
 ### `public.workout_session_sets`
 
-| Object                                                                    | Type        | Purpose / query contract                              |
-| ------------------------------------------------------------------------- | ----------- | ----------------------------------------------------- |
-| `(session_exercise_id, user_id) → workout_session_exercises(id, user_id)` | Foreign key | Same-user parent relationship                         |
-| `(session_exercise_id, set_index)`                                        | Unique      | Deterministic set ordering                            |
-| `(session_exercise_id, user_id)`                                          | Index       | Composite-FK referential lookup; detail fetch         |
-| `(user_id)`                                                               | Index       | RLS ownership path and `auth.users` cascade           |
+| Object                                                                    | Type        | Purpose / query contract                      |
+| ------------------------------------------------------------------------- | ----------- | --------------------------------------------- |
+| `(session_exercise_id, user_id) → workout_session_exercises(id, user_id)` | Foreign key | Same-user parent relationship                 |
+| `(session_exercise_id, set_index)`                                        | Unique      | Deterministic set ordering                    |
+| `(session_exercise_id, user_id)`                                          | Index       | Composite-FK referential lookup; detail fetch |
+| `(user_id)`                                                               | Index       | RLS ownership path and `auth.users` cascade   |
 
 ### `public.workout_session_adjustments`
 
-| Object                                                                        | Type        | Purpose / query contract                                          |
-| ----------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
-| `(target_session_id, user_id) → workout_sessions(id, user_id)`                | Foreign key | Same-user target                                                  |
-| `(replacement_session_id, user_id) → workout_sessions(id, user_id)`           | Foreign key | Same-user replacement                                             |
-| `(id, user_id)`                                                               | Unique      | Composite-ownership target for outbox rows                        |
-| `(user_id, adjustment_key)`                                                   | Unique      | Adjustment-command idempotency (§7.2)                             |
-| `(target_session_id)`                                                         | Unique      | At most one direct adjustment per session (§7 determinism)        |
-| `(replacement_session_id)` partial where not null                             | Unique      | A replacement session may serve at most one correction (§7.2)     |
-| `(target_session_id, user_id)`                                                | Index       | Composite-FK referential lookup and same-user chain resolution    |
-| `(replacement_session_id, user_id)` partial where not null                    | Index       | Composite-FK referential lookup and reverse chain resolution      |
-| `(user_id, occurred_at DESC, id DESC)`                                        | Index       | Audit timeline ordering; also satisfies the RLS `user_id` path    |
+| Object                                                              | Type        | Purpose / query contract                                       |
+| ------------------------------------------------------------------- | ----------- | -------------------------------------------------------------- |
+| `(target_session_id, user_id) → workout_sessions(id, user_id)`      | Foreign key | Same-user target                                               |
+| `(replacement_session_id, user_id) → workout_sessions(id, user_id)` | Foreign key | Same-user replacement                                          |
+| `(id, user_id)`                                                     | Unique      | Composite-ownership target for outbox rows                     |
+| `(user_id, adjustment_key)`                                         | Unique      | Adjustment-command idempotency (§7.2)                          |
+| `(target_session_id)`                                               | Unique      | At most one direct adjustment per session (§7 determinism)     |
+| `(replacement_session_id)` partial where not null                   | Unique      | A replacement session may serve at most one correction (§7.2)  |
+| `(target_session_id, user_id)`                                      | Index       | Composite-FK referential lookup and same-user chain resolution |
+| `(replacement_session_id, user_id)` partial where not null          | Index       | Composite-FK referential lookup and reverse chain resolution   |
+| `(user_id, occurred_at DESC, id DESC)`                              | Index       | Audit timeline ordering; also satisfies the RLS `user_id` path |
 
 The unique constraint on `(replacement_session_id)` (non-null rows only)
 replaces the previous non-unique lookup index. It is what makes correction
@@ -1364,18 +1409,18 @@ corrections, so no branching or merging is possible.
 
 | Object                                                                                | Type        | Purpose / query contract                                       |
 | ------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------- |
-| `(session_id, event_kind, consumer)` partial where `adjustment_id IS NULL`             | Unique      | One completion delivery per session/event/consumer (§12.1)     |
-| `(adjustment_id, event_kind, consumer)` partial where `adjustment_id IS NOT NULL`      | Unique      | One adjustment delivery per adjustment/event/consumer (§12.1)   |
-| `(state, next_attempt_at, id)` partial where `state IN ('pending','retry_scheduled')`  | Index       | Worker claim scan                                              |
-| `(lease_expires_at)` partial where `state = 'processing'`                              | Index       | Lease-expiry sweeper                                           |
-| `(session_id, user_id) → workout_sessions(id, user_id)`                                | Foreign key | Composite ownership to the subject session                     |
-| `(adjustment_id, user_id) → workout_session_adjustments(id, user_id)`                  | Foreign key | Composite ownership for adjustment events                      |
-| `user_id → auth.users(id) ON DELETE CASCADE`                                           | Foreign key | Ownership / account-deletion cascade                           |
-| `(user_id)`                                                                            | Index       | FK deletion performance, account-deletion cascade, diagnostics |
-| `(session_id, user_id)`                                                                | Index       | Composite-FK referential lookup; per-session dispatch review   |
-| `(adjustment_id, user_id)` partial where not null                                      | Index       | Composite-FK referential lookup for adjustment events          |
-| `(state, updated_at)` partial where `state = 'dead_letter'`                            | Index       | Operator dead-letter review                                    |
-| `(state, delivered_at)` partial where `state = 'delivered'`                            | Index       | 90-day retention maintenance boundary (§17)                    |
+| `(session_id, event_kind, consumer)` partial where `adjustment_id IS NULL`            | Unique      | One completion delivery per session/event/consumer (§12.1)     |
+| `(adjustment_id, event_kind, consumer)` partial where `adjustment_id IS NOT NULL`     | Unique      | One adjustment delivery per adjustment/event/consumer (§12.1)  |
+| `(state, next_attempt_at, id)` partial where `state IN ('pending','retry_scheduled')` | Index       | Worker claim scan                                              |
+| `(lease_expires_at)` partial where `state = 'processing'`                             | Index       | Lease-expiry sweeper                                           |
+| `(session_id, user_id) → workout_sessions(id, user_id)`                               | Foreign key | Composite ownership to the subject session                     |
+| `(adjustment_id, user_id) → workout_session_adjustments(id, user_id)`                 | Foreign key | Composite ownership for adjustment events                      |
+| `user_id → auth.users(id) ON DELETE CASCADE`                                          | Foreign key | Ownership / account-deletion cascade                           |
+| `(user_id)`                                                                           | Index       | FK deletion performance, account-deletion cascade, diagnostics |
+| `(session_id, user_id)`                                                               | Index       | Composite-FK referential lookup; per-session dispatch review   |
+| `(adjustment_id, user_id)` partial where not null                                     | Index       | Composite-FK referential lookup for adjustment events          |
+| `(state, updated_at)` partial where `state = 'dead_letter'`                           | Index       | Operator dead-letter review                                    |
+| `(state, delivered_at)` partial where `state = 'delivered'`                           | Index       | 90-day retention maintenance boundary (§17)                    |
 
 The `(user_id)` index is **required** even though authenticated users never
 query this table: PostgreSQL does not index the referencing side of
@@ -1385,35 +1430,35 @@ otherwise force a sequential scan of the whole outbox. The earlier claim that no
 
 ### Auxiliary facts
 
-| Table                    | Object                                                      | Type   | Purpose / query contract                                       |
-| ------------------------ | ----------------------------------------------------------- | ------ | -------------------------------------------------------------- |
-| `hydration_facts`        | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
-| `hydration_facts`        | `(user_id, local_day, kind, id)`                            | Index  | Effective-hydration totals after voids (§14.5)                 |
-| `hydration_facts`        | `(target_fact_id, user_id)` partial where not null           | Unique | Composite-FK lookup and at most one direct void per entry (§8.1) |
-| `hydration_facts`        | `(target_fact_id, user_id) → hydration_facts(id, user_id)`   | Foreign key | Same-user self-referential void target                     |
-| `hydration_facts`        | `(id, user_id)`                                             | Unique | Composite-ownership target for void events                     |
-| `meal_adherence_facts`   | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
-| `meal_adherence_facts`   | `(user_id, local_day, meal_key, occurred_at DESC, id DESC)`  | Index  | Deterministic latest-observation selection (§8.2)               |
-| `daily_target_snapshots` | `(user_id, ingestion_key)`                                  | Unique | Per-user idempotency                                           |
-| `daily_target_snapshots` | `(user_id, local_day, captured_at DESC, id DESC)`            | Index  | Deterministic applicable-snapshot selection (§8.3)              |
-| All three                | `user_id`                                                   | Index  | RLS ownership path (satisfied by the leading column above)      |
-| All three                | `user_id → auth.users(id) ON DELETE CASCADE`                 | Foreign key | Ownership / account-deletion cascade (indexed as above)    |
+| Table                    | Object                                                      | Type        | Purpose / query contract                                         |
+| ------------------------ | ----------------------------------------------------------- | ----------- | ---------------------------------------------------------------- |
+| `hydration_facts`        | `(user_id, ingestion_key)`                                  | Unique      | Per-user idempotency                                             |
+| `hydration_facts`        | `(user_id, local_day, kind, id)`                            | Index       | Effective-hydration totals after voids (§14.5)                   |
+| `hydration_facts`        | `(target_fact_id, user_id)` partial where not null          | Unique      | Composite-FK lookup and at most one direct void per entry (§8.1) |
+| `hydration_facts`        | `(target_fact_id, user_id) → hydration_facts(id, user_id)`  | Foreign key | Same-user self-referential void target                           |
+| `hydration_facts`        | `(id, user_id)`                                             | Unique      | Composite-ownership target for void events                       |
+| `meal_adherence_facts`   | `(user_id, ingestion_key)`                                  | Unique      | Per-user idempotency                                             |
+| `meal_adherence_facts`   | `(user_id, local_day, meal_key, occurred_at DESC, id DESC)` | Index       | Deterministic latest-observation selection (§8.2)                |
+| `daily_target_snapshots` | `(user_id, ingestion_key)`                                  | Unique      | Per-user idempotency                                             |
+| `daily_target_snapshots` | `(user_id, local_day, captured_at DESC, id DESC)`           | Index       | Deterministic applicable-snapshot selection (§8.3)               |
+| All three                | `user_id`                                                   | Index       | RLS ownership path (satisfied by the leading column above)       |
+| All three                | `user_id → auth.users(id) ON DELETE CASCADE`                | Foreign key | Ownership / account-deletion cascade (indexed as above)          |
 
 `fact_fingerprint` is deliberately **not** indexed: it is only ever read after a
 row has already been located through `(user_id, ingestion_key)` (§11.3).
 
 ### Composite foreign-key index review (frozen)
 
-| Referencing side                                                       | Composite FK group                | Index that satisfies referential lookup      | Justification                                                                                                                     |
-| ---------------------------------------------------------------------- | --------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `workout_session_exercises`                                            | `(session_id, user_id)`           | `(session_id, user_id)`                      | Full composite group indexed with the group's leading column first.                                                                |
-| `workout_session_sets`                                                 | `(session_exercise_id, user_id)`  | `(session_exercise_id, user_id)`             | Full composite group indexed.                                                                                                     |
-| `workout_session_adjustments` target                                   | `(target_session_id, user_id)`    | `(target_session_id, user_id)`               | Full composite group indexed; the additional unique on `(target_session_id)` alone enforces one-adjustment-per-session.            |
-| `workout_session_adjustments` replacement                              | `(replacement_session_id, user_id)` | `(replacement_session_id, user_id)` partial | Full composite group indexed for non-null rows, which are the only rows the FK constrains.                                          |
-| `history_dispatch_outbox` session                                      | `(session_id, user_id)`           | `(session_id, user_id)`                      | Full composite group indexed.                                                                                                     |
-| `history_dispatch_outbox` adjustment                                   | `(adjustment_id, user_id)`        | `(adjustment_id, user_id)` partial           | Full composite group indexed for non-null rows.                                                                                   |
-| `hydration_facts` void target                                          | `(target_fact_id, user_id)`       | `(target_fact_id, user_id)` partial unique   | Full composite group indexed for non-null rows and simultaneously enforces one direct void per entry.                              |
-| Every table's `user_id → auth.users(id)`                               | `(user_id)`                       | Leading-column index listed per table        | Each table has an index whose leading column is `user_id`; the outbox has a dedicated `(user_id)` index.                            |
+| Referencing side                          | Composite FK group                  | Index that satisfies referential lookup     | Justification                                                                                                           |
+| ----------------------------------------- | ----------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `workout_session_exercises`               | `(session_id, user_id)`             | `(session_id, user_id)`                     | Full composite group indexed with the group's leading column first.                                                     |
+| `workout_session_sets`                    | `(session_exercise_id, user_id)`    | `(session_exercise_id, user_id)`            | Full composite group indexed.                                                                                           |
+| `workout_session_adjustments` target      | `(target_session_id, user_id)`      | `(target_session_id, user_id)`              | Full composite group indexed; the additional unique on `(target_session_id)` alone enforces one-adjustment-per-session. |
+| `workout_session_adjustments` replacement | `(replacement_session_id, user_id)` | `(replacement_session_id, user_id)` partial | Full composite group indexed for non-null rows, which are the only rows the FK constrains.                              |
+| `history_dispatch_outbox` session         | `(session_id, user_id)`             | `(session_id, user_id)`                     | Full composite group indexed.                                                                                           |
+| `history_dispatch_outbox` adjustment      | `(adjustment_id, user_id)`          | `(adjustment_id, user_id)` partial          | Full composite group indexed for non-null rows.                                                                         |
+| `hydration_facts` void target             | `(target_fact_id, user_id)`         | `(target_fact_id, user_id)` partial unique  | Full composite group indexed for non-null rows and simultaneously enforces one direct void per entry.                   |
+| Every table's `user_id → auth.users(id)`  | `(user_id)`                         | Leading-column index listed per table       | Each table has an index whose leading column is `user_id`; the outbox has a dedicated `(user_id)` index.                |
 
 Where an index over a globally unique child identifier alone would have been
 used (for example `(session_id)` instead of `(session_id, user_id)`), the full
@@ -1437,21 +1482,21 @@ for `history_dispatch_outbox`. This is a definitive selection, not conditional.
 role. Every grant is the explicit minimum set of operations required by the
 trusted functions and workers that touch it.
 
-| Entity                                           | `anon` | `authenticated`                        | `service_role`                             | Trusted server route/function | Outbox worker                      |
-| ------------------------------------------------ | ------ | -------------------------------------- | ------------------------------------------ | ----------------------------- | ---------------------------------- |
-| `public.workout_sessions`                        | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_exercises`               | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_sets`                    | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
-| `public.workout_session_adjustments`             | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | `SELECT` via service role          |
-| `public.hydration_facts`                         | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
-| `public.meal_adherence_facts`                    | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
-| `public.daily_target_snapshots`                  | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                         | Writes via RPC only           | No access needed                   |
-| `public.history_dispatch_outbox`                 | None   | None                                   | `SELECT`, `INSERT`, `UPDATE`, `DELETE`\*   | Insert via RPC only           | `SELECT`/`UPDATE` via service role |
-| Read-model views (§14, if materialized as views) | None   | `SELECT` (own, via `security_invoker`) | `SELECT`                                   | Not applicable                | Not applicable                     |
-| `public.ingest_workout_completion_v1`            | None   | None                                   | `EXECUTE`                                  | Calls via service role        | No                                 |
-| `public.adjust_workout_session_v1`               | None   | None                                   | `EXECUTE`                                  | Calls via service role        | No                                 |
-| Outbox claim/recovery functions                  | None   | None                                   | `EXECUTE`                                  | No                            | Calls via service role             |
-| Outbox retention-maintenance function            | None   | None                                   | `EXECUTE`                                  | No                            | Server-only maintenance boundary   |
+| Entity                                           | `anon` | `authenticated`                        | `service_role`                           | Trusted server route/function | Outbox worker                      |
+| ------------------------------------------------ | ------ | -------------------------------------- | ---------------------------------------- | ----------------------------- | ---------------------------------- |
+| `public.workout_sessions`                        | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                       | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_exercises`               | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                       | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_sets`                    | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                       | Writes via RPC only           | `SELECT` via service role          |
+| `public.workout_session_adjustments`             | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                       | Writes via RPC only           | `SELECT` via service role          |
+| `public.hydration_facts`                         | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                       | Writes via RPC only           | No access needed                   |
+| `public.meal_adherence_facts`                    | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                       | Writes via RPC only           | No access needed                   |
+| `public.daily_target_snapshots`                  | None   | `SELECT` (own, RLS)                    | `SELECT`, `INSERT`                       | Writes via RPC only           | No access needed                   |
+| `public.history_dispatch_outbox`                 | None   | None                                   | `SELECT`, `INSERT`, `UPDATE`, `DELETE`\* | Insert via RPC only           | `SELECT`/`UPDATE` via service role |
+| Read-model views (§14, if materialized as views) | None   | `SELECT` (own, via `security_invoker`) | `SELECT`                                 | Not applicable                | Not applicable                     |
+| `public.ingest_workout_completion_v1`            | None   | None                                   | `EXECUTE`                                | Calls via service role        | No                                 |
+| `public.adjust_workout_session_v1`               | None   | None                                   | `EXECUTE`                                | Calls via service role        | No                                 |
+| Outbox claim/recovery functions                  | None   | None                                   | `EXECUTE`                                | No                            | Calls via service role             |
+| Outbox retention-maintenance function            | None   | None                                   | `EXECUTE`                                | No                            | Server-only maintenance boundary   |
 
 \* Outbox `DELETE` exists **only** to serve the 90-day `delivered`-row retention
 policy and is exercised only through the restricted server-only maintenance
