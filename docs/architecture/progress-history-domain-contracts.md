@@ -1,6 +1,6 @@
 # Progress History Domain Contracts — ADR 0005 Companion
 
-**Status:** DRAFT (Sprint 8.0B-B2A) · Pending independent validation · Not implemented
+**Status:** DRAFT (Sprint 8.0B-B2A, corrected by 8.0B-B2A-C1 and 8.0B-B2A-C2) · Pending independent validation · Not implemented
 
 ---
 
@@ -345,21 +345,29 @@ Frozen rules:
 `public.workout_session_adjustments` — the only mechanism for voiding or
 correcting history. Originals are never edited.
 
+### 7.1 Adjustment entity contract
+
 | Field                    | Logical type               | Required | Source/owner               | Mutability | Constraints and allowed values                                                                                                                                     | Purpose                      |
 | ------------------------ | -------------------------- | -------- | -------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
 | `id`                     | UUID                       | Required | Server-generated           | Write-once | Primary key                                                                                                                                                        | Adjustment identity          |
 | `user_id`                | UUID                       | Required | Server-derived             | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                                                                                              | Ownership                    |
+| `adjustment_key`         | Constrained text (max 128) | Required | Client-proposed            | Write-once | Unique with `user_id`; frozen key forms of §7.2                                                                                                                    | Command idempotency          |
+| `command_fingerprint`    | Constrained text (64)      | Required | Server-computed            | Write-once | 64 lowercase hex, SHA-256, inputs frozen in §7.2                                                                                                                   | Replay/conflict detection    |
 | `kind`                   | Constrained text           | Required | Server-validated           | Write-once | `void` \| `correction`                                                                                                                                             | Adjustment semantics         |
 | `target_session_id`      | UUID                       | Required | Client-proposed, validated | Write-once | FK `(target_session_id, user_id) → workout_sessions(id, user_id)`                                                                                                  | Session being adjusted       |
 | `replacement_session_id` | UUID                       | Nullable | Server-created             | Write-once | FK `(replacement_session_id, user_id) → workout_sessions(id, user_id)`; required iff `kind = 'correction'`; forbidden when `kind = 'void'`; `<> target_session_id` | New canonical session        |
-| `reason`                 | Constrained text (max 500) | Required | User- or server-supplied   | Write-once | Non-empty; neutral reason code or user text                                                                                                                        | Auditability                 |
-| `occurred_at`            | UTC timestamp              | Required | Server clock at request    | Write-once | —                                                                                                                                                                  | When the adjustment happened |
-| `actor_type`             | Constrained text           | Required | Server-derived             | Write-once | `user` \| `system` \| `support`                                                                                                                                    | Who adjusted                 |
-| `actor_id`               | UUID                       | Nullable | Server-derived             | Write-once | Required when `actor_type = 'user'`; must equal `user_id`; null for `system`                                                                                       | Verified actor identity      |
-| `created_at`             | UTC timestamp              | Required | Database clock             | Write-once | Default now                                                                                                                                                        | Audit                        |
+| `reason_code`            | Constrained text (max 64)  | Required | Client-declared, validated | Write-once | `^[a-z0-9_]{1,64}$`; neutral, non-translated, stable identifier                                                                                                    | Machine-readable audit       |
+| `reason_text`            | Constrained text (max 500) | Nullable | User-supplied              | Write-once | Trimmed; non-empty when present; never used as a machine key                                                                                                       | Human audit detail           |
+| `occurred_at`            | UTC timestamp              | Required | Server clock at request    | Write-once | Normalized per §11 (UTC, second precision)                                                                                                                         | When the adjustment happened |
+| `actor_type`             | Constrained text           | Required | Server-derived             | Write-once | `user` \| `system` (§7.1 actor semantics)                                                                                                                          | Who adjusted                 |
+| `actor_id`               | UUID                       | Nullable | Server-derived             | Write-once | Required and equal to `user_id` when `actor_type = 'user'`; null when `actor_type = 'system'`                                                                      | Verified actor identity      |
+| `created_at`             | UTC timestamp              | Required | Database clock             | Write-once | Default now; database precision retained (§11)                                                                                                                     | Audit                        |
 | `contract_version`       | Bounded integer            | Required | Server-set                 | Write-once | Currently `1`                                                                                                                                                      | Contract evolution           |
 
-Frozen rules:
+The earlier ambiguous combined `reason` field is **withdrawn**; every reader and
+read model uses `reason_code` plus optional `reason_text`.
+
+Frozen entity rules:
 
 - A `void` has no replacement session; a `correction` must have one.
 - Target and replacement must belong to the same `user_id` (enforced by the
@@ -367,32 +375,125 @@ Frozen rules:
 - Target and replacement must be different sessions.
 - Original sessions are never edited or deleted; a replacement is a **new**
   immutable canonical session with its own `ingestion_key`
-  (`correction:{originalSessionId}:{stableUuid}`).
-- Correction adjustment and its replacement session commit in one transaction
-  (§17).
-- **Terminal-adjustment conflict:** at most one adjustment may directly target
-  a given session. This is enforced by a unique constraint on
-  `target_session_id`. A second attempt returns `PH_ADJUSTMENT_CONFLICT`. To
-  adjust again, the user adjusts the current effective (replacement) session,
-  producing a deterministic chain.
-- **Chain determinism:** because each session has at most one direct
-  adjustment and each replacement is a newly created session (which cannot
-  already exist earlier in a chain), the adjustment graph is a forest of
-  simple paths — acyclic and deterministic by construction. Effective-session
-  resolution follows `correction` links until a session with no adjustment
-  (effective) or a `void` (excluded) is reached; chain depth is bounded to 32
-  links, beyond which resolution returns `PH_ADJUSTMENT_CONFLICT` to the
-  operator and the last resolved session to readers.
+  (`correction:{originalSessionId}:{stableUuid}`) created in the same
+  transaction as the adjustment.
 - Read models resolve the effective session purely by reading adjustments —
   never by mutating any original row.
 - Account deletion remains the explicit hard-deletion exception.
 
-**Write boundary.** Voids and corrections are submitted to the trusted server
-route, which authenticates, derives `user_id`, and calls a restricted
-transactional function (`public.adjust_workout_session_v1`) under the same
-security rules as ingestion (§16). `authenticated` and `anon` have **no**
-insert privilege on the adjustment table and no execute privilege on the
-function.
+**Actor semantics (frozen, v1).**
+
+| `actor_type` | `actor_id`                                          | Permitted origin                                                                                       |
+| ------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `user`       | Required; exactly the verified owner's `user_id`     | An authenticated request from the owner through the trusted server boundary                            |
+| `system`     | Null                                                 | An explicitly trusted internal workflow (maintenance, reconciliation) running under the service role   |
+
+A `support` actor type is **not** part of v1 and is removed: no verified support
+identity exists in the platform today, so it would be unenforceable. Neither
+`actor_type` nor `actor_id` is ever client-supplied; the trusted server derives
+both from the verified request context.
+
+### 7.2 Adjustment idempotency and graph integrity
+
+Frozen `adjustment_key` forms:
+
+- `void:{targetSessionId}:{stableUuid}`
+- `correction:{targetSessionId}:{stableUuid}`
+
+Frozen resolution rules:
+
+- Uniqueness is `(user_id, adjustment_key)`.
+- Same key **+ equivalent** `command_fingerprint` → idempotent replay: the
+  existing adjustment is returned, nothing is written, no replacement session is
+  created.
+- Same key **+ different** `command_fingerprint` → stable conflict
+  `PH_ADJUSTMENT_KEY_CONFLICT`; the whole transaction fails.
+- At most one adjustment may directly target a given session (unique
+  `(target_session_id)`). A second attempt returns `PH_ADJUSTMENT_CONFLICT`.
+- A replacement session may belong to at most one correction (unique non-null
+  `(replacement_session_id)`).
+- Replacement sessions are created inside the adjustment transaction. A client
+  may never supply an arbitrary existing session as the replacement; the
+  replacement row ID is never accepted from the payload.
+- Because each session has at most one direct adjustment, each replacement is
+  newly created, and no replacement is shared, the adjustment graph is a forest
+  of simple paths: it cannot branch, merge or form a cycle.
+- To adjust again, the user adjusts the current effective (replacement)
+  session, producing another deterministic link rather than rewriting an
+  earlier link.
+- Effective-session resolution follows `correction` links until a session with
+  no adjustment (effective) or a `void` (excluded) is reached; chain depth is
+  bounded to 32 links, beyond which resolution returns
+  `PH_ADJUSTMENT_CHAIN_CORRUPT` to readers (§14.4) and
+  `PH_ADJUSTMENT_CONFLICT` to the operator issuing a further adjustment.
+
+**Adjustment `command_fingerprint` inputs (frozen).**
+
+| Group             | Fingerprinted values                                                                          |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| Command identity  | `command_version`, `adjustment_key`                                                           |
+| Adjustment intent | `kind`, `target_session_id`, `reason_code`, `reason_text`                                     |
+| Replacement       | For `kind = correction`: the full session `command_fingerprint` (§11.1) of the replacement    |
+| Verified actor    | `actor_type`, `actor_id`                                                                      |
+
+Canonicalization is exactly §11.1's (UTF-8 JSON, NFC, sorted keys, absent and
+`null` identical, UTC second-precision timestamps, SHA-256 lowercase hex).
+Server-generated row IDs, `created_at`, `contract_version` and transport
+metadata are excluded.
+
+### 7.3 Trusted adjustment command and result
+
+Future function: `public.adjust_workout_session_v1`.
+
+**Conceptual signature (implementation-neutral, no SQL):**
+
+| Position | Argument      | Logical type       | Notes                                              |
+| -------- | ------------- | ------------------ | -------------------------------------------------- |
+| 1        | `p_user_id`   | UUID               | Server-derived only; never from the client payload |
+| 2        | `p_command`   | Versioned document | Adjustment command below                           |
+| Returns  | `p_result`    | Versioned document | Adjustment result below                            |
+
+**Adjustment-command input matrix:**
+
+| Field                    | Logical type               | Required                          | Origin          | Constraints                                              |
+| ------------------------ | -------------------------- | --------------------------------- | --------------- | -------------------------------------------------------- |
+| `command_version`        | Bounded integer            | Required                          | Client          | Currently `1`                                            |
+| `adjustment_key`         | Constrained text (max 128) | Required                          | Client          | Frozen key forms of §7.2                                 |
+| `kind`                   | Constrained text           | Required                          | Client          | `void` \| `correction`                                   |
+| `target_session_id`      | UUID                       | Required                          | Client          | Must be an existing same-user session                    |
+| `reason_code`            | Constrained text (max 64)  | Required                          | Client          | `^[a-z0-9_]{1,64}$`                                      |
+| `reason_text`            | Constrained text (max 500) | Optional                          | User-entered    | Trimmed; non-empty when present                          |
+| `replacement_completion` | Versioned command (§9)     | Required when `kind = correction` | Client          | A complete completion command; forbidden for `kind=void` |
+
+The client must **not** supply: `user_id`, actor authority, `actor_type`,
+`actor_id`, any replacement database row ID, any outbox field, any database
+timestamp, any fingerprint, or any `contract_version`. Supplying any of them is
+a structural violation.
+
+**Adjustment-result matrix:**
+
+| Field                    | Logical type     | Required | Meaning                                                  |
+| ------------------------ | ---------------- | -------- | -------------------------------------------------------- |
+| `result_version`         | Bounded integer  | Required | Currently `1`                                            |
+| `ok`                     | Boolean          | Required | Whether the adjustment succeeded                         |
+| `adjustment_id`          | UUID             | Required on success | Stored adjustment identity                    |
+| `target_session_id`      | UUID             | Required on success | Echo of the adjusted session                  |
+| `replacement_session_id` | UUID             | Required for corrections | New immutable session                    |
+| `adjustment_key`         | Constrained text | Required on success | Echo of the accepted key                      |
+| `outcome`                | Constrained text | Required on success | `created` \| `replayed`                       |
+| `error_code`             | Constrained text | Required on failure | Stable code from §10                          |
+| `error_detail`           | Structured object | Optional | Non-sensitive diagnostic context, no user PII |
+
+**Security (identical to ingestion, §16).** `SECURITY INVOKER`, empty safe
+`search_path`, fully qualified relation names, execution revoked from `PUBLIC`,
+`anon` and `authenticated`, execution granted only to `service_role`. The
+trusted server authenticates the request and derives both user and actor
+identity. `authenticated` and `anon` have **no** insert privilege on the
+adjustment table.
+
+The correction replacement session and its children, the adjustment row and all
+outbox rows commit atomically in one transaction (§17). No executable SQL is
+defined here.
 
 **Downstream consequences.** Every committed adjustment creates outbox rows in
 the same transaction: `session_void` or `session_correction` events for the
@@ -409,24 +510,44 @@ Auxiliary facts are **not** workout children. They carry no `session_id`.
 
 ### 8.1 `public.hydration_facts`
 
-| Field                      | Logical type               | Required | Source/owner     | Mutability | Constraints and allowed values                       | Purpose            |
-| -------------------------- | -------------------------- | -------- | ---------------- | ---------- | ---------------------------------------------------- | ------------------ |
-| `id`                       | UUID                       | Required | Server-generated | Write-once | Primary key                                          | Fact identity      |
-| `user_id`                  | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                | Ownership          |
-| `ingestion_key`            | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `hydration:{stableUuid}` | Idempotency        |
-| `occurred_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Same window rule as §5                               | Event instant      |
-| `occurred_timezone`        | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                      | Zone at ingestion  |
-| `occurred_timezone_source` | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`          | Zone provenance    |
-| `local_day`                | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                   | Daily grouping     |
-| `volume_ml`                | Bounded integer            | Required | Client-observed  | Write-once | `> 0`, `<= 10000`                                    | Hydration amount   |
-| `created_at`               | UTC timestamp              | Required | Database clock   | Write-once | Default now                                          | Audit              |
-| `contract_version`         | Bounded integer            | Required | Server-set       | Write-once | Currently `1`                                        | Contract evolution |
+| Field                      | Logical type               | Required                     | Source/owner     | Mutability | Constraints and allowed values                                                             | Purpose                   |
+| -------------------------- | -------------------------- | ---------------------------- | ---------------- | ---------- | -------------------------------------------------------------------------------------------- | ------------------------- |
+| `id`                       | UUID                       | Required                     | Server-generated | Write-once | Primary key; also unique as `(id, user_id)`                                                | Fact identity             |
+| `user_id`                  | UUID                       | Required                     | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                      | Ownership                 |
+| `ingestion_key`            | Constrained text (max 128) | Required                     | Client-proposed  | Write-once | Unique with `user_id`; form `hydration:{stableUuid}`                                       | Idempotency               |
+| `fact_fingerprint`         | Constrained text (64)      | Required                     | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                                          | Replay/conflict detection |
+| `kind`                     | Constrained text           | Required                     | Client-declared  | Write-once | `entry` \| `void`                                                                          | Append-only event type    |
+| `target_fact_id`           | UUID                       | Required when `kind = void`  | Client-proposed  | Write-once | Forbidden when `kind = entry`; FK `(target_fact_id, user_id) → hydration_facts(id, user_id)` | Voided entry              |
+| `occurred_at`              | UTC timestamp              | Required                     | Client-observed  | Write-once | Same window rule as §5; normalized per §11 (UTC, second precision)                         | Event instant             |
+| `occurred_timezone`        | Constrained text (max 64)  | Required                     | Client-observed  | Write-once | Valid IANA zone                                                                            | Zone at ingestion         |
+| `occurred_timezone_source` | Constrained text           | Required                     | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                                                | Zone provenance           |
+| `local_day`                | Local date                 | Required                     | Server-derived   | Write-once | Never recalculated                                                                         | Daily grouping            |
+| `volume_ml`                | Bounded integer            | Required when `kind = entry` | Client-observed  | Write-once | `> 0`, `<= 10000`; absent/null when `kind = void`; never negative                          | Hydration amount          |
+| `created_at`               | UTC timestamp              | Required                     | Database clock   | Write-once | Default now; database precision retained (§11)                                             | Audit                     |
+| `contract_version`         | Bounded integer            | Required                     | Server-set       | Write-once | Currently `1`                                                                              | Contract evolution        |
 
-Hydration facts are append-only. A mistaken entry is corrected by appending a
-compensating fact through the trusted boundary (a later negative-intent fact is
-**not** modelled in Phase 8; instead the product appends the corrected total as
-a new fact and read models sum facts per `local_day`). No original fact is
-rewritten.
+Frozen rules:
+
+- **Entry event:** `kind = entry`, positive `volume_ml`, no `target_fact_id`.
+- **Void event:** `kind = void`, required same-user `target_fact_id`,
+  `volume_ml` absent/null. The target must be an existing hydration `entry`
+  row; a void may never target another void. At most one direct void per
+  target, enforced by partial uniqueness on non-null
+  `(target_fact_id, user_id)` (§15).
+- Uniqueness is `(user_id, ingestion_key)`; composite ownership is
+  `(id, user_id)`; the self-reference is same-user `(target_fact_id, user_id)`.
+- `fact_fingerprint` is required and immutable.
+- No hydration row is ever updated or deleted, and no negative volume is
+  storable.
+
+**Correcting a mistaken entry (atomic, §17).**
+
+1. Append a `void` event targeting the incorrect entry.
+2. Append a new `entry` event carrying the corrected volume.
+
+Effective hydration totals sum **only** `entry` rows that are not targeted by a
+void (§14.5). The earlier statement that a corrected total is appended and all
+facts are then summed is withdrawn: it double-counted.
 
 ### 8.2 `public.meal_adherence_facts`
 
