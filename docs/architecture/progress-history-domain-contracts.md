@@ -137,7 +137,8 @@ workout.
 | `calorie_algorithm_version`  | Constrained text (max 32)   | Nullable | Server-supplied                          | Write-once | Required when `calories_source = 'estimated'`; forbidden otherwise              | Reproducibility of estimates                      |
 | `calculation_weight_kg`      | Decimal(5,2)                | Nullable | Snapshot of profile at ingestion         | Write-once | `> 0` when present; required when `calories_source = 'estimated'`               | Historical calculation input                      |
 | `notes`                      | Constrained text (max 2000) | Nullable | User-entered                             | Write-once | Never overwritten on replay                                                     | User annotation                                   |
-| `app_version`                | Constrained text (max 32)   | Required | Client-declared                          | Write-once | Non-empty                                                                       | Diagnostics and provenance                        |
+| `app_version`                | Constrained text (max 32)   | Required | Client-declared                          | Write-once | Non-empty; non-semantic diagnostics only                                        | Diagnostics and provenance                        |
+| `confirmation_received_at`   | UTC timestamp               | Required | Server clock at first accepted write     | Write-once | Never client-supplied; not fingerprinted (§9.2, §11.1)                          | When the trusted server received the confirmation |
 | `contract_version`           | Bounded integer             | Required | Server-set                               | Write-once | Currently `1`                                                                   | Schema/contract evolution                         |
 
 **Time semantics.** `occurred_at` is the event instant; `created_at` is the
