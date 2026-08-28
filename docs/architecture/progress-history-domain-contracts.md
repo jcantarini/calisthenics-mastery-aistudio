@@ -945,11 +945,15 @@ Frozen resolution rules:
 | —                 | `pending`         | Row created atomically with the history event                |
 | `pending`         | `processing`      | Atomic worker claim (`next_attempt_at <= now`)               |
 | `retry_scheduled` | `processing`      | Atomic worker claim after backoff elapsed                    |
-| `processing`      | `delivered`       | Consumer acknowledged successfully                           |
+| `processing`      | `delivered`       | Consumer applied, or idempotently confirmed it already applied, its **complete** semantic obligation (§13.4) |
 | `processing`      | `retry_scheduled` | Retryable failure and `attempt_count < 10`                   |
+| `processing`      | `retry_scheduled` | `PH_DISPATCH_SEMANTICS_UNSUPPORTED`: the consumer cannot yet apply void/correction semantics |
 | `processing`      | `dead_letter`     | Non-retryable failure, or `attempt_count >= 10`              |
 | `processing`      | `retry_scheduled` | Lease expiry recovery by a sweeper (abandoned worker)        |
 | `dead_letter`     | `pending`         | Explicit operator manual replay (resets lease, keeps counts) |
+
+A row is **never** marked `delivered` merely because the consumer has no
+implementation for its semantics; see §13.4.
 
 Frozen operational rules:
 
