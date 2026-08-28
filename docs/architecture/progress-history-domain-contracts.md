@@ -973,10 +973,30 @@ retry_scheduled)` and `next_attempt_at <= now`), locks them skipping locked
 - **History is never deleted** because a delivery failed or dead-lettered.
 - **No user access:** `anon` and `authenticated` receive no grants and no RLS
   policy on this table.
-- **Duplicate protection:** unique `(session_id, event_kind, consumer,
-adjustment_id)` — treating a null `adjustment_id` as a distinct logical
-  value — so one logical history event yields at most one delivery row per
-  consumer.
+### 12.1 Duplicate protection under PostgreSQL null semantics (frozen)
+
+The earlier single unique constraint `(session_id, event_kind, consumer,
+adjustment_id)` is **withdrawn**: under ordinary PostgreSQL unique-null
+semantics two null `adjustment_id` rows are never equal, so it would not
+prevent duplicate completion deliveries. It is replaced by two **partial
+unique constraints**:
+
+| Event class       | Uniqueness                                                                 |
+| ----------------- | -------------------------------------------------------------------------- |
+| Completion events | Unique `(session_id, event_kind, consumer)` where `adjustment_id IS NULL`  |
+| Adjustment events | Unique `(adjustment_id, event_kind, consumer)` where `adjustment_id IS NOT NULL` |
+
+Guarantees: at most one completion delivery per session/event/consumer, and at
+most one adjustment delivery per adjustment/event/consumer. Both hold without
+relying on null comparison.
+
+Subject resolution, frozen exactly:
+
+| `event_kind`        | `session_id` is…                                | `adjustment_id`                            |
+| ------------------- | ----------------------------------------------- | ------------------------------------------ |
+| `session_completed` | the completed session                           | **forbidden** (must be null)               |
+| `session_voided`    | the target / original session                   | **mandatory**                              |
+| `session_corrected` | the target / original session; the replacement is resolved through the adjustment | **mandatory** |
 
 **Plan synchronization.** A `training_plan_sync` row is created only when the
 subject session carries a non-null `source_planned_workout_id`. When it is
