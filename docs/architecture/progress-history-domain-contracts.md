@@ -1036,15 +1036,34 @@ amounts, goal increments, level deltas) are never copied into the outbox.
 - `goal_progress_events` remains mutable operational state under its existing
   retry contract; further hardening is outside ADR 0005.
 
-**Implementation dependency (recorded, not weakening the contract).** The
-current Gamification and Goals consumers implement forward progress only; they
-have no reversal path for void or correction events. The durable delivery
-contract stands as specified: void and correction outbox rows are created from
-day one. Until reversal handling ships (Sprint 8.2 for Gamification and Goals
-consumer updates), those rows are delivered to consumers that must at minimum
-acknowledge them idempotently as no-ops and record the unhandled event for
-later recomputation. No history write is skipped or delayed because of this
-dependency.
+### 13.4 Delivery-completeness rule (frozen)
+
+The earlier allowance for consumers to acknowledge void and correction events
+as no-ops "until reversal ships" is **withdrawn**: it would discard the durable
+obligation to reverse or recompute downstream projections.
+
+- An outbox row may become `delivered` **only** after the consumer has applied,
+  or idempotently confirmed it already applied, its **complete** semantic
+  obligation for that event.
+- A consumer that cannot yet apply void or correction semantics must fail the
+  delivery with `PH_DISPATCH_SEMANTICS_UNSUPPORTED`. The row stays in
+  `retry_scheduled` and, after the bounded attempt budget, moves to
+  `dead_letter`.
+- The outbox row itself is the durable recovery record; it is retained and
+  never deleted while the obligation is outstanding.
+- A no-op acknowledgement is valid **only** when the consumer can prove the
+  event has no applicable domain consequence for it (for example a goal that
+  never counted the voided session). "Handling is not implemented yet" is never
+  such a proof.
+- **Implementation dependency.** Consumer support for void and correction must
+  ship **before** the product enables user-facing void/correction actions.
+  History storage and the adjustment RPC may exist earlier, but no correction
+  event may be silently lost.
+- When consumer support ships, retained `dead_letter` and pending rows are
+  reprocessed through operator manual replay, so no obligation is skipped.
+- No history write is ever skipped, delayed or rolled back because of this
+  dependency, and Progress History still never edits Gamification or Goals
+  directly.
 
 ---
 
