@@ -556,11 +556,12 @@ facts are then summed is withdrawn: it double-counted.
 | `id`                       | UUID                       | Required | Server-generated | Write-once | Primary key                                                                            | Fact identity        |
 | `user_id`                  | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                  | Ownership            |
 | `ingestion_key`            | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `meal:{stableUuid}`                                        | Idempotency          |
+| `fact_fingerprint`         | Constrained text (64)      | Required | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                                      | Replay/conflict detection |
 | `occurred_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Same window rule as §5                                                                 | Observation instant  |
 | `occurred_timezone`        | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                                                        | Zone at ingestion    |
 | `occurred_timezone_source` | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                                            | Zone provenance      |
 | `local_day`                | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                                                     | Daily grouping       |
-| `meal_key`                 | Constrained text (max 40)  | Required | Client-declared  | Write-once | Neutral key: `breakfast` \| `lunch` \| `dinner` \| `snack_1` \| `snack_2` \| `snack_3` | Stable meal identity |
+| `meal_key`                 | Constrained text (max 40)  | Required | Client-declared  | Write-once | Closed v1 enum: `breakfast` \| `lunch` \| `dinner` \| `snack_1` \| `snack_2` \| `snack_3` | Stable meal identity |
 | `adhered`                  | Boolean                    | Required | Client-observed  | Write-once | —                                                                                      | Adherence value      |
 | `created_at`               | UTC timestamp              | Required | Database clock   | Write-once | Default now                                                                            | Audit                |
 | `contract_version`         | Bounded integer            | Required | Server-set       | Write-once | Currently `1`                                                                          | Contract evolution   |
@@ -578,6 +579,7 @@ canonical and UI resolves the localized label.
 | `id`                       | UUID                       | Required | Server-generated | Write-once | Primary key                                                       | Snapshot identity            |
 | `user_id`                  | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                             | Ownership                    |
 | `ingestion_key`            | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `daily-target:{stableUuid}`           | Idempotency                  |
+| `fact_fingerprint`         | Constrained text (64)      | Required | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                 | Replay/conflict detection    |
 | `captured_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Same window rule as §5                                            | Capture instant              |
 | `captured_timezone`        | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                                   | Zone at capture              |
 | `captured_timezone_source` | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                       | Zone provenance              |
@@ -786,7 +788,8 @@ Server-derived for each stored set row: `id`, `session_exercise_id`,
 | `volume_ml`      | Bounded integer            | Required when `kind = entry` | Client-observed | `> 0`, `<= 10000`; forbidden when `kind = void`                                   |
 | `target_fact_id` | UUID                       | Required when `kind = void`  | Client          | Must reference an existing same-user hydration `entry` row; forbidden for `entry` |
 | `occurred_at`    | UTC timestamp              | Required                     | Client-observed | Session occurrence window rules of §8.1                                           |
-| `timezone`       | Constrained text (max 64)  | Required                     | Client-observed | Valid IANA zone                                                                   |
+| `timezone`       | Constrained text (max 64)  | Required                     | Client-observed | Valid IANA zone; stored as `occurred_timezone`                                    |
+| `timezone_source` | Constrained text          | Required                     | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `occurred_timezone_source` |
 
 `target_fact_id` is the single permitted client-supplied row identifier in the
 whole command, because a void is meaningless without its target; the server
@@ -801,10 +804,11 @@ still verifies same-user ownership and rejects a cross-user target with
 | Field           | Logical type               | Required | Origin          | Constraints                                                       |
 | --------------- | -------------------------- | -------- | --------------- | ----------------------------------------------------------------- |
 | `ingestion_key` | Constrained text (max 128) | Required | Client          | Frozen key form (§8.2); unique within the command                 |
-| `meal_key`      | Constrained text (max 64)  | Required | Trusted state   | `^[A-Za-z0-9_.:-]{1,64}$`; neutral meal identifier, never a label |
+| `meal_key`      | Constrained text (max 40)  | Required | Client-declared | Closed v1 enum of §8.2: `breakfast` \| `lunch` \| `dinner` \| `snack_1` \| `snack_2` \| `snack_3` |
 | `adhered`       | Boolean                    | Required | Client-observed | —                                                                 |
-| `occurred_at`   | UTC timestamp              | Required | Client-observed | Window rules of §8.2                                              |
-| `timezone`      | Constrained text (max 64)  | Required | Client-observed | Valid IANA zone                                                   |
+| `occurred_at`   | UTC timestamp              | Required | Client-observed | Window rules of §8.2; normalized per §11                          |
+| `timezone`      | Constrained text (max 64)  | Required | Client-observed | Valid IANA zone; stored as `occurred_timezone`                    |
+| `timezone_source` | Constrained text         | Required | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `occurred_timezone_source` |
 
 `daily_target[]`:
 
@@ -816,7 +820,8 @@ still verifies same-user ownership and rejects a cross-user target with
 | `target_algorithm_version` | Constrained text (max 32)  | Required when the target is derived | Trusted state   | Forbidden otherwise                               |
 | `calculation_weight_kg`    | Decimal(5,2)               | Optional                            | Trusted state   | `> 0`, `<= 500`                                   |
 | `captured_at`              | UTC timestamp              | Required                            | Trusted state   | Within the session occurrence window              |
-| `timezone`                 | Constrained text (max 64)  | Required                            | Client-observed | Valid IANA zone                                   |
+| `timezone`                 | Constrained text (max 64)  | Required                            | Client-observed | Valid IANA zone; stored as `captured_timezone`    |
+| `timezone_source`          | Constrained text           | Required                            | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `captured_timezone_source` |
 
 For both lists the server derives `id`, `user_id`, `local_day`,
 `fact_fingerprint`, `created_at` and `contract_version`. Structural violations
@@ -986,11 +991,28 @@ immutable historical fact:
 | Null vs omitted | An optional field that is absent and an optional field explicitly `null` canonicalize **identically** (both omitted), so transport-only differences never conflict |
 | Decimals        | Fixed scale per the field's declared scale, plain decimal notation, no exponent, no trailing zero beyond the declared scale, `-0` forbidden                        |
 | Integers        | Plain, no decimal point                                                                                                                                            |
-| Timestamps      | UTC, ISO-8601 with `Z`, truncated to **second** precision                                                                                                          |
+| Timestamps      | UTC, ISO-8601 with `Z`, truncated to **second** precision — identical to the stored value (see the precision rule below)                                           |
 | Local dates     | `YYYY-MM-DD`                                                                                                                                                       |
 | Booleans        | `true` / `false` literals                                                                                                                                          |
 | Text            | Trimmed of leading/trailing whitespace; interior whitespace preserved verbatim                                                                                     |
 | Hash            | SHA-256, lowercase hex, 64 characters                                                                                                                              |
+
+**Timestamp precision (frozen, one rule for storage and fingerprinting).**
+
+- Every accepted client-observed historical timestamp (`occurred_at`,
+  `performed_at`, `captured_at`, and every auxiliary occurrence/capture time) is
+  converted to UTC and truncated to **second** precision **before** validation,
+  storage and fingerprinting.
+- The stored historical value is exactly the normalized value the fingerprint
+  consumes; two stored timestamps can never differ while being
+  fingerprint-equivalent.
+- Sub-second differences are therefore intentionally non-semantic and are never
+  stored.
+- Server/database audit timestamps (`created_at`, `updated_at`, outbox
+  scheduling columns) may retain full database precision because they are not
+  client-authored fingerprint inputs.
+- `confirmation_received_at` is server-derived (§9.2) and excluded from every
+  fingerprint.
 
 A materially changed immutable fact therefore always yields a different
 fingerprint and `PH_INGESTION_KEY_CONFLICT`, never a silent replay.
@@ -1013,9 +1035,9 @@ write-once, server-computed).
 
 | Fact table               | Canonical fact-fingerprint inputs                                                                                                        |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `local_day`                                  |
-| `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `local_day`                                                  |
-| `daily_target_snapshots` | `ingestion_key`, `local_day`, `calorie_target_kcal`, `target_source`, `target_algorithm_version`, `calculation_weight_kg`, `captured_at` |
+| `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `occurred_timezone_source`, `local_day`      |
+| `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `occurred_timezone_source`, `local_day`                      |
+| `daily_target_snapshots` | `ingestion_key`, `captured_at`, `captured_timezone`, `captured_timezone_source`, `local_day`, `calorie_target_kcal`, `target_source`, `target_algorithm_version`, `calculation_weight_kg` |
 
 Canonicalization is exactly §11.1's.
 
@@ -1280,7 +1302,7 @@ Session level:
 | `calories_kcal`, `calories_source`, `calorie_algorithm_version`, `calculation_weight_kg`                                                                            | Calorie provenance block                                                                                                                      |
 | `notes`                                                                                                                                                             | Stored user note                                                                                                                              |
 | `effective_state`                                                                                                                                                   | `effective` \| `voided` \| `superseded` (§14.4)                                                                                               |
-| `adjustment_audit`                                                                                                                                                  | `{ adjustment_id, kind, reason, occurred_at, actor_type, target_session_id, replacement_session_id }` when an adjustment targets this session |
+| `adjustment_audit`                                                                                                                                                  | `{ adjustment_id, kind, reason_code, reason_text, occurred_at, actor_type, target_session_id, replacement_session_id }` when an adjustment targets this session |
 | `chain_depth`                                                                                                                                                       | Number of correction links traversed from the root                                                                                            |
 
 Exercise level (ordered by `order_index ASC`):
@@ -1372,7 +1394,7 @@ Definitions:
 | `state`                | Constrained text | `effective` \| `voided` \| `chain_error`                                                              |
 | `chain_depth`          | Integer          | Number of correction links traversed (0 for an unadjusted session)                                    |
 | `chain_session_ids`    | Ordered list     | Root → terminal session IDs, for audit views only                                                     |
-| `terminal_adjustment`  | Object           | `{ adjustment_id, kind, reason, occurred_at, actor_type }` when the chain terminates in an adjustment |
+| `terminal_adjustment`  | Object           | `{ adjustment_id, kind, reason_code, reason_text, occurred_at, actor_type }` when the chain terminates in an adjustment |
 | `integrity_error_code` | Constrained text | Null, or `PH_ADJUSTMENT_CHAIN_CORRUPT` when `state = 'chain_error'`                                   |
 
 Cycle, corruption and bound handling (frozen):
@@ -1703,7 +1725,7 @@ never fails merely because the original occurrence window has elapsed.
 **Auxiliary-fact write (inside the same transaction).** For each supplied
 auxiliary fact, look up `(user_id, ingestion_key)`, compare the recomputed
 `fact_fingerprint` (§11.3), and either insert, treat as replay, or fail the whole
-transaction with `PH_AUXILIARY_FACT_KEY_CONFLICT`.
+transaction with `PH_AUXILIARY_FACT_CONFLICT`.
 
 **Void (single transaction).** Create the append-only void adjustment
 (`kind = void`) and the required downstream dispatch rows. The original session
