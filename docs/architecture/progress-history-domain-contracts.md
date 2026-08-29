@@ -997,6 +997,23 @@ immutable historical fact:
 | Text            | Trimmed of leading/trailing whitespace; interior whitespace preserved verbatim                                                                                     |
 | Hash            | SHA-256, lowercase hex, 64 characters                                                                                                                              |
 
+**Timestamp precision (frozen, one rule for storage and fingerprinting).**
+
+- Every accepted client-observed historical timestamp (`occurred_at`,
+  `performed_at`, `captured_at`, and every auxiliary occurrence/capture time) is
+  converted to UTC and truncated to **second** precision **before** validation,
+  storage and fingerprinting.
+- The stored historical value is exactly the normalized value the fingerprint
+  consumes; two stored timestamps can never differ while being
+  fingerprint-equivalent.
+- Sub-second differences are therefore intentionally non-semantic and are never
+  stored.
+- Server/database audit timestamps (`created_at`, `updated_at`, outbox
+  scheduling columns) may retain full database precision because they are not
+  client-authored fingerprint inputs.
+- `confirmation_received_at` is server-derived (§9.2) and excluded from every
+  fingerprint.
+
 A materially changed immutable fact therefore always yields a different
 fingerprint and `PH_INGESTION_KEY_CONFLICT`, never a silent replay.
 
@@ -1020,7 +1037,7 @@ write-once, server-computed).
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `occurred_timezone_source`, `local_day`      |
 | `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `occurred_timezone_source`, `local_day`                      |
-| `daily_target_snapshots` | `ingestion_key`, `local_day`, `calorie_target_kcal`, `target_source`, `target_algorithm_version`, `calculation_weight_kg`, `captured_at` |
+| `daily_target_snapshots` | `ingestion_key`, `captured_at`, `captured_timezone`, `captured_timezone_source`, `local_day`, `calorie_target_kcal`, `target_source`, `target_algorithm_version`, `calculation_weight_kg` |
 
 Canonicalization is exactly §11.1's.
 
