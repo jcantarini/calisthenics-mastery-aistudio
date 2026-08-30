@@ -383,10 +383,10 @@ Frozen entity rules:
 
 **Actor semantics (frozen, v1).**
 
-| `actor_type` | `actor_id`                                          | Permitted origin                                                                                       |
-| ------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `user`       | Required; exactly the verified owner's `user_id`     | An authenticated request from the owner through the trusted server boundary                            |
-| `system`     | Null                                                 | An explicitly trusted internal workflow (maintenance, reconciliation) running under the service role   |
+| `actor_type` | `actor_id`                                       | Permitted origin                                                                                     |
+| ------------ | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `user`       | Required; exactly the verified owner's `user_id` | An authenticated request from the owner through the trusted server boundary                          |
+| `system`     | Null                                             | An explicitly trusted internal workflow (maintenance, reconciliation) running under the service role |
 
 A `support` actor type is **not** part of v1 and is removed: no verified support
 identity exists in the platform today, so it would be unenforceable. Neither
@@ -429,12 +429,12 @@ Frozen resolution rules:
 
 **Adjustment `command_fingerprint` inputs (frozen).**
 
-| Group             | Fingerprinted values                                                                          |
-| ----------------- | --------------------------------------------------------------------------------------------- |
-| Command identity  | `command_version`, `adjustment_key`                                                           |
-| Adjustment intent | `kind`, `target_session_id`, `reason_code`, `reason_text`                                     |
-| Replacement       | For `kind = correction`: the full session `command_fingerprint` (§11.1) of the replacement    |
-| Verified actor    | `actor_type`, `actor_id`                                                                      |
+| Group             | Fingerprinted values                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| Command identity  | `command_version`, `adjustment_key`                                                        |
+| Adjustment intent | `kind`, `target_session_id`, `reason_code`, `reason_text`                                  |
+| Replacement       | For `kind = correction`: the full session `command_fingerprint` (§11.1) of the replacement |
+| Verified actor    | `actor_type`, `actor_id`                                                                   |
 
 Canonicalization is exactly §11.1's (UTF-8 JSON, NFC, sorted keys, absent and
 `null` identical, UTC second-precision timestamps, SHA-256 lowercase hex).
@@ -447,23 +447,23 @@ Future function: `public.adjust_workout_session_v1`.
 
 **Conceptual signature (implementation-neutral, no SQL):**
 
-| Position | Argument      | Logical type       | Notes                                              |
-| -------- | ------------- | ------------------ | -------------------------------------------------- |
-| 1        | `p_user_id`   | UUID               | Server-derived only; never from the client payload |
-| 2        | `p_command`   | Versioned document | Adjustment command below                           |
-| Returns  | `p_result`    | Versioned document | Adjustment result below                            |
+| Position | Argument    | Logical type       | Notes                                              |
+| -------- | ----------- | ------------------ | -------------------------------------------------- |
+| 1        | `p_user_id` | UUID               | Server-derived only; never from the client payload |
+| 2        | `p_command` | Versioned document | Adjustment command below                           |
+| Returns  | `p_result`  | Versioned document | Adjustment result below                            |
 
 **Adjustment-command input matrix:**
 
-| Field                    | Logical type               | Required                          | Origin          | Constraints                                              |
-| ------------------------ | -------------------------- | --------------------------------- | --------------- | -------------------------------------------------------- |
-| `command_version`        | Bounded integer            | Required                          | Client          | Currently `1`                                            |
-| `adjustment_key`         | Constrained text (max 128) | Required                          | Client          | Frozen key forms of §7.2                                 |
-| `kind`                   | Constrained text           | Required                          | Client          | `void` \| `correction`                                   |
-| `target_session_id`      | UUID                       | Required                          | Client          | Must be an existing same-user session                    |
-| `reason_code`            | Constrained text (max 64)  | Required                          | Client          | `^[a-z0-9_]{1,64}$`                                      |
-| `reason_text`            | Constrained text (max 500) | Optional                          | User-entered    | Trimmed; non-empty when present                          |
-| `replacement_completion` | Versioned command (§9)     | Required when `kind = correction` | Client          | A complete completion command; forbidden for `kind=void` |
+| Field                    | Logical type               | Required                          | Origin       | Constraints                                              |
+| ------------------------ | -------------------------- | --------------------------------- | ------------ | -------------------------------------------------------- |
+| `command_version`        | Bounded integer            | Required                          | Client       | Currently `1`                                            |
+| `adjustment_key`         | Constrained text (max 128) | Required                          | Client       | Frozen key forms of §7.2                                 |
+| `kind`                   | Constrained text           | Required                          | Client       | `void` \| `correction`                                   |
+| `target_session_id`      | UUID                       | Required                          | Client       | Must be an existing same-user session                    |
+| `reason_code`            | Constrained text (max 64)  | Required                          | Client       | `^[a-z0-9_]{1,64}$`                                      |
+| `reason_text`            | Constrained text (max 500) | Optional                          | User-entered | Trimmed; non-empty when present                          |
+| `replacement_completion` | Versioned command (§9)     | Required when `kind = correction` | Client       | A complete completion command; forbidden for `kind=void` |
 
 The client must **not** supply: `user_id`, actor authority, `actor_type`,
 `actor_id`, any replacement database row ID, any outbox field, any database
@@ -472,17 +472,17 @@ a structural violation.
 
 **Adjustment-result matrix:**
 
-| Field                    | Logical type     | Required | Meaning                                                  |
-| ------------------------ | ---------------- | -------- | -------------------------------------------------------- |
-| `result_version`         | Bounded integer  | Required | Currently `1`                                            |
-| `ok`                     | Boolean          | Required | Whether the adjustment succeeded                         |
-| `adjustment_id`          | UUID             | Required on success | Stored adjustment identity                    |
-| `target_session_id`      | UUID             | Required on success | Echo of the adjusted session                  |
-| `replacement_session_id` | UUID             | Required for corrections | New immutable session                    |
-| `adjustment_key`         | Constrained text | Required on success | Echo of the accepted key                      |
-| `outcome`                | Constrained text | Required on success | `created` \| `replayed`                       |
-| `error_code`             | Constrained text | Required on failure | Stable code from §10                          |
-| `error_detail`           | Structured object | Optional | Non-sensitive diagnostic context, no user PII |
+| Field                    | Logical type      | Required                 | Meaning                                       |
+| ------------------------ | ----------------- | ------------------------ | --------------------------------------------- |
+| `result_version`         | Bounded integer   | Required                 | Currently `1`                                 |
+| `ok`                     | Boolean           | Required                 | Whether the adjustment succeeded              |
+| `adjustment_id`          | UUID              | Required on success      | Stored adjustment identity                    |
+| `target_session_id`      | UUID              | Required on success      | Echo of the adjusted session                  |
+| `replacement_session_id` | UUID              | Required for corrections | New immutable session                         |
+| `adjustment_key`         | Constrained text  | Required on success      | Echo of the accepted key                      |
+| `outcome`                | Constrained text  | Required on success      | `created` \| `replayed`                       |
+| `error_code`             | Constrained text  | Required on failure      | Stable code from §10                          |
+| `error_detail`           | Structured object | Optional                 | Non-sensitive diagnostic context, no user PII |
 
 **Security (identical to ingestion, §16).** `SECURITY INVOKER`, empty safe
 `search_path`, fully qualified relation names, execution revoked from `PUBLIC`,
@@ -510,21 +510,21 @@ Auxiliary facts are **not** workout children. They carry no `session_id`.
 
 ### 8.1 `public.hydration_facts`
 
-| Field                      | Logical type               | Required                     | Source/owner     | Mutability | Constraints and allowed values                                                             | Purpose                   |
+| Field                      | Logical type               | Required                     | Source/owner     | Mutability | Constraints and allowed values                                                               | Purpose                   |
 | -------------------------- | -------------------------- | ---------------------------- | ---------------- | ---------- | -------------------------------------------------------------------------------------------- | ------------------------- |
-| `id`                       | UUID                       | Required                     | Server-generated | Write-once | Primary key; also unique as `(id, user_id)`                                                | Fact identity             |
-| `user_id`                  | UUID                       | Required                     | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                      | Ownership                 |
-| `ingestion_key`            | Constrained text (max 128) | Required                     | Client-proposed  | Write-once | Unique with `user_id`; form `hydration:{stableUuid}`                                       | Idempotency               |
-| `fact_fingerprint`         | Constrained text (64)      | Required                     | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                                          | Replay/conflict detection |
-| `kind`                     | Constrained text           | Required                     | Client-declared  | Write-once | `entry` \| `void`                                                                          | Append-only event type    |
+| `id`                       | UUID                       | Required                     | Server-generated | Write-once | Primary key; also unique as `(id, user_id)`                                                  | Fact identity             |
+| `user_id`                  | UUID                       | Required                     | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                        | Ownership                 |
+| `ingestion_key`            | Constrained text (max 128) | Required                     | Client-proposed  | Write-once | Unique with `user_id`; form `hydration:{stableUuid}`                                         | Idempotency               |
+| `fact_fingerprint`         | Constrained text (64)      | Required                     | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                                            | Replay/conflict detection |
+| `kind`                     | Constrained text           | Required                     | Client-declared  | Write-once | `entry` \| `void`                                                                            | Append-only event type    |
 | `target_fact_id`           | UUID                       | Required when `kind = void`  | Client-proposed  | Write-once | Forbidden when `kind = entry`; FK `(target_fact_id, user_id) → hydration_facts(id, user_id)` | Voided entry              |
-| `occurred_at`              | UTC timestamp              | Required                     | Client-observed  | Write-once | Same window rule as §5; normalized per §11 (UTC, second precision)                         | Event instant             |
-| `occurred_timezone`        | Constrained text (max 64)  | Required                     | Client-observed  | Write-once | Valid IANA zone                                                                            | Zone at ingestion         |
-| `occurred_timezone_source` | Constrained text           | Required                     | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                                                | Zone provenance           |
-| `local_day`                | Local date                 | Required                     | Server-derived   | Write-once | Never recalculated                                                                         | Daily grouping            |
-| `volume_ml`                | Bounded integer            | Required when `kind = entry` | Client-observed  | Write-once | `> 0`, `<= 10000`; absent/null when `kind = void`; never negative                          | Hydration amount          |
-| `created_at`               | UTC timestamp              | Required                     | Database clock   | Write-once | Default now; database precision retained (§11)                                             | Audit                     |
-| `contract_version`         | Bounded integer            | Required                     | Server-set       | Write-once | Currently `1`                                                                              | Contract evolution        |
+| `occurred_at`              | UTC timestamp              | Required                     | Client-observed  | Write-once | Same window rule as §5; normalized per §11 (UTC, second precision)                           | Event instant             |
+| `occurred_timezone`        | Constrained text (max 64)  | Required                     | Client-observed  | Write-once | Valid IANA zone                                                                              | Zone at ingestion         |
+| `occurred_timezone_source` | Constrained text           | Required                     | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                                                  | Zone provenance           |
+| `local_day`                | Local date                 | Required                     | Server-derived   | Write-once | Never recalculated                                                                           | Daily grouping            |
+| `volume_ml`                | Bounded integer            | Required when `kind = entry` | Client-observed  | Write-once | `> 0`, `<= 10000`; absent/null when `kind = void`; never negative                            | Hydration amount          |
+| `created_at`               | UTC timestamp              | Required                     | Database clock   | Write-once | Default now; database precision retained (§11)                                               | Audit                     |
+| `contract_version`         | Bounded integer            | Required                     | Server-set       | Write-once | Currently `1`                                                                                | Contract evolution        |
 
 Frozen rules:
 
@@ -551,20 +551,20 @@ facts are then summed is withdrawn: it double-counted.
 
 ### 8.2 `public.meal_adherence_facts`
 
-| Field                      | Logical type               | Required | Source/owner     | Mutability | Constraints and allowed values                                                         | Purpose              |
-| -------------------------- | -------------------------- | -------- | ---------------- | ---------- | -------------------------------------------------------------------------------------- | -------------------- |
-| `id`                       | UUID                       | Required | Server-generated | Write-once | Primary key                                                                            | Fact identity        |
-| `user_id`                  | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                  | Ownership            |
-| `ingestion_key`            | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `meal:{stableUuid}`                                        | Idempotency          |
-| `fact_fingerprint`         | Constrained text (64)      | Required | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                                      | Replay/conflict detection |
-| `occurred_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Same window rule as §5                                                                 | Observation instant  |
-| `occurred_timezone`        | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                                                        | Zone at ingestion    |
-| `occurred_timezone_source` | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                                            | Zone provenance      |
-| `local_day`                | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                                                     | Daily grouping       |
-| `meal_key`                 | Constrained text (max 40)  | Required | Client-declared  | Write-once | Closed v1 enum: `breakfast` \| `lunch` \| `dinner` \| `snack_1` \| `snack_2` \| `snack_3` | Stable meal identity |
-| `adhered`                  | Boolean                    | Required | Client-observed  | Write-once | —                                                                                      | Adherence value      |
-| `created_at`               | UTC timestamp              | Required | Database clock   | Write-once | Default now                                                                            | Audit                |
-| `contract_version`         | Bounded integer            | Required | Server-set       | Write-once | Currently `1`                                                                          | Contract evolution   |
+| Field                      | Logical type               | Required | Source/owner     | Mutability | Constraints and allowed values                                                            | Purpose                   |
+| -------------------------- | -------------------------- | -------- | ---------------- | ---------- | ----------------------------------------------------------------------------------------- | ------------------------- |
+| `id`                       | UUID                       | Required | Server-generated | Write-once | Primary key                                                                               | Fact identity             |
+| `user_id`                  | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                     | Ownership                 |
+| `ingestion_key`            | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `meal:{stableUuid}`                                           | Idempotency               |
+| `fact_fingerprint`         | Constrained text (64)      | Required | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                                         | Replay/conflict detection |
+| `occurred_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Same window rule as §5                                                                    | Observation instant       |
+| `occurred_timezone`        | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                                                           | Zone at ingestion         |
+| `occurred_timezone_source` | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                                               | Zone provenance           |
+| `local_day`                | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                                                        | Daily grouping            |
+| `meal_key`                 | Constrained text (max 40)  | Required | Client-declared  | Write-once | Closed v1 enum: `breakfast` \| `lunch` \| `dinner` \| `snack_1` \| `snack_2` \| `snack_3` | Stable meal identity      |
+| `adhered`                  | Boolean                    | Required | Client-observed  | Write-once | —                                                                                         | Adherence value           |
+| `created_at`               | UTC timestamp              | Required | Database clock   | Write-once | Default now                                                                               | Audit                     |
+| `contract_version`         | Bounded integer            | Required | Server-set       | Write-once | Currently `1`                                                                             | Contract evolution        |
 
 **Deterministic read semantics.** When several append-only observations exist
 for the same `(user_id, local_day, meal_key)`, the effective value is the one
@@ -781,15 +781,15 @@ Server-derived for each stored set row: `id`, `session_exercise_id`,
 
 ### 9.8 `auxiliary_facts.hydration[]` input matrix
 
-| Field            | Logical type               | Required                     | Origin          | Constraints                                                                       |
-| ---------------- | -------------------------- | ---------------------------- | --------------- | --------------------------------------------------------------------------------- |
-| `ingestion_key`  | Constrained text (max 128) | Required                     | Client          | Frozen hydration key form (§8.1); unique within the command                       |
-| `kind`           | Constrained text           | Required                     | Client          | `entry` \| `void`                                                                 |
-| `volume_ml`      | Bounded integer            | Required when `kind = entry` | Client-observed | `> 0`, `<= 10000`; forbidden when `kind = void`                                   |
-| `target_fact_id` | UUID                       | Required when `kind = void`  | Client          | Must reference an existing same-user hydration `entry` row; forbidden for `entry` |
-| `occurred_at`    | UTC timestamp              | Required                     | Client-observed | Session occurrence window rules of §8.1                                           |
-| `timezone`       | Constrained text (max 64)  | Required                     | Client-observed | Valid IANA zone; stored as `occurred_timezone`                                    |
-| `timezone_source` | Constrained text          | Required                     | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `occurred_timezone_source` |
+| Field             | Logical type               | Required                     | Origin          | Constraints                                                                       |
+| ----------------- | -------------------------- | ---------------------------- | --------------- | --------------------------------------------------------------------------------- |
+| `ingestion_key`   | Constrained text (max 128) | Required                     | Client          | Frozen hydration key form (§8.1); unique within the command                       |
+| `kind`            | Constrained text           | Required                     | Client          | `entry` \| `void`                                                                 |
+| `volume_ml`       | Bounded integer            | Required when `kind = entry` | Client-observed | `> 0`, `<= 10000`; forbidden when `kind = void`                                   |
+| `target_fact_id`  | UUID                       | Required when `kind = void`  | Client          | Must reference an existing same-user hydration `entry` row; forbidden for `entry` |
+| `occurred_at`     | UTC timestamp              | Required                     | Client-observed | Session occurrence window rules of §8.1                                           |
+| `timezone`        | Constrained text (max 64)  | Required                     | Client-observed | Valid IANA zone; stored as `occurred_timezone`                                    |
+| `timezone_source` | Constrained text           | Required                     | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `occurred_timezone_source` |
 
 `target_fact_id` is the single permitted client-supplied row identifier in the
 whole command, because a void is meaningless without its target; the server
@@ -801,26 +801,26 @@ still verifies same-user ownership and rejects a cross-user target with
 
 `meal_adherence[]`:
 
-| Field           | Logical type               | Required | Origin          | Constraints                                                       |
-| --------------- | -------------------------- | -------- | --------------- | ----------------------------------------------------------------- |
-| `ingestion_key` | Constrained text (max 128) | Required | Client          | Frozen key form (§8.2); unique within the command                 |
-| `meal_key`      | Constrained text (max 40)  | Required | Client-declared | Closed v1 enum of §8.2: `breakfast` \| `lunch` \| `dinner` \| `snack_1` \| `snack_2` \| `snack_3` |
-| `adhered`       | Boolean                    | Required | Client-observed | —                                                                 |
-| `occurred_at`   | UTC timestamp              | Required | Client-observed | Window rules of §8.2; normalized per §11                          |
-| `timezone`      | Constrained text (max 64)  | Required | Client-observed | Valid IANA zone; stored as `occurred_timezone`                    |
-| `timezone_source` | Constrained text         | Required | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `occurred_timezone_source` |
+| Field             | Logical type               | Required | Origin          | Constraints                                                                                       |
+| ----------------- | -------------------------- | -------- | --------------- | ------------------------------------------------------------------------------------------------- |
+| `ingestion_key`   | Constrained text (max 128) | Required | Client          | Frozen key form (§8.2); unique within the command                                                 |
+| `meal_key`        | Constrained text (max 40)  | Required | Client-declared | Closed v1 enum of §8.2: `breakfast` \| `lunch` \| `dinner` \| `snack_1` \| `snack_2` \| `snack_3` |
+| `adhered`         | Boolean                    | Required | Client-observed | —                                                                                                 |
+| `occurred_at`     | UTC timestamp              | Required | Client-observed | Window rules of §8.2; normalized per §11                                                          |
+| `timezone`        | Constrained text (max 64)  | Required | Client-observed | Valid IANA zone; stored as `occurred_timezone`                                                    |
+| `timezone_source` | Constrained text           | Required | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `occurred_timezone_source`                 |
 
 `daily_target[]`:
 
-| Field                      | Logical type               | Required                            | Origin          | Constraints                                       |
-| -------------------------- | -------------------------- | ----------------------------------- | --------------- | ------------------------------------------------- |
-| `ingestion_key`            | Constrained text (max 128) | Required                            | Client          | Frozen key form (§8.3); unique within the command |
-| `calorie_target_kcal`      | Decimal(7,2)               | Required                            | Trusted state   | `> 0`, `<= 20000`                                 |
-| `target_source`            | Constrained text           | Required                            | Trusted state   | Frozen vocabulary of §8.3                         |
-| `target_algorithm_version` | Constrained text (max 32)  | Required when the target is derived | Trusted state   | Forbidden otherwise                               |
-| `calculation_weight_kg`    | Decimal(5,2)               | Optional                            | Trusted state   | `> 0`, `<= 500`                                   |
-| `captured_at`              | UTC timestamp              | Required                            | Trusted state   | Within the session occurrence window              |
-| `timezone`                 | Constrained text (max 64)  | Required                            | Client-observed | Valid IANA zone; stored as `captured_timezone`    |
+| Field                      | Logical type               | Required                            | Origin          | Constraints                                                                       |
+| -------------------------- | -------------------------- | ----------------------------------- | --------------- | --------------------------------------------------------------------------------- |
+| `ingestion_key`            | Constrained text (max 128) | Required                            | Client          | Frozen key form (§8.3); unique within the command                                 |
+| `calorie_target_kcal`      | Decimal(7,2)               | Required                            | Trusted state   | `> 0`, `<= 20000`                                                                 |
+| `target_source`            | Constrained text           | Required                            | Trusted state   | Frozen vocabulary of §8.3                                                         |
+| `target_algorithm_version` | Constrained text (max 32)  | Required when the target is derived | Trusted state   | Forbidden otherwise                                                               |
+| `calculation_weight_kg`    | Decimal(5,2)               | Optional                            | Trusted state   | `> 0`, `<= 500`                                                                   |
+| `captured_at`              | UTC timestamp              | Required                            | Trusted state   | Within the session occurrence window                                              |
+| `timezone`                 | Constrained text (max 64)  | Required                            | Client-observed | Valid IANA zone; stored as `captured_timezone`                                    |
 | `timezone_source`          | Constrained text           | Required                            | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `captured_timezone_source` |
 
 For both lists the server derives `id`, `user_id`, `local_day`,
@@ -1033,10 +1033,10 @@ different value**. Every auxiliary table therefore carries a required,
 immutable `fact_fingerprint` (constrained text, 64 lowercase hex, SHA-256,
 write-once, server-computed).
 
-| Fact table               | Canonical fact-fingerprint inputs                                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `occurred_timezone_source`, `local_day`      |
-| `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `occurred_timezone_source`, `local_day`                      |
+| Fact table               | Canonical fact-fingerprint inputs                                                                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hydration_facts`        | `ingestion_key`, `kind`, `target_fact_id`, `volume_ml`, `occurred_at`, `occurred_timezone`, `occurred_timezone_source`, `local_day`                                                       |
+| `meal_adherence_facts`   | `ingestion_key`, `meal_key`, `adhered`, `occurred_at`, `occurred_timezone`, `occurred_timezone_source`, `local_day`                                                                       |
 | `daily_target_snapshots` | `ingestion_key`, `captured_at`, `captured_timezone`, `captured_timezone_source`, `local_day`, `calorie_target_kcal`, `target_source`, `target_algorithm_version`, `calculation_weight_kg` |
 
 Canonicalization is exactly §11.1's.
@@ -1294,16 +1294,16 @@ Authoritative tables: `public.workout_sessions`,
 
 Session level:
 
-| Output field                                                                                                                                                        | Derivation                                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session_id`, `root_session_id`, `occurred_at`, `local_day`, `occurred_timezone`, `occurred_timezone_source`, `source`                                              | Effective session columns                                                                                                                     |
-| `source_plan_id`, `source_planned_workout_id`, `plan_name_snapshot`, `week_number_snapshot`, `day_number_snapshot`, `workout_title_snapshot`, `difficulty_snapshot` | Immutable provenance/snapshot scalars                                                                                                         |
-| `actual_duration_seconds`, `estimated_duration_seconds`                                                                                                             | Reported separately; never substituted for one another                                                                                        |
-| `calories_kcal`, `calories_source`, `calorie_algorithm_version`, `calculation_weight_kg`                                                                            | Calorie provenance block                                                                                                                      |
-| `notes`                                                                                                                                                             | Stored user note                                                                                                                              |
-| `effective_state`                                                                                                                                                   | `effective` \| `voided` \| `superseded` (§14.4)                                                                                               |
+| Output field                                                                                                                                                        | Derivation                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session_id`, `root_session_id`, `occurred_at`, `local_day`, `occurred_timezone`, `occurred_timezone_source`, `source`                                              | Effective session columns                                                                                                                                       |
+| `source_plan_id`, `source_planned_workout_id`, `plan_name_snapshot`, `week_number_snapshot`, `day_number_snapshot`, `workout_title_snapshot`, `difficulty_snapshot` | Immutable provenance/snapshot scalars                                                                                                                           |
+| `actual_duration_seconds`, `estimated_duration_seconds`                                                                                                             | Reported separately; never substituted for one another                                                                                                          |
+| `calories_kcal`, `calories_source`, `calorie_algorithm_version`, `calculation_weight_kg`                                                                            | Calorie provenance block                                                                                                                                        |
+| `notes`                                                                                                                                                             | Stored user note                                                                                                                                                |
+| `effective_state`                                                                                                                                                   | `effective` \| `voided` \| `superseded` (§14.4)                                                                                                                 |
 | `adjustment_audit`                                                                                                                                                  | `{ adjustment_id, kind, reason_code, reason_text, occurred_at, actor_type, target_session_id, replacement_session_id }` when an adjustment targets this session |
-| `chain_depth`                                                                                                                                                       | Number of correction links traversed from the root                                                                                            |
+| `chain_depth`                                                                                                                                                       | Number of correction links traversed from the root                                                                                                              |
 
 Exercise level (ordered by `order_index ASC`):
 
@@ -1387,15 +1387,15 @@ Definitions:
   `replacement_session_id` until a session with no direct adjustment (the
   effective session) or a `void` adjustment (the chain is voided) is reached.
 
-| Output field           | Logical type     | Meaning                                                                                               |
-| ---------------------- | ---------------- | ----------------------------------------------------------------------------------------------------- |
-| `root_session_id`      | UUID             | Chain root                                                                                            |
-| `effective_session_id` | UUID             | Terminal non-voided session; null when the chain terminates in a `void`                               |
-| `state`                | Constrained text | `effective` \| `voided` \| `chain_error`                                                              |
-| `chain_depth`          | Integer          | Number of correction links traversed (0 for an unadjusted session)                                    |
-| `chain_session_ids`    | Ordered list     | Root → terminal session IDs, for audit views only                                                     |
+| Output field           | Logical type     | Meaning                                                                                                                 |
+| ---------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `root_session_id`      | UUID             | Chain root                                                                                                              |
+| `effective_session_id` | UUID             | Terminal non-voided session; null when the chain terminates in a `void`                                                 |
+| `state`                | Constrained text | `effective` \| `voided` \| `chain_error`                                                                                |
+| `chain_depth`          | Integer          | Number of correction links traversed (0 for an unadjusted session)                                                      |
+| `chain_session_ids`    | Ordered list     | Root → terminal session IDs, for audit views only                                                                       |
 | `terminal_adjustment`  | Object           | `{ adjustment_id, kind, reason_code, reason_text, occurred_at, actor_type }` when the chain terminates in an adjustment |
-| `integrity_error_code` | Constrained text | Null, or `PH_ADJUSTMENT_CHAIN_CORRUPT` when `state = 'chain_error'`                                   |
+| `integrity_error_code` | Constrained text | Null, or `PH_ADJUSTMENT_CHAIN_CORRUPT` when `state = 'chain_error'`                                                     |
 
 Cycle, corruption and bound handling (frozen):
 
