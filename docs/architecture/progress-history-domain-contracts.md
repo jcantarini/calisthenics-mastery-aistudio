@@ -1823,8 +1823,8 @@ every choice remains inside ADR 0005's decisions.
 **Correction record (Sprint 8.0B-B2A-C1).** The independent validation of the
 8.0B-B2A draft identified sixteen contract defects. They are corrected in this
 revision: repository-compatible text exercise identifiers and substitution
-semantics (§3, §6.1, §9.4, §11, §14, §15); explicit difficulty normalization
-(§5.1, §9.1); a versioned structured prescription snapshot (§6.1.1, §9.5);
+semantics (§3, §6.1, §9.5, §11, §14, §15); explicit difficulty normalization
+(§5.1, §9.1); a versioned structured prescription snapshot (§6.1.1, §9.6);
 complete nested command-payload input matrices (§9.3–§9.9); a
 semantically complete session fingerprint with frozen canonicalization (§11.1);
 independent auxiliary-fact fingerprints and conflict detection (§8, §11.3);
@@ -1839,8 +1839,31 @@ clarification (§16); server-derived confirmation time and replay-safe
 occurrence-window validation (§9.2); complete read-model output matrices and
 aggregate formulas (§14); and a reconciled error taxonomy (§10).
 
+**Correction record (Sprint 8.0B-B2A-C2).** Independent validation of the C1
+revision found that several corrections were recorded in later sections without
+their physical contracts. This revision completes them: Section 7 is rewritten
+into real subsections — the adjustment entity contract with `adjustment_key`,
+`command_fingerprint`, `reason_code` and optional `reason_text` replacing the
+withdrawn combined `reason` field (§7.1); adjustment idempotency, fingerprint
+inputs and forest-shaped graph integrity (§7.2); and the complete
+`public.adjust_workout_session_v1` command, result and security contract
+(§7.3). `support` is removed from the actor vocabulary because no verified
+support identity exists in v1. The physical hydration entity now carries
+`kind`, `target_fact_id`, conditional `volume_ml` and `fact_fingerprint` with
+non-double-counting correction semantics (§8.1); `meal_adherence_facts` and
+`daily_target_snapshots` now carry required immutable `fact_fingerprint`
+(§8.2, §8.3); the meal-key vocabulary and maximum length are identical in the
+entity and the payload (§8.2, §9.9); auxiliary payloads now carry
+`timezone_source` mapped to their stored columns (§9.8, §9.9); auxiliary fact
+fingerprints now cover timezone provenance (§11.3); a single timestamp
+precision rule now governs storage and fingerprinting alike (§11.1); and the
+stale `PH_AUXILIARY_FACT_KEY_CONFLICT` spelling is replaced everywhere by
+`PH_AUXILIARY_FACT_CONFLICT` (§10, §17). Adjustment read models now expose
+`reason_code` and `reason_text` (§14.2, §14.4).
+
 This revision remains a **Draft**. It has **not** been independently validated,
-ADR 0005 remains **Proposed**, and nothing has been implemented.
+ADR 0005 remains **Proposed**, and nothing has been implemented. Sprint
+8.0B-B2B remains the only ADR acceptance gate.
 
 Remaining blockers: **none.**
 
