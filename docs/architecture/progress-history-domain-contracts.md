@@ -770,6 +770,8 @@ payloads are forbidden.
 - **Occurrence-window validation applies only when creating a new session.**
   The `occurred_at` freshness rule of §5 is a new-write rule.
 - Processing order for every ingestion call is fixed: (1) validate command
+  shape (`PH_INVALID_COMMAND_SHAPE`) and version
+  (`PH_INVALID_COMMAND_VERSION`); previously described as "validate command
   shape and version; (2) look up `(user_id, ingestion_key)`; (3) if a row
   exists, verify ownership and compare `command_fingerprint`; (4) return
   `outcome = replayed` on equivalence, or `PH_INGESTION_KEY_CONFLICT` on
@@ -922,6 +924,7 @@ The result never contains raw database errors, SQL text or stack traces.
 | ---------------------------- | ----------------------------------- | --------- | ---------------------------------------- |
 | Authentication / boundary    | `PH_UNAUTHENTICATED`                | No        | Yes                                      |
 | Domain validation            | `PH_INVALID_COMMAND_VERSION`        | No        | Internal-only                            |
+| Domain validation            | `PH_INVALID_COMMAND_SHAPE`          | No        | Internal-only                            |
 | Domain validation            | `PH_PAYLOAD_TOO_LARGE`              | No        | Yes                                      |
 | Domain validation            | `PH_INVALID_INGESTION_KEY`          | No        | Internal-only                            |
 | Idempotency conflict         | `PH_INGESTION_KEY_CONFLICT`         | No        | Yes                                      |
@@ -960,8 +963,11 @@ Disambiguation of the codes added by this revision:
 | `PH_INVALID_AUXILIARY_FACT`         | An auxiliary fact is structurally invalid (bad kind/target/volume combination, bounds, unknown meal key) — not a key conflict.                                                                     |
 | `PH_INGESTION_KEY_CONFLICT`         | A session `ingestion_key` is reused with a different session `command_fingerprint` (§11.1).                                                                                                        |
 | `PH_ADJUSTMENT_KEY_CONFLICT`        | An `adjustment_key` is reused with a different adjustment `command_fingerprint` (§7.2).                                                                                                            |
-| `PH_ADJUSTMENT_CONFLICT`            | The adjustment is structurally allowed but conflicts with existing graph state: the target already has a direct adjustment, or the proposed replacement session already serves another correction. |
-| `PH_INVALID_ADJUSTMENT`             | The adjustment command is invalid on its own terms (unknown kind, missing target, cross-user target, target equal to replacement, missing replacement for a correction).                           |
+| `PH_ADJUSTMENT_CONFLICT`            | An otherwise valid adjustment cannot be applied because of existing graph state: the target already has a direct adjustment, or applying another correction would exceed the frozen maximum chain depth (§7.2).                                          |
+| `PH_INVALID_ADJUSTMENT`             | The adjustment command is invalid on its own terms (unknown kind, missing target, target equal to replacement, missing replacement for a correction, replacement key/source/provenance mismatch). Cross-user references are **not** covered by this code. |
+| `PH_CROSS_USER_VIOLATION`           | Any verified cross-user reference attempt, including an adjustment target or replacement and a hydration void target that belongs to another user. This is the only code for that condition.                                                             |
+| `PH_INVALID_COMMAND_SHAPE`          | Structurally malformed command shape before domain-field validation: unknown fields, forbidden server-owned fields, client-supplied authoritative identity, or malformed objects. Never used for an unsupported `command_version`.                       |
+| `PH_INVALID_COMMAND_VERSION`        | Exclusively an unsupported `command_version` on the completion or adjustment command.                                                                                                                                                                   |
 | `PH_ADJUSTMENT_CHAIN_CORRUPT`       | Effective-session resolution detected a revisit, a missing replacement or the maximum chain depth (§14.4).                                                                                         |
 | `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | A consumer cannot yet apply the delivered void/correction semantics; the event stays durable and is never marked delivered (§12, §13).                                                             |
 
