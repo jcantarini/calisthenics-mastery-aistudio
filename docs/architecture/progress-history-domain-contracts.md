@@ -1003,6 +1003,15 @@ Rules:
   confirms completion, persisted with the pending command, and reused across
   every retry of that same command.
 - `source` is provenance only and is not part of uniqueness.
+- The `correction:` key form is a contextual exception to the ordinary
+  source/key mapping: it is produced only by
+  `public.adjust_workout_session_v1`, it always equals the accepted
+  `adjustment_key` (§7.2), and the replacement session keeps the **target
+  session's** `source` and plan provenance. No `source = correction` value
+  exists. An ordinary call to `public.ingest_workout_completion_v1` carrying a
+  `correction:` key is rejected with `PH_INVALID_INGESTION_KEY`.
+- The `correction:` replacement is exempt from the ordinary 48-hour occurrence
+  window (§7.3) but never from the 5-minute future bound.
 - **Replay:** same key + fingerprint-equivalent immutable command → return the
   original `session_id` with `outcome = replayed`; no new child rows, no new
   auxiliary facts, no new dispatch rows.
