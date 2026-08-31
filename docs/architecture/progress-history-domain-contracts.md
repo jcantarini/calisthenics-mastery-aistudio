@@ -499,12 +499,34 @@ Future function: `public.adjust_workout_session_v1`.
 | `target_session_id`      | UUID                       | Required                          | Client       | Must be an existing same-user session                    |
 | `reason_code`            | Constrained text (max 64)  | Required                          | Client       | `^[a-z0-9_]{1,64}$`                                      |
 | `reason_text`            | Constrained text (max 500) | Optional                          | User-entered | Trimmed; non-empty when present                          |
-| `replacement_completion` | Versioned command (§9)     | Required when `kind = correction` | Client       | A complete completion command; forbidden for `kind=void` |
+| `replacement_completion` | Versioned command (§9)     | Required when `kind = correction` | Client       | A complete completion command; forbidden for `kind=void`; its `ingestion_key` must equal `adjustment_key`; its `source` and plan provenance must match the target session |
 
 The client must **not** supply: `user_id`, actor authority, `actor_type`,
 `actor_id`, any replacement database row ID, any outbox field, any database
 timestamp, any fingerprint, or any `contract_version`. Supplying any of them is
-a structural violation.
+a structural violation reported as `PH_INVALID_COMMAND_SHAPE` (§10).
+
+**Replacement-completion validation (frozen).**
+
+- `replacement_completion.ingestion_key` must equal the accepted
+  `adjustment_key`; divergence is `PH_INVALID_ADJUSTMENT`.
+- `replacement_completion.source` must equal the target session's stored
+  `source`; plan provenance must equal the target session's immutable
+  provenance. No `source = correction` value exists.
+- `occurred_at` may be any past instant — the ordinary 48-hour freshness rule of
+  §5 and §9.2 does **not** apply to a correction replacement — but it is never
+  more than 5 min in the future relative to the trusted server clock, else
+  `PH_INVALID_OCCURRED_AT`.
+- A valid IANA `timezone` and a `timezone_source` are still required, and
+  `local_day` is derived once from the accepted replacement `occurred_at` and
+  that timezone.
+- The explicit correction request **is** the confirmation action;
+  `confirmation_received_at` for the replacement session is generated from the
+  server clock when the correction is first accepted.
+- Replay lookup on `(user_id, adjustment_key)` and fingerprint comparison happen
+  **before** any time-dependent validation, so a retry of an accepted correction
+  never fails because time has passed.
+- The target session itself is never mutated by any of this.
 
 **Adjustment-result matrix:**
 
@@ -531,12 +553,24 @@ The correction replacement session and its children, the adjustment row and all
 outbox rows commit atomically in one transaction (§17). No executable SQL is
 defined here.
 
-**Downstream consequences.** Every committed adjustment creates outbox rows in
-the same transaction: `session_void` or `session_correction` events for the
-`gamification` and `goals` consumers, and for `training_plan_sync` when the
-target session carries a `source_planned_workout_id`. Progress History never
-writes XP, levels, achievements or goal progress itself; consumers reverse or
-recompute their own projections idempotently.
+**Downstream consequences (frozen).** Every committed adjustment creates outbox
+rows in the same transaction: `session_voided` or `session_corrected` events
+(§12 vocabulary) for the `gamification` and `goals` consumers, and for
+`training_plan_sync` when the target session carries a
+`source_planned_workout_id`.
+
+- A correction transaction creates the `session_corrected` dispatch obligation
+  for each applicable consumer and **must not** create a separate
+  `session_completed` obligation for the replacement session.
+- Consumers use `replacement_session_id` from the correction event to reverse or
+  recompute their projection, which is what prevents duplicate XP, achievement,
+  goal and training-plan effects.
+- The replacement session is canonical history, but it enters the downstream
+  world through the correction event, never as an independent new completion
+  event.
+
+Progress History never writes XP, levels, achievements or goal progress itself;
+consumers reverse or recompute their own projections idempotently.
 
 ---
 
