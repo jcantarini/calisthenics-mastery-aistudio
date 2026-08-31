@@ -358,7 +358,7 @@ correcting history. Originals are never edited.
 | `replacement_session_id` | UUID                       | Nullable | Server-created             | Write-once | FK `(replacement_session_id, user_id) → workout_sessions(id, user_id)`; required iff `kind = 'correction'`; forbidden when `kind = 'void'`; `<> target_session_id` | New canonical session        |
 | `reason_code`            | Constrained text (max 64)  | Required | Client-declared, validated | Write-once | `^[a-z0-9_]{1,64}$`; neutral, non-translated, stable identifier                                                                                                    | Machine-readable audit       |
 | `reason_text`            | Constrained text (max 500) | Nullable | User-supplied              | Write-once | Trimmed; non-empty when present; never used as a machine key                                                                                                       | Human audit detail           |
-| `occurred_at`            | UTC timestamp              | Required | Server clock at request    | Write-once | Normalized per §11 (UTC, second precision)                                                                                                                         | When the adjustment happened |
+| `occurred_at`            | UTC timestamp              | Required | Server-derived (server clock at the first accepted request) | Write-once | Never client-supplied; stored in UTC at second precision (§11.1); excluded from the adjustment `command_fingerprint`                              | Historical event time of the adjustment |
 | `actor_type`             | Constrained text           | Required | Server-derived             | Write-once | `user` \| `system` (§7.1 actor semantics)                                                                                                                          | Who adjusted                 |
 | `actor_id`               | UUID                       | Nullable | Server-derived             | Write-once | Required and equal to `user_id` when `actor_type = 'user'`; null when `actor_type = 'system'`                                                                      | Verified actor identity      |
 | `created_at`             | UTC timestamp              | Required | Database clock             | Write-once | Default now; database precision retained (§11)                                                                                                                     | Audit                        |
@@ -371,15 +371,41 @@ Frozen entity rules:
 
 - A `void` has no replacement session; a `correction` must have one.
 - Target and replacement must belong to the same `user_id` (enforced by the
-  composite FKs).
+  composite FKs). A verified cross-user reference is rejected with
+  `PH_CROSS_USER_VIOLATION` (§10).
 - Target and replacement must be different sessions.
 - Original sessions are never edited or deleted; a replacement is a **new**
   immutable canonical session with its own `ingestion_key`
-  (`correction:{originalSessionId}:{stableUuid}`) created in the same
-  transaction as the adjustment.
+  (`correction:{targetSessionId}:{stableUuid}`, exactly equal to the accepted
+  `adjustment_key`, §7.2) created in the same transaction as the adjustment.
 - Read models resolve the effective session purely by reading adjustments —
   never by mutating any original row.
 - Account deletion remains the explicit hard-deletion exception.
+
+**Adjustment time semantics (frozen).** `occurred_at` is the server-derived
+historical event time of the adjustment itself, stored in UTC at second
+precision. It is distinct from `created_at`, which is the database write instant
+and may retain database precision. `occurred_at` is never client-supplied and,
+being server-derived, is excluded from the adjustment `command_fingerprint`
+(§7.2). It is therefore **not** a client-observed timestamp in the sense of §11.
+
+**Replacement session identity, source and time (frozen).**
+
+- The replacement session preserves the **target session's** canonical
+  `source` value. A correction is not a new completion surface, so no
+  `source = correction` value exists and the frozen source vocabulary of §5 is
+  not extended.
+- Plan provenance (`source_plan_id`, `source_planned_workout_id` and the plan
+  snapshots) is copied from, or server-validated against, the target session's
+  immutable provenance. A correction can never change plan identity.
+- The `correction:{targetSessionId}:{stableUuid}` key form is a contextual
+  exception to the ordinary source/key mapping of §11. It is accepted **only**
+  inside `public.adjust_workout_session_v1`; an ordinary call to
+  `public.ingest_workout_completion_v1` carrying a `correction:` key is
+  rejected with `PH_INVALID_INGESTION_KEY`.
+- The replacement `occurred_at` may preserve or correct the historical instant
+  even when it is older than 48 h, but it is never more than 5 min in the
+  future relative to the trusted server clock (§7.3).
 
 **Actor semantics (frozen, v1).**
 
