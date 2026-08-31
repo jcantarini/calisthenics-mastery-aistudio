@@ -429,18 +429,28 @@ Frozen `adjustment_key` forms:
 Frozen resolution rules:
 
 - Uniqueness is `(user_id, adjustment_key)`.
+- The stable UUID inside the key is generated once, persisted with the pending
+  adjustment command and reused unchanged across every retry.
+- For `kind = correction`, `replacement_completion.ingestion_key` must equal the
+  accepted `adjustment_key`
+  (`correction:{targetSessionId}:{stableUuid}`), so the replacement session is
+  independently protected by `(user_id, ingestion_key)` while the adjustment is
+  protected by `(user_id, adjustment_key)`.
 - Same key **+ equivalent** `command_fingerprint` → idempotent replay: the
   existing adjustment is returned, nothing is written, no replacement session is
   created.
 - Same key **+ different** `command_fingerprint` → stable conflict
-  `PH_ADJUSTMENT_KEY_CONFLICT`; the whole transaction fails.
+  `PH_ADJUSTMENT_KEY_CONFLICT`; the whole transaction fails. A changed nested
+  replacement command under the same key is exactly this case.
 - At most one adjustment may directly target a given session (unique
   `(target_session_id)`). A second attempt returns `PH_ADJUSTMENT_CONFLICT`.
-- A replacement session may belong to at most one correction (unique non-null
-  `(replacement_session_id)`).
+- `targetSessionId` in every key form is the session **directly targeted** by
+  this adjustment, never an earlier original in the chain.
 - Replacement sessions are created inside the adjustment transaction. A client
   may never supply an arbitrary existing session as the replacement; the
-  replacement row ID is never accepted from the payload.
+  replacement row ID is server-generated and is never accepted from the
+  payload. The unique non-null constraint on `(replacement_session_id)` is
+  retained as database defense in depth.
 - Because each session has at most one direct adjustment, each replacement is
   newly created, and no replacement is shared, the adjustment graph is a forest
   of simple paths: it cannot branch, merge or form a cycle.
@@ -449,9 +459,9 @@ Frozen resolution rules:
   earlier link.
 - Effective-session resolution follows `correction` links until a session with
   no adjustment (effective) or a `void` (excluded) is reached; chain depth is
-  bounded to 32 links, beyond which resolution returns
-  `PH_ADJUSTMENT_CHAIN_CORRUPT` to readers (§14.4) and
-  `PH_ADJUSTMENT_CONFLICT` to the operator issuing a further adjustment.
+  bounded to 32 links. Exceeding it returns `PH_ADJUSTMENT_CHAIN_CORRUPT` to
+  readers of an already-stored chain (§14.4) and `PH_ADJUSTMENT_CONFLICT` to
+  the operator issuing a further adjustment that would exceed the bound.
 
 **Adjustment `command_fingerprint` inputs (frozen).**
 
@@ -464,8 +474,8 @@ Frozen resolution rules:
 
 Canonicalization is exactly §11.1's (UTF-8 JSON, NFC, sorted keys, absent and
 `null` identical, UTC second-precision timestamps, SHA-256 lowercase hex).
-Server-generated row IDs, `created_at`, `contract_version` and transport
-metadata are excluded.
+Server-generated row IDs, the server-derived adjustment `occurred_at`,
+`created_at`, `contract_version` and transport metadata are excluded.
 
 ### 7.3 Trusted adjustment command and result
 
