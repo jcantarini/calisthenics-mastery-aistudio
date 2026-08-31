@@ -1,6 +1,6 @@
 # Progress History Domain Contracts — ADR 0005 Companion
 
-**Status:** DRAFT (Sprint 8.0B-B2A, corrected by 8.0B-B2A-C1 and 8.0B-B2A-C2) · Pending independent validation · Not implemented
+**Status:** DRAFT (Sprint 8.0B-B2A, corrected by 8.0B-B2A-C1, 8.0B-B2A-C2 and 8.0B-B2A-C3) · Pending independent validation · Not implemented
 
 ---
 
@@ -41,7 +41,7 @@ worker, service or UI implementation.
 | I2  | One logical completion creates at most one canonical session.                                                      | Unique `(user_id, ingestion_key)` on `public.workout_sessions` (§11, §15).                                        |
 | I3  | The browser cannot write reward-bearing history.                                                                   | No `INSERT/UPDATE/DELETE` grant to `authenticated`; no RPC execute grant (§16).                                   |
 | I4  | The trusted server derives `user_id`.                                                                              | `user_id` is a separate server-derived argument, never a payload field (§9).                                      |
-| I5  | A client-supplied `user_id` is never accepted as authority.                                                        | Any `user_id`-like field in the payload is a contract violation → `PH_INVALID_COMMAND_VERSION` / rejected schema. |
+| I5  | A client-supplied `user_id` is never accepted as authority.                                                        | Any `user_id`-like field in the payload is a structural contract violation → `PH_INVALID_COMMAND_SHAPE` (§10).    |
 | I6  | Session, children, supplied auxiliary facts and dispatch rows commit atomically.                                   | One transactional function call per completion (§9, §17).                                                         |
 | I7  | Original historical facts are immutable.                                                                           | No `UPDATE` path exists for fact tables in any role except account-deletion cascade (§17).                        |
 | I8  | Corrections are append-only.                                                                                       | `public.workout_session_adjustments` insert-only; originals never edited (§7).                                    |
@@ -119,7 +119,7 @@ workout.
 | `command_fingerprint`        | Constrained text (64, hex)  | Required | Server-computed from canonical payload   | Write-once | SHA-256 hex of the canonicalized immutable command subset (§11)                 | Detect incompatible reuse of an ingestion key     |
 | `source`                     | Constrained text            | Required | Client-declared, server-validated        | Write-once | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`         | Provenance only; not part of uniqueness           |
 | `created_at`                 | UTC timestamp               | Required | Database clock                           | Write-once | Default now                                                                     | Row creation time (not the event time)            |
-| `occurred_at`                | UTC timestamp               | Required | Client-observed, server-validated        | Write-once | Not more than 48 h in the past nor 5 min in the future relative to server clock | Event occurrence instant                          |
+| `occurred_at`                | UTC timestamp               | Required | Client-observed, server-validated        | Write-once | Ordinary completion ingestion: not more than 48 h in the past nor 5 min in the future relative to the server clock. Correction replacement (created only by `public.adjust_workout_session_v1`, §7.3): any past instant is accepted, never more than 5 min in the future | Event occurrence instant |
 | `occurred_timezone`          | Constrained text (max 64)   | Required | Client-observed, server-validated        | Write-once | Valid IANA zone name                                                            | Zone captured at ingestion                        |
 | `occurred_timezone_source`   | Constrained text            | Required | Client-declared, server-validated        | Write-once | `device` \| `user_setting` \| `assumed_utc`                                     | Honesty about zone provenance                     |
 | `local_day`                  | Local date                  | Required | Server-derived from `occurred_at` + zone | Write-once | Never recalculated after ingestion                                              | Historical calendar-day grouping                  |
@@ -127,15 +127,15 @@ workout.
 | `source_planned_workout_id`  | UUID                        | Nullable | Copied from trusted application state    | Write-once | **No FK**; required when `source = plan_workout`                                | Plan-sync target identity                         |
 | `plan_name_snapshot`         | Constrained text (max 160)  | Nullable | Snapshot at ingestion                    | Write-once | Neutral stored value; never re-resolved                                         | Stable historical display                         |
 | `workout_title_snapshot`     | Constrained text (max 160)  | Required | Snapshot at ingestion                    | Write-once | Non-empty; neutral identity, not a translated UI string                         | Stable historical display                         |
-| `week_number_snapshot`       | Bounded integer             | Nullable | Snapshot at ingestion                    | Write-once | `>= 1` when present                                                             | Plan position at completion time                  |
-| `day_number_snapshot`        | Bounded integer             | Nullable | Snapshot at ingestion                    | Write-once | `>= 1` when present                                                             | Plan position at completion time                  |
+| `week_number_snapshot`       | Bounded integer             | Nullable | Snapshot at ingestion                    | Write-once | `>= 1`, `<= 520` when present                                                   | Plan position at completion time                  |
+| `day_number_snapshot`        | Bounded integer             | Nullable | Snapshot at ingestion                    | Write-once | `>= 1`, `<= 7` when present                                                     | Plan position at completion time                  |
 | `difficulty_snapshot`        | Constrained text            | Nullable | Snapshot at ingestion                    | Write-once | `beginner` \| `intermediate` \| `advanced`                                      | Historical difficulty context                     |
 | `estimated_duration_seconds` | Bounded integer             | Nullable | Snapshot of prescription                 | Write-once | `>= 0`, `<= 86400`                                                              | Prescribed duration                               |
 | `actual_duration_seconds`    | Bounded integer             | Nullable | Client-observed, server-validated        | Write-once | `>= 0`, `<= 86400`; distinct from estimated                                     | Measured duration                                 |
-| `calories_kcal`              | Decimal(7,2)                | Nullable | Derived or user-entered                  | Write-once | `>= 0`; required non-null when `calories_source <> 'unknown'`                   | Energy fact                                       |
+| `calories_kcal`              | Decimal(7,2)                | Nullable | Derived or user-entered                  | Write-once | `>= 0`, `<= 20000` when present; required non-null when `calories_source <> 'unknown'` | Energy fact                                |
 | `calories_source`            | Constrained text            | Required | Server-validated                         | Write-once | `estimated` \| `measured` \| `user_entered` \| `unknown`                        | Provenance; forbids labelling estimates as actual |
 | `calorie_algorithm_version`  | Constrained text (max 32)   | Nullable | Server-supplied                          | Write-once | Required when `calories_source = 'estimated'`; forbidden otherwise              | Reproducibility of estimates                      |
-| `calculation_weight_kg`      | Decimal(5,2)                | Nullable | Snapshot of profile at ingestion         | Write-once | `> 0` when present; required when `calories_source = 'estimated'`               | Historical calculation input                      |
+| `calculation_weight_kg`      | Decimal(5,2)                | Nullable | Snapshot of profile at ingestion         | Write-once | `> 0`, `<= 500` when present; required when `calories_source = 'estimated'`     | Historical calculation input                      |
 | `notes`                      | Constrained text (max 2000) | Nullable | User-entered                             | Write-once | Never overwritten on replay                                                     | User annotation                                   |
 | `app_version`                | Constrained text (max 32)   | Required | Client-declared                          | Write-once | Non-empty; non-semantic diagnostics only                                        | Diagnostics and provenance                        |
 | `confirmation_received_at`   | UTC timestamp               | Required | Server clock at first accepted write     | Write-once | Never client-supplied; not fingerprinted (§9.2, §11.1)                          | When the trusted server received the confirmation |
@@ -771,7 +771,7 @@ object yields `PH_INVALID_PRESCRIPTION_SNAPSHOT`.
 | `duration_seconds` | Bounded integer  | Optional | Client-observed | `>= 0`, `<= 86400`                                                                           |
 | `hold_seconds`     | Bounded integer  | Optional | Client-observed | `>= 0`, `<= 86400`                                                                           |
 | `distance_m`       | Decimal(8,2)     | Optional | Client-observed | `>= 0`, `<= 100000`                                                                          |
-| `rpe`              | Decimal(3,1)     | Optional | Client-observed | `>= 1.0`, `<= 10.0`                                                                          |
+| `rpe`              | Decimal(3,1)     | Optional | User-entered    | `>= 1.0`, `<= 10.0`, in steps of `0.5` (§6.2)                                                |
 | `is_completed`     | Boolean          | Required | Client-observed | A completed set requires at least one nonzero performance measure (§6.2)                     |
 | `performed_at`     | UTC timestamp    | Optional | Client-observed | Within the session's occurrence window; non-decreasing across `set_index` within an exercise |
 
