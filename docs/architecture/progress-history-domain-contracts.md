@@ -650,12 +650,12 @@ canonical and UI resolves the localized label.
 | `user_id`                  | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                             | Ownership                    |
 | `ingestion_key`            | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `daily-target:{stableUuid}`           | Idempotency                  |
 | `fact_fingerprint`         | Constrained text (64)      | Required | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                 | Replay/conflict detection    |
-| `captured_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Same window rule as §5                                            | Capture instant              |
+| `captured_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Applicable occurrence window of §5; normalized to UTC second precision before validation, storage and fingerprinting (§11.1) | Capture instant |
 | `captured_timezone`        | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                                   | Zone at capture              |
 | `captured_timezone_source` | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                       | Zone provenance              |
 | `local_day`                | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                                | Daily grouping               |
 | `calorie_target_kcal`      | Decimal(7,2)               | Required | Derived/entered  | Write-once | `> 0`, `<= 20000`                                                 | Applicable daily target      |
-| `calculation_weight_kg`    | Decimal(5,2)               | Nullable | Snapshot         | Write-once | `> 0` when present; required when `target_source = 'calculated'`  | Historical calculation input |
+| `calculation_weight_kg`    | Decimal(5,2)               | Nullable | Snapshot         | Write-once | Required when `target_source = 'calculated'`, forbidden otherwise; `> 0`, `<= 500`; included in `fact_fingerprint` (§11.3) | Historical calculation input |
 | `target_source`            | Constrained text           | Required | Server-validated | Write-once | `calculated` \| `user_entered` \| `unknown`                       | Provenance                   |
 | `target_algorithm_version` | Constrained text (max 32)  | Nullable | Server-supplied  | Write-once | Required when `target_source = 'calculated'`; forbidden otherwise | Reproducibility              |
 | `created_at`               | UTC timestamp              | Required | Database clock   | Write-once | Default now                                                       | Audit                        |
@@ -887,9 +887,9 @@ still verifies same-user ownership and rejects a cross-user target with
 | `ingestion_key`            | Constrained text (max 128) | Required                            | Client          | Frozen key form (§8.3); unique within the command                                 |
 | `calorie_target_kcal`      | Decimal(7,2)               | Required                            | Trusted state   | `> 0`, `<= 20000`                                                                 |
 | `target_source`            | Constrained text           | Required                            | Trusted state   | Frozen vocabulary of §8.3                                                         |
-| `target_algorithm_version` | Constrained text (max 32)  | Required when the target is derived | Trusted state   | Forbidden otherwise                                                               |
-| `calculation_weight_kg`    | Decimal(5,2)               | Optional                            | Trusted state   | `> 0`, `<= 500`                                                                   |
-| `captured_at`              | UTC timestamp              | Required                            | Trusted state   | Within the session occurrence window                                              |
+| `target_algorithm_version` | Constrained text (max 32)  | Required when `target_source = calculated` | Trusted state | Forbidden for every other `target_source`                                  |
+| `calculation_weight_kg`    | Decimal(5,2)               | Required when `target_source = calculated` | Trusted state | Forbidden for every other `target_source`; `> 0`, `<= 500`; fingerprinted (§11.3) |
+| `captured_at`              | UTC timestamp              | Required                            | Client-observed | Applicable occurrence window of §5; normalized to UTC second precision before validation, storage and fingerprinting (§11.1) |
 | `timezone`                 | Constrained text (max 64)  | Required                            | Client-observed | Valid IANA zone; stored as `captured_timezone`                                    |
 | `timezone_source`          | Constrained text           | Required                            | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `captured_timezone_source` |
 
@@ -993,7 +993,7 @@ Frozen key forms:
 | Plan-linked completion            | `planned-workout:{plannedWorkoutId}`          |
 | Timer-only ad-hoc completion      | `timer:{stableUuid}`                          |
 | First-workout / ad-hoc completion | `first-workout:{stableUuid}`                  |
-| Correction replacement session    | `correction:{originalSessionId}:{stableUuid}` |
+| Correction replacement session    | `correction:{targetSessionId}:{stableUuid}`   |
 
 Rules:
 
