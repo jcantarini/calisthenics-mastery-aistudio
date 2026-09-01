@@ -1825,8 +1825,12 @@ transaction with `PH_AUXILIARY_FACT_CONFLICT`.
 is not edited.
 
 **Correction (single transaction).** Create the replacement immutable session
-and its children, the append-only correction adjustment, and the required
-downstream dispatch rows. The original session is neither edited nor deleted.
+and its children — preserving the target session's `source` and plan provenance,
+with `ingestion_key` equal to the accepted `adjustment_key` (§7.2) — the
+append-only correction adjustment, and the required `session_corrected`
+dispatch rows only. No `session_completed` row is created for the replacement
+(§12). The original session is neither edited nor deleted, and the replacement
+occurrence instant may be older than 48 h (§7.3).
 
 **Adjustment replay (single transaction).** Look up
 `(user_id, adjustment_key)`, compare the stored `command_fingerprint`, and
