@@ -719,7 +719,8 @@ did not create through this contract), `user_id` or any other authoritative
 user identifier, `created_at` / `updated_at`, `contract_version` /
 `event_version`, `command_fingerprint` / `fact_fingerprint`, any outbox field,
 `local_day`, `confirmation_received_at`, or actor authority. Presence of any of
-these is a contract violation and the command is rejected.
+these is a structural contract violation and the command is rejected with
+`PH_INVALID_COMMAND_SHAPE` (§10).
 
 ### 9.1 Command input matrix (top level)
 
@@ -1226,6 +1227,13 @@ Subject resolution, frozen exactly:
 | `session_completed` | the completed session                                                             | **forbidden** (must be null) |
 | `session_voided`    | the target / original session                                                     | **mandatory**                |
 | `session_corrected` | the target / original session; the replacement is resolved through the adjustment | **mandatory**                |
+
+**No duplicate completion delivery (frozen).** A correction transaction creates
+`session_corrected` rows only. It never creates a `session_completed` row for
+the replacement session; consumers learn about the replacement through
+`replacement_session_id` in the correction envelope (§13) and reverse or
+recompute their projection from it. This is what prevents duplicate XP,
+achievement, goal and training-plan effects (§7.3).
 
 **Plan synchronization.** A `training_plan_sync` row is created only when the
 subject session carries a non-null `source_planned_workout_id`. When it is
