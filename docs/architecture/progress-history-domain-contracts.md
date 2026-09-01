@@ -1954,9 +1954,36 @@ entity and the payload (§8.2, §9.9); auxiliary payloads now carry
 `timezone_source` mapped to their stored columns (§9.8, §9.9); auxiliary fact
 fingerprints now cover timezone provenance (§11.3); a single timestamp
 precision rule now governs storage and fingerprinting alike (§11.1); and the
-stale `PH_AUXILIARY_FACT_KEY_CONFLICT` spelling is replaced everywhere by
-`PH_AUXILIARY_FACT_CONFLICT` (§10, §17). Adjustment read models now expose
-`reason_code` and `reason_text` (§14.2, §14.4).
+obsolete auxiliary conflict spelling was replaced everywhere by the single
+canonical code `PH_AUXILIARY_FACT_CONFLICT` (§10, §17). Adjustment read models
+now expose `reason_code` and `reason_text` (§14.2, §14.4).
+
+**Correction record (Sprint 8.0B-B2A-C3).** Independent validation of the C2
+revision found remaining internal-consistency and executability defects. This
+revision: removes the obsolete auxiliary conflict identifier from every
+remaining occurrence, including this correction history, leaving
+`PH_AUXILIARY_FACT_CONFLICT` as the only auxiliary idempotency-conflict code
+(§10); standardizes every correction replacement key on
+`correction:{targetSessionId}:{stableUuid}`, ties it deterministically to the
+accepted `adjustment_key` and forbids that key form in ordinary ingestion
+(§7.1, §7.2, §7.3, §11); confirms that a correction replacement preserves the
+target session's `source` and plan provenance so no `source = correction`
+value is introduced (§5, §7); separates ordinary completion freshness (48 h
+past, 5 min future) from historical correction time handling, which accepts
+older instants but never a future one beyond 5 min and validates replay before
+time (§5, §7.3, §9.2); forbids a `session_completed` dispatch obligation for a
+correction replacement so consumers cannot double-count (§7.3, §12, §13, §17);
+reconciles the daily-target physical and payload matrices on `captured_at` and
+conditional `calculation_weight_kg` (§8.3, §9.9); aligns duplicated physical and
+payload bounds for `week_number`, `day_number`, `calories_kcal`,
+`calculation_weight_kg` and `rpe` steps (§5, §6.2, §9.3, §9.4, §9.7); adds
+`PH_INVALID_COMMAND_SHAPE` for malformed command shape, reserves
+`PH_INVALID_COMMAND_VERSION` for version alone, routes every cross-user
+reference to `PH_CROSS_USER_VIOLATION`, scopes `PH_ADJUSTMENT_CONFLICT` to
+graph-state conflicts and removes the unreachable client-proposed replacement
+wording (§2 I5, §9, §10); and clarifies that adjustment `occurred_at` is
+server-derived UTC second-precision event time, distinct from `created_at` and
+excluded from the adjustment fingerprint (§7.1, §7.2).
 
 This revision remains a **Draft**. It has **not** been independently validated,
 ADR 0005 remains **Proposed**, and nothing has been implemented. Sprint
