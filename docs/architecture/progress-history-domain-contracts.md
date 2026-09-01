@@ -35,24 +35,24 @@ worker, service or UI implementation.
 
 ## 2. Contract-wide invariants
 
-| #   | Invariant                                                                                                          | Implementation-contract implication                                                                               |
-| --- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| I1  | Completed workout history is independent of mutable prescription data.                                             | No FK from history to `training_plans`/`planned_workouts`; provenance stored as immutable scalars (§5).           |
-| I2  | One logical completion creates at most one canonical session.                                                      | Unique `(user_id, ingestion_key)` on `public.workout_sessions` (§11, §15).                                        |
-| I3  | The browser cannot write reward-bearing history.                                                                   | No `INSERT/UPDATE/DELETE` grant to `authenticated`; no RPC execute grant (§16).                                   |
-| I4  | The trusted server derives `user_id`.                                                                              | `user_id` is a separate server-derived argument, never a payload field (§9).                                      |
-| I5  | A client-supplied `user_id` is never accepted as authority.                                                        | Any `user_id`-like field in the payload is a structural contract violation → `PH_INVALID_COMMAND_SHAPE` (§10).    |
-| I6  | Session, children, supplied auxiliary facts and dispatch rows commit atomically.                                   | One transactional function call per completion (§9, §17).                                                         |
-| I7  | Original historical facts are immutable.                                                                           | No `UPDATE` path exists for fact tables in any role except account-deletion cascade (§17).                        |
-| I8  | Corrections are append-only.                                                                                       | `public.workout_session_adjustments` insert-only; originals never edited (§7).                                    |
-| I9  | Historical provenance never uses a foreign key to mutable training-plan rows.                                      | Source plan/planned-workout IDs are plain UUID scalars, no FK, no `ON DELETE SET NULL` (§5).                      |
-| I10 | Training-plan runtime remains writable only through `TrainingPlanService`.                                         | The outbox `training_plan_sync` consumer calls the service; it never touches plan tables (§12, §13).              |
-| I11 | Progress History never directly awards XP or changes Goals.                                                        | Outbox delivers facts; consumers own their own writes (§13).                                                      |
-| I12 | Downstream delivery is durable and independently retryable.                                                        | One outbox row per `(logical event, consumer)`; per-consumer state machine (§12).                                 |
-| I13 | Historical dates, snapshots and calculation inputs never silently change.                                          | `local_day`, timezone, snapshots and `calculation_weight_kg` are write-once (§5, §9).                             |
-| I14 | User account deletion is the only ordinary hard-deletion exception.                                                | `user_id → auth.users(id) ON DELETE CASCADE`; no other delete path (§17).                                         |
-| I15 | Canonical reports never reconstruct history from `planned_workouts`, current profile values or `src/lib/store.ts`. | Read models bind exclusively to Progress History tables after cutover (§14).                                      |
-| I16 | All direct user access is separately controlled by grants and RLS.                                                 | Grants are designed independently of RLS; RLS is defense in depth (§16).                                          |
+| #   | Invariant                                                                                                          | Implementation-contract implication                                                                            |
+| --- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| I1  | Completed workout history is independent of mutable prescription data.                                             | No FK from history to `training_plans`/`planned_workouts`; provenance stored as immutable scalars (§5).        |
+| I2  | One logical completion creates at most one canonical session.                                                      | Unique `(user_id, ingestion_key)` on `public.workout_sessions` (§11, §15).                                     |
+| I3  | The browser cannot write reward-bearing history.                                                                   | No `INSERT/UPDATE/DELETE` grant to `authenticated`; no RPC execute grant (§16).                                |
+| I4  | The trusted server derives `user_id`.                                                                              | `user_id` is a separate server-derived argument, never a payload field (§9).                                   |
+| I5  | A client-supplied `user_id` is never accepted as authority.                                                        | Any `user_id`-like field in the payload is a structural contract violation → `PH_INVALID_COMMAND_SHAPE` (§10). |
+| I6  | Session, children, supplied auxiliary facts and dispatch rows commit atomically.                                   | One transactional function call per completion (§9, §17).                                                      |
+| I7  | Original historical facts are immutable.                                                                           | No `UPDATE` path exists for fact tables in any role except account-deletion cascade (§17).                     |
+| I8  | Corrections are append-only.                                                                                       | `public.workout_session_adjustments` insert-only; originals never edited (§7).                                 |
+| I9  | Historical provenance never uses a foreign key to mutable training-plan rows.                                      | Source plan/planned-workout IDs are plain UUID scalars, no FK, no `ON DELETE SET NULL` (§5).                   |
+| I10 | Training-plan runtime remains writable only through `TrainingPlanService`.                                         | The outbox `training_plan_sync` consumer calls the service; it never touches plan tables (§12, §13).           |
+| I11 | Progress History never directly awards XP or changes Goals.                                                        | Outbox delivers facts; consumers own their own writes (§13).                                                   |
+| I12 | Downstream delivery is durable and independently retryable.                                                        | One outbox row per `(logical event, consumer)`; per-consumer state machine (§12).                              |
+| I13 | Historical dates, snapshots and calculation inputs never silently change.                                          | `local_day`, timezone, snapshots and `calculation_weight_kg` are write-once (§5, §9).                          |
+| I14 | User account deletion is the only ordinary hard-deletion exception.                                                | `user_id → auth.users(id) ON DELETE CASCADE`; no other delete path (§17).                                      |
+| I15 | Canonical reports never reconstruct history from `planned_workouts`, current profile values or `src/lib/store.ts`. | Read models bind exclusively to Progress History tables after cutover (§14).                                   |
+| I16 | All direct user access is separately controlled by grants and RLS.                                                 | Grants are designed independently of RLS; RLS is defense in depth (§16).                                       |
 
 ---
 
@@ -111,35 +111,35 @@ are deliberately absent — they remain Phase 9B.
 `public.workout_sessions` — immutable canonical record of one completed
 workout.
 
-| Field                        | Logical type                | Required | Source/owner                             | Mutability | Constraints and allowed values                                                  | Purpose                                           |
-| ---------------------------- | --------------------------- | -------- | ---------------------------------------- | ---------- | ------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `id`                         | UUID                        | Required | Server-generated                         | Write-once | Primary key                                                                     | Canonical session identity                        |
-| `user_id`                    | UUID                        | Required | Server-derived from verified session     | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                           | Ownership                                         |
-| `ingestion_key`              | Constrained text (max 128)  | Required | Client-proposed, server-validated        | Write-once | Matches a frozen key form (§11); unique with `user_id`                          | Idempotency identity                              |
-| `command_fingerprint`        | Constrained text (64, hex)  | Required | Server-computed from canonical payload   | Write-once | SHA-256 hex of the canonicalized immutable command subset (§11)                 | Detect incompatible reuse of an ingestion key     |
-| `source`                     | Constrained text            | Required | Client-declared, server-validated        | Write-once | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`         | Provenance only; not part of uniqueness           |
-| `created_at`                 | UTC timestamp               | Required | Database clock                           | Write-once | Default now                                                                     | Row creation time (not the event time)            |
-| `occurred_at`                | UTC timestamp               | Required | Client-observed, server-validated        | Write-once | Ordinary completion ingestion: not more than 48 h in the past nor 5 min in the future relative to the server clock. Correction replacement (created only by `public.adjust_workout_session_v1`, §7.3): any past instant is accepted, never more than 5 min in the future | Event occurrence instant |
-| `occurred_timezone`          | Constrained text (max 64)   | Required | Client-observed, server-validated        | Write-once | Valid IANA zone name                                                            | Zone captured at ingestion                        |
-| `occurred_timezone_source`   | Constrained text            | Required | Client-declared, server-validated        | Write-once | `device` \| `user_setting` \| `assumed_utc`                                     | Honesty about zone provenance                     |
-| `local_day`                  | Local date                  | Required | Server-derived from `occurred_at` + zone | Write-once | Never recalculated after ingestion                                              | Historical calendar-day grouping                  |
-| `source_plan_id`             | UUID                        | Nullable | Copied from trusted application state    | Write-once | **No FK**; required when `source = plan_workout`                                | Immutable plan provenance                         |
-| `source_planned_workout_id`  | UUID                        | Nullable | Copied from trusted application state    | Write-once | **No FK**; required when `source = plan_workout`                                | Plan-sync target identity                         |
-| `plan_name_snapshot`         | Constrained text (max 160)  | Nullable | Snapshot at ingestion                    | Write-once | Neutral stored value; never re-resolved                                         | Stable historical display                         |
-| `workout_title_snapshot`     | Constrained text (max 160)  | Required | Snapshot at ingestion                    | Write-once | Non-empty; neutral identity, not a translated UI string                         | Stable historical display                         |
-| `week_number_snapshot`       | Bounded integer             | Nullable | Snapshot at ingestion                    | Write-once | `>= 1`, `<= 520` when present                                                   | Plan position at completion time                  |
-| `day_number_snapshot`        | Bounded integer             | Nullable | Snapshot at ingestion                    | Write-once | `>= 1`, `<= 7` when present                                                     | Plan position at completion time                  |
-| `difficulty_snapshot`        | Constrained text            | Nullable | Snapshot at ingestion                    | Write-once | `beginner` \| `intermediate` \| `advanced`                                      | Historical difficulty context                     |
-| `estimated_duration_seconds` | Bounded integer             | Nullable | Snapshot of prescription                 | Write-once | `>= 0`, `<= 86400`                                                              | Prescribed duration                               |
-| `actual_duration_seconds`    | Bounded integer             | Nullable | Client-observed, server-validated        | Write-once | `>= 0`, `<= 86400`; distinct from estimated                                     | Measured duration                                 |
-| `calories_kcal`              | Decimal(7,2)                | Nullable | Derived or user-entered                  | Write-once | `>= 0`, `<= 20000` when present; required non-null when `calories_source <> 'unknown'` | Energy fact                                |
-| `calories_source`            | Constrained text            | Required | Server-validated                         | Write-once | `estimated` \| `measured` \| `user_entered` \| `unknown`                        | Provenance; forbids labelling estimates as actual |
-| `calorie_algorithm_version`  | Constrained text (max 32)   | Nullable | Server-supplied                          | Write-once | Required when `calories_source = 'estimated'`; forbidden otherwise              | Reproducibility of estimates                      |
-| `calculation_weight_kg`      | Decimal(5,2)                | Nullable | Snapshot of profile at ingestion         | Write-once | `> 0`, `<= 500` when present; required when `calories_source = 'estimated'`     | Historical calculation input                      |
-| `notes`                      | Constrained text (max 2000) | Nullable | User-entered                             | Write-once | Never overwritten on replay                                                     | User annotation                                   |
-| `app_version`                | Constrained text (max 32)   | Required | Client-declared                          | Write-once | Non-empty; non-semantic diagnostics only                                        | Diagnostics and provenance                        |
-| `confirmation_received_at`   | UTC timestamp               | Required | Server clock at first accepted write     | Write-once | Never client-supplied; not fingerprinted (§9.2, §11.1)                          | When the trusted server received the confirmation |
-| `contract_version`           | Bounded integer             | Required | Server-set                               | Write-once | Currently `1`                                                                   | Schema/contract evolution                         |
+| Field                        | Logical type                | Required | Source/owner                             | Mutability | Constraints and allowed values                                                                                                                                                                                                                                           | Purpose                                           |
+| ---------------------------- | --------------------------- | -------- | ---------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| `id`                         | UUID                        | Required | Server-generated                         | Write-once | Primary key                                                                                                                                                                                                                                                              | Canonical session identity                        |
+| `user_id`                    | UUID                        | Required | Server-derived from verified session     | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                                                                                                                                                                                                    | Ownership                                         |
+| `ingestion_key`              | Constrained text (max 128)  | Required | Client-proposed, server-validated        | Write-once | Matches a frozen key form (§11); unique with `user_id`                                                                                                                                                                                                                   | Idempotency identity                              |
+| `command_fingerprint`        | Constrained text (64, hex)  | Required | Server-computed from canonical payload   | Write-once | SHA-256 hex of the canonicalized immutable command subset (§11)                                                                                                                                                                                                          | Detect incompatible reuse of an ingestion key     |
+| `source`                     | Constrained text            | Required | Client-declared, server-validated        | Write-once | `plan_workout` \| `timer_session` \| `first_workout` \| `adhoc_workout`                                                                                                                                                                                                  | Provenance only; not part of uniqueness           |
+| `created_at`                 | UTC timestamp               | Required | Database clock                           | Write-once | Default now                                                                                                                                                                                                                                                              | Row creation time (not the event time)            |
+| `occurred_at`                | UTC timestamp               | Required | Client-observed, server-validated        | Write-once | Ordinary completion ingestion: not more than 48 h in the past nor 5 min in the future relative to the server clock. Correction replacement (created only by `public.adjust_workout_session_v1`, §7.3): any past instant is accepted, never more than 5 min in the future | Event occurrence instant                          |
+| `occurred_timezone`          | Constrained text (max 64)   | Required | Client-observed, server-validated        | Write-once | Valid IANA zone name                                                                                                                                                                                                                                                     | Zone captured at ingestion                        |
+| `occurred_timezone_source`   | Constrained text            | Required | Client-declared, server-validated        | Write-once | `device` \| `user_setting` \| `assumed_utc`                                                                                                                                                                                                                              | Honesty about zone provenance                     |
+| `local_day`                  | Local date                  | Required | Server-derived from `occurred_at` + zone | Write-once | Never recalculated after ingestion                                                                                                                                                                                                                                       | Historical calendar-day grouping                  |
+| `source_plan_id`             | UUID                        | Nullable | Copied from trusted application state    | Write-once | **No FK**; required when `source = plan_workout`                                                                                                                                                                                                                         | Immutable plan provenance                         |
+| `source_planned_workout_id`  | UUID                        | Nullable | Copied from trusted application state    | Write-once | **No FK**; required when `source = plan_workout`                                                                                                                                                                                                                         | Plan-sync target identity                         |
+| `plan_name_snapshot`         | Constrained text (max 160)  | Nullable | Snapshot at ingestion                    | Write-once | Neutral stored value; never re-resolved                                                                                                                                                                                                                                  | Stable historical display                         |
+| `workout_title_snapshot`     | Constrained text (max 160)  | Required | Snapshot at ingestion                    | Write-once | Non-empty; neutral identity, not a translated UI string                                                                                                                                                                                                                  | Stable historical display                         |
+| `week_number_snapshot`       | Bounded integer             | Nullable | Snapshot at ingestion                    | Write-once | `>= 1`, `<= 520` when present                                                                                                                                                                                                                                            | Plan position at completion time                  |
+| `day_number_snapshot`        | Bounded integer             | Nullable | Snapshot at ingestion                    | Write-once | `>= 1`, `<= 7` when present                                                                                                                                                                                                                                              | Plan position at completion time                  |
+| `difficulty_snapshot`        | Constrained text            | Nullable | Snapshot at ingestion                    | Write-once | `beginner` \| `intermediate` \| `advanced`                                                                                                                                                                                                                               | Historical difficulty context                     |
+| `estimated_duration_seconds` | Bounded integer             | Nullable | Snapshot of prescription                 | Write-once | `>= 0`, `<= 86400`                                                                                                                                                                                                                                                       | Prescribed duration                               |
+| `actual_duration_seconds`    | Bounded integer             | Nullable | Client-observed, server-validated        | Write-once | `>= 0`, `<= 86400`; distinct from estimated                                                                                                                                                                                                                              | Measured duration                                 |
+| `calories_kcal`              | Decimal(7,2)                | Nullable | Derived or user-entered                  | Write-once | `>= 0`, `<= 20000` when present; required non-null when `calories_source <> 'unknown'`                                                                                                                                                                                   | Energy fact                                       |
+| `calories_source`            | Constrained text            | Required | Server-validated                         | Write-once | `estimated` \| `measured` \| `user_entered` \| `unknown`                                                                                                                                                                                                                 | Provenance; forbids labelling estimates as actual |
+| `calorie_algorithm_version`  | Constrained text (max 32)   | Nullable | Server-supplied                          | Write-once | Required when `calories_source = 'estimated'`; forbidden otherwise                                                                                                                                                                                                       | Reproducibility of estimates                      |
+| `calculation_weight_kg`      | Decimal(5,2)                | Nullable | Snapshot of profile at ingestion         | Write-once | `> 0`, `<= 500` when present; required when `calories_source = 'estimated'`                                                                                                                                                                                              | Historical calculation input                      |
+| `notes`                      | Constrained text (max 2000) | Nullable | User-entered                             | Write-once | Never overwritten on replay                                                                                                                                                                                                                                              | User annotation                                   |
+| `app_version`                | Constrained text (max 32)   | Required | Client-declared                          | Write-once | Non-empty; non-semantic diagnostics only                                                                                                                                                                                                                                 | Diagnostics and provenance                        |
+| `confirmation_received_at`   | UTC timestamp               | Required | Server clock at first accepted write     | Write-once | Never client-supplied; not fingerprinted (§9.2, §11.1)                                                                                                                                                                                                                   | When the trusted server received the confirmation |
+| `contract_version`           | Bounded integer             | Required | Server-set                               | Write-once | Currently `1`                                                                                                                                                                                                                                                            | Schema/contract evolution                         |
 
 **Time semantics.** `occurred_at` is the event instant; `created_at` is the
 database write instant; `local_day` is the historical calendar day derived once
@@ -347,22 +347,22 @@ correcting history. Originals are never edited.
 
 ### 7.1 Adjustment entity contract
 
-| Field                    | Logical type               | Required | Source/owner               | Mutability | Constraints and allowed values                                                                                                                                     | Purpose                      |
-| ------------------------ | -------------------------- | -------- | -------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
-| `id`                     | UUID                       | Required | Server-generated           | Write-once | Primary key                                                                                                                                                        | Adjustment identity          |
-| `user_id`                | UUID                       | Required | Server-derived             | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                                                                                              | Ownership                    |
-| `adjustment_key`         | Constrained text (max 128) | Required | Client-proposed            | Write-once | Unique with `user_id`; frozen key forms of §7.2                                                                                                                    | Command idempotency          |
-| `command_fingerprint`    | Constrained text (64)      | Required | Server-computed            | Write-once | 64 lowercase hex, SHA-256, inputs frozen in §7.2                                                                                                                   | Replay/conflict detection    |
-| `kind`                   | Constrained text           | Required | Server-validated           | Write-once | `void` \| `correction`                                                                                                                                             | Adjustment semantics         |
-| `target_session_id`      | UUID                       | Required | Client-proposed, validated | Write-once | FK `(target_session_id, user_id) → workout_sessions(id, user_id)`                                                                                                  | Session being adjusted       |
-| `replacement_session_id` | UUID                       | Nullable | Server-created             | Write-once | FK `(replacement_session_id, user_id) → workout_sessions(id, user_id)`; required iff `kind = 'correction'`; forbidden when `kind = 'void'`; `<> target_session_id` | New canonical session        |
-| `reason_code`            | Constrained text (max 64)  | Required | Client-declared, validated | Write-once | `^[a-z0-9_]{1,64}$`; neutral, non-translated, stable identifier                                                                                                    | Machine-readable audit       |
-| `reason_text`            | Constrained text (max 500) | Nullable | User-supplied              | Write-once | Trimmed; non-empty when present; never used as a machine key                                                                                                       | Human audit detail           |
-| `occurred_at`            | UTC timestamp              | Required | Server-derived (server clock at the first accepted request) | Write-once | Never client-supplied; stored in UTC at second precision (§11.1); excluded from the adjustment `command_fingerprint`                              | Historical event time of the adjustment |
-| `actor_type`             | Constrained text           | Required | Server-derived             | Write-once | `user` \| `system` (§7.1 actor semantics)                                                                                                                          | Who adjusted                 |
-| `actor_id`               | UUID                       | Nullable | Server-derived             | Write-once | Required and equal to `user_id` when `actor_type = 'user'`; null when `actor_type = 'system'`                                                                      | Verified actor identity      |
-| `created_at`             | UTC timestamp              | Required | Database clock             | Write-once | Default now; database precision retained (§11)                                                                                                                     | Audit                        |
-| `contract_version`       | Bounded integer            | Required | Server-set                 | Write-once | Currently `1`                                                                                                                                                      | Contract evolution           |
+| Field                    | Logical type               | Required | Source/owner                                                | Mutability | Constraints and allowed values                                                                                                                                     | Purpose                                 |
+| ------------------------ | -------------------------- | -------- | ----------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| `id`                     | UUID                       | Required | Server-generated                                            | Write-once | Primary key                                                                                                                                                        | Adjustment identity                     |
+| `user_id`                | UUID                       | Required | Server-derived                                              | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                                                                                              | Ownership                               |
+| `adjustment_key`         | Constrained text (max 128) | Required | Client-proposed                                             | Write-once | Unique with `user_id`; frozen key forms of §7.2                                                                                                                    | Command idempotency                     |
+| `command_fingerprint`    | Constrained text (64)      | Required | Server-computed                                             | Write-once | 64 lowercase hex, SHA-256, inputs frozen in §7.2                                                                                                                   | Replay/conflict detection               |
+| `kind`                   | Constrained text           | Required | Server-validated                                            | Write-once | `void` \| `correction`                                                                                                                                             | Adjustment semantics                    |
+| `target_session_id`      | UUID                       | Required | Client-proposed, validated                                  | Write-once | FK `(target_session_id, user_id) → workout_sessions(id, user_id)`                                                                                                  | Session being adjusted                  |
+| `replacement_session_id` | UUID                       | Nullable | Server-created                                              | Write-once | FK `(replacement_session_id, user_id) → workout_sessions(id, user_id)`; required iff `kind = 'correction'`; forbidden when `kind = 'void'`; `<> target_session_id` | New canonical session                   |
+| `reason_code`            | Constrained text (max 64)  | Required | Client-declared, validated                                  | Write-once | `^[a-z0-9_]{1,64}$`; neutral, non-translated, stable identifier                                                                                                    | Machine-readable audit                  |
+| `reason_text`            | Constrained text (max 500) | Nullable | User-supplied                                               | Write-once | Trimmed; non-empty when present; never used as a machine key                                                                                                       | Human audit detail                      |
+| `occurred_at`            | UTC timestamp              | Required | Server-derived (server clock at the first accepted request) | Write-once | Never client-supplied; stored in UTC at second precision (§11.1); excluded from the adjustment `command_fingerprint`                                               | Historical event time of the adjustment |
+| `actor_type`             | Constrained text           | Required | Server-derived                                              | Write-once | `user` \| `system` (§7.1 actor semantics)                                                                                                                          | Who adjusted                            |
+| `actor_id`               | UUID                       | Nullable | Server-derived                                              | Write-once | Required and equal to `user_id` when `actor_type = 'user'`; null when `actor_type = 'system'`                                                                      | Verified actor identity                 |
+| `created_at`             | UTC timestamp              | Required | Database clock                                              | Write-once | Default now; database precision retained (§11)                                                                                                                     | Audit                                   |
+| `contract_version`       | Bounded integer            | Required | Server-set                                                  | Write-once | Currently `1`                                                                                                                                                      | Contract evolution                      |
 
 The earlier ambiguous combined `reason` field is **withdrawn**; every reader and
 read model uses `reason_code` plus optional `reason_text`.
@@ -491,14 +491,14 @@ Future function: `public.adjust_workout_session_v1`.
 
 **Adjustment-command input matrix:**
 
-| Field                    | Logical type               | Required                          | Origin       | Constraints                                              |
-| ------------------------ | -------------------------- | --------------------------------- | ------------ | -------------------------------------------------------- |
-| `command_version`        | Bounded integer            | Required                          | Client       | Currently `1`                                            |
-| `adjustment_key`         | Constrained text (max 128) | Required                          | Client       | Frozen key forms of §7.2                                 |
-| `kind`                   | Constrained text           | Required                          | Client       | `void` \| `correction`                                   |
-| `target_session_id`      | UUID                       | Required                          | Client       | Must be an existing same-user session                    |
-| `reason_code`            | Constrained text (max 64)  | Required                          | Client       | `^[a-z0-9_]{1,64}$`                                      |
-| `reason_text`            | Constrained text (max 500) | Optional                          | User-entered | Trimmed; non-empty when present                          |
+| Field                    | Logical type               | Required                          | Origin       | Constraints                                                                                                                                                               |
+| ------------------------ | -------------------------- | --------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `command_version`        | Bounded integer            | Required                          | Client       | Currently `1`                                                                                                                                                             |
+| `adjustment_key`         | Constrained text (max 128) | Required                          | Client       | Frozen key forms of §7.2                                                                                                                                                  |
+| `kind`                   | Constrained text           | Required                          | Client       | `void` \| `correction`                                                                                                                                                    |
+| `target_session_id`      | UUID                       | Required                          | Client       | Must be an existing same-user session                                                                                                                                     |
+| `reason_code`            | Constrained text (max 64)  | Required                          | Client       | `^[a-z0-9_]{1,64}$`                                                                                                                                                       |
+| `reason_text`            | Constrained text (max 500) | Optional                          | User-entered | Trimmed; non-empty when present                                                                                                                                           |
 | `replacement_completion` | Versioned command (§9)     | Required when `kind = correction` | Client       | A complete completion command; forbidden for `kind=void`; its `ingestion_key` must equal `adjustment_key`; its `source` and plan provenance must match the target session |
 
 The client must **not** supply: `user_id`, actor authority, `actor_type`,
@@ -644,22 +644,22 @@ canonical and UI resolves the localized label.
 
 ### 8.3 `public.daily_target_snapshots`
 
-| Field                      | Logical type               | Required | Source/owner     | Mutability | Constraints and allowed values                                    | Purpose                      |
-| -------------------------- | -------------------------- | -------- | ---------------- | ---------- | ----------------------------------------------------------------- | ---------------------------- |
-| `id`                       | UUID                       | Required | Server-generated | Write-once | Primary key                                                       | Snapshot identity            |
-| `user_id`                  | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                             | Ownership                    |
-| `ingestion_key`            | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `daily-target:{stableUuid}`           | Idempotency                  |
-| `fact_fingerprint`         | Constrained text (64)      | Required | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                 | Replay/conflict detection    |
-| `captured_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Applicable occurrence window of §5; normalized to UTC second precision before validation, storage and fingerprinting (§11.1) | Capture instant |
-| `captured_timezone`        | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                                   | Zone at capture              |
-| `captured_timezone_source` | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                       | Zone provenance              |
-| `local_day`                | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                                | Daily grouping               |
-| `calorie_target_kcal`      | Decimal(7,2)               | Required | Derived/entered  | Write-once | `> 0`, `<= 20000`                                                 | Applicable daily target      |
-| `calculation_weight_kg`    | Decimal(5,2)               | Nullable | Snapshot         | Write-once | Required when `target_source = 'calculated'`, forbidden otherwise; `> 0`, `<= 500`; included in `fact_fingerprint` (§11.3) | Historical calculation input |
-| `target_source`            | Constrained text           | Required | Server-validated | Write-once | `calculated` \| `user_entered` \| `unknown`                       | Provenance                   |
-| `target_algorithm_version` | Constrained text (max 32)  | Nullable | Server-supplied  | Write-once | Required when `target_source = 'calculated'`; forbidden otherwise | Reproducibility              |
-| `created_at`               | UTC timestamp              | Required | Database clock   | Write-once | Default now                                                       | Audit                        |
-| `contract_version`         | Bounded integer            | Required | Server-set       | Write-once | Currently `1`                                                     | Contract evolution           |
+| Field                      | Logical type               | Required | Source/owner     | Mutability | Constraints and allowed values                                                                                               | Purpose                      |
+| -------------------------- | -------------------------- | -------- | ---------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `id`                       | UUID                       | Required | Server-generated | Write-once | Primary key                                                                                                                  | Snapshot identity            |
+| `user_id`                  | UUID                       | Required | Server-derived   | Write-once | FK `auth.users(id) ON DELETE CASCADE`                                                                                        | Ownership                    |
+| `ingestion_key`            | Constrained text (max 128) | Required | Client-proposed  | Write-once | Unique with `user_id`; form `daily-target:{stableUuid}`                                                                      | Idempotency                  |
+| `fact_fingerprint`         | Constrained text (64)      | Required | Server-computed  | Write-once | 64 lowercase hex, SHA-256; inputs frozen in §11.3                                                                            | Replay/conflict detection    |
+| `captured_at`              | UTC timestamp              | Required | Client-observed  | Write-once | Applicable occurrence window of §5; normalized to UTC second precision before validation, storage and fingerprinting (§11.1) | Capture instant              |
+| `captured_timezone`        | Constrained text (max 64)  | Required | Client-observed  | Write-once | Valid IANA zone                                                                                                              | Zone at capture              |
+| `captured_timezone_source` | Constrained text           | Required | Client-declared  | Write-once | `device` \| `user_setting` \| `assumed_utc`                                                                                  | Zone provenance              |
+| `local_day`                | Local date                 | Required | Server-derived   | Write-once | Never recalculated                                                                                                           | Daily grouping               |
+| `calorie_target_kcal`      | Decimal(7,2)               | Required | Derived/entered  | Write-once | `> 0`, `<= 20000`                                                                                                            | Applicable daily target      |
+| `calculation_weight_kg`    | Decimal(5,2)               | Nullable | Snapshot         | Write-once | Required when `target_source = 'calculated'`, forbidden otherwise; `> 0`, `<= 500`; included in `fact_fingerprint` (§11.3)   | Historical calculation input |
+| `target_source`            | Constrained text           | Required | Server-validated | Write-once | `calculated` \| `user_entered` \| `unknown`                                                                                  | Provenance                   |
+| `target_algorithm_version` | Constrained text (max 32)  | Nullable | Server-supplied  | Write-once | Required when `target_source = 'calculated'`; forbidden otherwise                                                            | Reproducibility              |
+| `created_at`               | UTC timestamp              | Required | Database clock   | Write-once | Default now                                                                                                                  | Audit                        |
+| `contract_version`         | Bounded integer            | Required | Server-set       | Write-once | Currently `1`                                                                                                                | Contract evolution           |
 
 **Multiplicity.** Several snapshots may exist for one `local_day` (for example
 after a profile change). The applicable snapshot for a day is the one with the
@@ -719,7 +719,8 @@ did not create through this contract), `user_id` or any other authoritative
 user identifier, `created_at` / `updated_at`, `contract_version` /
 `event_version`, `command_fingerprint` / `fact_fingerprint`, any outbox field,
 `local_day`, `confirmation_received_at`, or actor authority. Presence of any of
-these is a contract violation and the command is rejected.
+these is a structural contract violation and the command is rejected with
+`PH_INVALID_COMMAND_SHAPE` (§10).
 
 ### 9.1 Command input matrix (top level)
 
@@ -768,15 +769,15 @@ payloads are forbidden.
 - Confirmation is a signal of intent only; it cannot substitute for completed
   sets (§9.1 nonzero-evidence rule).
 - **Occurrence-window validation applies only when creating a new session.**
-  The `occurred_at` freshness rule of §5 is a new-write rule.
+  The `occurred_at` freshness rule of §5 is a new-write rule, and it never
+  applies to a correction replacement session (§7.3).
 - Processing order for every ingestion call is fixed: (1) validate command
-  shape (`PH_INVALID_COMMAND_SHAPE`) and version
-  (`PH_INVALID_COMMAND_VERSION`); previously described as "validate command
-  shape and version; (2) look up `(user_id, ingestion_key)`; (3) if a row
-  exists, verify ownership and compare `command_fingerprint`; (4) return
-  `outcome = replayed` on equivalence, or `PH_INGESTION_KEY_CONFLICT` on
-  divergence; (5) only when no row exists, apply the occurrence-window and
-  remaining new-write validations.
+  shape (`PH_INVALID_COMMAND_SHAPE`) and then `command_version`
+  (`PH_INVALID_COMMAND_VERSION`); (2) look up `(user_id, ingestion_key)`;
+  (3) if a row exists, verify ownership and compare `command_fingerprint`;
+  (4) return `outcome = replayed` on equivalence, or
+  `PH_INGESTION_KEY_CONFLICT` on divergence; (5) only when no row exists, apply
+  the occurrence-window and remaining new-write validations.
 - Consequently a valid replay of an already-persisted command still returns the
   existing session long after the original occurrence window has elapsed, and
   is never rejected merely because it is now old.
@@ -884,16 +885,16 @@ still verifies same-user ownership and rejects a cross-user target with
 
 `daily_target[]`:
 
-| Field                      | Logical type               | Required                            | Origin          | Constraints                                                                       |
-| -------------------------- | -------------------------- | ----------------------------------- | --------------- | --------------------------------------------------------------------------------- |
-| `ingestion_key`            | Constrained text (max 128) | Required                            | Client          | Frozen key form (§8.3); unique within the command                                 |
-| `calorie_target_kcal`      | Decimal(7,2)               | Required                            | Trusted state   | `> 0`, `<= 20000`                                                                 |
-| `target_source`            | Constrained text           | Required                            | Trusted state   | Frozen vocabulary of §8.3                                                         |
-| `target_algorithm_version` | Constrained text (max 32)  | Required when `target_source = calculated` | Trusted state | Forbidden for every other `target_source`                                  |
-| `calculation_weight_kg`    | Decimal(5,2)               | Required when `target_source = calculated` | Trusted state | Forbidden for every other `target_source`; `> 0`, `<= 500`; fingerprinted (§11.3) |
-| `captured_at`              | UTC timestamp              | Required                            | Client-observed | Applicable occurrence window of §5; normalized to UTC second precision before validation, storage and fingerprinting (§11.1) |
-| `timezone`                 | Constrained text (max 64)  | Required                            | Client-observed | Valid IANA zone; stored as `captured_timezone`                                    |
-| `timezone_source`          | Constrained text           | Required                            | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `captured_timezone_source` |
+| Field                      | Logical type               | Required                                   | Origin          | Constraints                                                                                                                  |
+| -------------------------- | -------------------------- | ------------------------------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `ingestion_key`            | Constrained text (max 128) | Required                                   | Client          | Frozen key form (§8.3); unique within the command                                                                            |
+| `calorie_target_kcal`      | Decimal(7,2)               | Required                                   | Trusted state   | `> 0`, `<= 20000`                                                                                                            |
+| `target_source`            | Constrained text           | Required                                   | Trusted state   | Frozen vocabulary of §8.3                                                                                                    |
+| `target_algorithm_version` | Constrained text (max 32)  | Required when `target_source = calculated` | Trusted state   | Forbidden for every other `target_source`                                                                                    |
+| `calculation_weight_kg`    | Decimal(5,2)               | Required when `target_source = calculated` | Trusted state   | Forbidden for every other `target_source`; `> 0`, `<= 500`; fingerprinted (§11.3)                                            |
+| `captured_at`              | UTC timestamp              | Required                                   | Client-observed | Applicable occurrence window of §5; normalized to UTC second precision before validation, storage and fingerprinting (§11.1) |
+| `timezone`                 | Constrained text (max 64)  | Required                                   | Client-observed | Valid IANA zone; stored as `captured_timezone`                                                                               |
+| `timezone_source`          | Constrained text           | Required                                   | Client-declared | `device` \| `user_setting` \| `assumed_utc`; stored as `captured_timezone_source`                                            |
 
 For both lists the server derives `id`, `user_id`, `local_day`,
 `fact_fingerprint`, `created_at` and `contract_version`. Structural violations
@@ -953,23 +954,23 @@ The result never contains raw database errors, SQL text or stack traces.
 
 Disambiguation of the codes added by this revision:
 
-| Code                                | Exactly one condition                                                                                                                                                                              |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PH_INVALID_DIFFICULTY`             | The command's `difficulty` is not one of the canonical history values, i.e. the coordinator failed to normalize it (§5.1).                                                                         |
-| `PH_INVALID_EXERCISE_IDENTITY`      | An exercise identifier violates §6.1: bad pattern/length, equal performed and substituted identifiers, or a substitution without its own neutral snapshots.                                        |
-| `PH_INVALID_PRESCRIPTION_SNAPSHOT`  | The `prescription_snapshot` object violates §6.1.1: unsupported `version`, missing required field, out-of-bounds value or oversized serialization.                                                 |
-| `PH_INVALID_EXERCISE`               | An exercise row is invalid for a reason **other** than identity or prescription (ordering, status vocabulary, set-count bounds).                                                                   |
-| `PH_AUXILIARY_FACT_CONFLICT`        | An auxiliary `ingestion_key` is reused with a different `fact_fingerprint` (§11.3).                                                                                                                |
-| `PH_INVALID_AUXILIARY_FACT`         | An auxiliary fact is structurally invalid (bad kind/target/volume combination, bounds, unknown meal key) — not a key conflict.                                                                     |
-| `PH_INGESTION_KEY_CONFLICT`         | A session `ingestion_key` is reused with a different session `command_fingerprint` (§11.1).                                                                                                        |
-| `PH_ADJUSTMENT_KEY_CONFLICT`        | An `adjustment_key` is reused with a different adjustment `command_fingerprint` (§7.2).                                                                                                            |
-| `PH_ADJUSTMENT_CONFLICT`            | An otherwise valid adjustment cannot be applied because of existing graph state: the target already has a direct adjustment, or applying another correction would exceed the frozen maximum chain depth (§7.2).                                          |
+| Code                                | Exactly one condition                                                                                                                                                                                                                                     |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PH_INVALID_DIFFICULTY`             | The command's `difficulty` is not one of the canonical history values, i.e. the coordinator failed to normalize it (§5.1).                                                                                                                                |
+| `PH_INVALID_EXERCISE_IDENTITY`      | An exercise identifier violates §6.1: bad pattern/length, equal performed and substituted identifiers, or a substitution without its own neutral snapshots.                                                                                               |
+| `PH_INVALID_PRESCRIPTION_SNAPSHOT`  | The `prescription_snapshot` object violates §6.1.1: unsupported `version`, missing required field, out-of-bounds value or oversized serialization.                                                                                                        |
+| `PH_INVALID_EXERCISE`               | An exercise row is invalid for a reason **other** than identity or prescription (ordering, status vocabulary, set-count bounds).                                                                                                                          |
+| `PH_AUXILIARY_FACT_CONFLICT`        | An auxiliary `ingestion_key` is reused with a different `fact_fingerprint` (§11.3).                                                                                                                                                                       |
+| `PH_INVALID_AUXILIARY_FACT`         | An auxiliary fact is structurally invalid (bad kind/target/volume combination, bounds, unknown meal key) — not a key conflict.                                                                                                                            |
+| `PH_INGESTION_KEY_CONFLICT`         | A session `ingestion_key` is reused with a different session `command_fingerprint` (§11.1).                                                                                                                                                               |
+| `PH_ADJUSTMENT_KEY_CONFLICT`        | An `adjustment_key` is reused with a different adjustment `command_fingerprint` (§7.2).                                                                                                                                                                   |
+| `PH_ADJUSTMENT_CONFLICT`            | An otherwise valid adjustment cannot be applied because of existing graph state: the target already has a direct adjustment, or applying another correction would exceed the frozen maximum chain depth (§7.2).                                           |
 | `PH_INVALID_ADJUSTMENT`             | The adjustment command is invalid on its own terms (unknown kind, missing target, target equal to replacement, missing replacement for a correction, replacement key/source/provenance mismatch). Cross-user references are **not** covered by this code. |
-| `PH_CROSS_USER_VIOLATION`           | Any verified cross-user reference attempt, including an adjustment target or replacement and a hydration void target that belongs to another user. This is the only code for that condition.                                                             |
-| `PH_INVALID_COMMAND_SHAPE`          | Structurally malformed command shape before domain-field validation: unknown fields, forbidden server-owned fields, client-supplied authoritative identity, or malformed objects. Never used for an unsupported `command_version`.                       |
-| `PH_INVALID_COMMAND_VERSION`        | Exclusively an unsupported `command_version` on the completion or adjustment command.                                                                                                                                                                   |
-| `PH_ADJUSTMENT_CHAIN_CORRUPT`       | Effective-session resolution detected a revisit, a missing replacement or the maximum chain depth (§14.4).                                                                                         |
-| `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | A consumer cannot yet apply the delivered void/correction semantics; the event stays durable and is never marked delivered (§12, §13).                                                             |
+| `PH_CROSS_USER_VIOLATION`           | Any verified cross-user reference attempt, including an adjustment target or replacement and a hydration void target that belongs to another user. This is the only code for that condition.                                                              |
+| `PH_INVALID_COMMAND_SHAPE`          | Structurally malformed command shape before domain-field validation: unknown fields, forbidden server-owned fields, client-supplied authoritative identity, or malformed objects. Never used for an unsupported `command_version`.                        |
+| `PH_INVALID_COMMAND_VERSION`        | Exclusively an unsupported `command_version` on the completion or adjustment command.                                                                                                                                                                     |
+| `PH_ADJUSTMENT_CHAIN_CORRUPT`       | Effective-session resolution detected a revisit, a missing replacement or the maximum chain depth (§14.4).                                                                                                                                                |
+| `PH_DISPATCH_SEMANTICS_UNSUPPORTED` | A consumer cannot yet apply the delivered void/correction semantics; the event stays durable and is never marked delivered (§12, §13).                                                                                                                    |
 
 Rules:
 
@@ -994,12 +995,12 @@ Canonical session uniqueness: **`(user_id, ingestion_key)`**.
 
 Frozen key forms:
 
-| Completion                        | Key form                                      |
-| --------------------------------- | --------------------------------------------- |
-| Plan-linked completion            | `planned-workout:{plannedWorkoutId}`          |
-| Timer-only ad-hoc completion      | `timer:{stableUuid}`                          |
-| First-workout / ad-hoc completion | `first-workout:{stableUuid}`                  |
-| Correction replacement session    | `correction:{targetSessionId}:{stableUuid}`   |
+| Completion                        | Key form                                    |
+| --------------------------------- | ------------------------------------------- |
+| Plan-linked completion            | `planned-workout:{plannedWorkoutId}`        |
+| Timer-only ad-hoc completion      | `timer:{stableUuid}`                        |
+| First-workout / ad-hoc completion | `first-workout:{stableUuid}`                |
+| Correction replacement session    | `correction:{targetSessionId}:{stableUuid}` |
 
 Rules:
 
@@ -1226,6 +1227,13 @@ Subject resolution, frozen exactly:
 | `session_completed` | the completed session                                                             | **forbidden** (must be null) |
 | `session_voided`    | the target / original session                                                     | **mandatory**                |
 | `session_corrected` | the target / original session; the replacement is resolved through the adjustment | **mandatory**                |
+
+**No duplicate completion delivery (frozen).** A correction transaction creates
+`session_corrected` rows only. It never creates a `session_completed` row for
+the replacement session; consumers learn about the replacement through
+`replacement_session_id` in the correction envelope (§13) and reverse or
+recompute their projection from it. This is what prevents duplicate XP,
+achievement, goal and training-plan effects (§7.3).
 
 **Plan synchronization.** A `training_plan_sync` row is created only when the
 subject session carries a non-null `source_planned_workout_id`. When it is
@@ -1817,8 +1825,12 @@ transaction with `PH_AUXILIARY_FACT_CONFLICT`.
 is not edited.
 
 **Correction (single transaction).** Create the replacement immutable session
-and its children, the append-only correction adjustment, and the required
-downstream dispatch rows. The original session is neither edited nor deleted.
+and its children — preserving the target session's `source` and plan provenance,
+with `ingestion_key` equal to the accepted `adjustment_key` (§7.2) — the
+append-only correction adjustment, and the required `session_corrected`
+dispatch rows only. No `session_completed` row is created for the replacement
+(§12). The original session is neither edited nor deleted, and the replacement
+occurrence instant may be older than 48 h (§7.3).
 
 **Adjustment replay (single transaction).** Look up
 `(user_id, adjustment_key)`, compare the stored `command_fingerprint`, and
@@ -1942,9 +1954,36 @@ entity and the payload (§8.2, §9.9); auxiliary payloads now carry
 `timezone_source` mapped to their stored columns (§9.8, §9.9); auxiliary fact
 fingerprints now cover timezone provenance (§11.3); a single timestamp
 precision rule now governs storage and fingerprinting alike (§11.1); and the
-stale `PH_AUXILIARY_FACT_KEY_CONFLICT` spelling is replaced everywhere by
-`PH_AUXILIARY_FACT_CONFLICT` (§10, §17). Adjustment read models now expose
-`reason_code` and `reason_text` (§14.2, §14.4).
+obsolete auxiliary conflict spelling was replaced everywhere by the single
+canonical code `PH_AUXILIARY_FACT_CONFLICT` (§10, §17). Adjustment read models
+now expose `reason_code` and `reason_text` (§14.2, §14.4).
+
+**Correction record (Sprint 8.0B-B2A-C3).** Independent validation of the C2
+revision found remaining internal-consistency and executability defects. This
+revision: removes the obsolete auxiliary conflict identifier from every
+remaining occurrence, including this correction history, leaving
+`PH_AUXILIARY_FACT_CONFLICT` as the only auxiliary idempotency-conflict code
+(§10); standardizes every correction replacement key on
+`correction:{targetSessionId}:{stableUuid}`, ties it deterministically to the
+accepted `adjustment_key` and forbids that key form in ordinary ingestion
+(§7.1, §7.2, §7.3, §11); confirms that a correction replacement preserves the
+target session's `source` and plan provenance so no `source = correction`
+value is introduced (§5, §7); separates ordinary completion freshness (48 h
+past, 5 min future) from historical correction time handling, which accepts
+older instants but never a future one beyond 5 min and validates replay before
+time (§5, §7.3, §9.2); forbids a `session_completed` dispatch obligation for a
+correction replacement so consumers cannot double-count (§7.3, §12, §13, §17);
+reconciles the daily-target physical and payload matrices on `captured_at` and
+conditional `calculation_weight_kg` (§8.3, §9.9); aligns duplicated physical and
+payload bounds for `week_number`, `day_number`, `calories_kcal`,
+`calculation_weight_kg` and `rpe` steps (§5, §6.2, §9.3, §9.4, §9.7); adds
+`PH_INVALID_COMMAND_SHAPE` for malformed command shape, reserves
+`PH_INVALID_COMMAND_VERSION` for version alone, routes every cross-user
+reference to `PH_CROSS_USER_VIOLATION`, scopes `PH_ADJUSTMENT_CONFLICT` to
+graph-state conflicts and removes the unreachable client-proposed replacement
+wording (§2 I5, §9, §10); and clarifies that adjustment `occurred_at` is
+server-derived UTC second-precision event time, distinct from `created_at` and
+excluded from the adjustment fingerprint (§7.1, §7.2).
 
 This revision remains a **Draft**. It has **not** been independently validated,
 ADR 0005 remains **Proposed**, and nothing has been implemented. Sprint
