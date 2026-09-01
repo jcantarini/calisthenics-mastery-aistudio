@@ -768,15 +768,15 @@ payloads are forbidden.
 - Confirmation is a signal of intent only; it cannot substitute for completed
   sets (§9.1 nonzero-evidence rule).
 - **Occurrence-window validation applies only when creating a new session.**
-  The `occurred_at` freshness rule of §5 is a new-write rule.
+  The `occurred_at` freshness rule of §5 is a new-write rule, and it never
+  applies to a correction replacement session (§7.3).
 - Processing order for every ingestion call is fixed: (1) validate command
-  shape (`PH_INVALID_COMMAND_SHAPE`) and version
-  (`PH_INVALID_COMMAND_VERSION`); previously described as "validate command
-  shape and version; (2) look up `(user_id, ingestion_key)`; (3) if a row
-  exists, verify ownership and compare `command_fingerprint`; (4) return
-  `outcome = replayed` on equivalence, or `PH_INGESTION_KEY_CONFLICT` on
-  divergence; (5) only when no row exists, apply the occurrence-window and
-  remaining new-write validations.
+  shape (`PH_INVALID_COMMAND_SHAPE`) and then `command_version`
+  (`PH_INVALID_COMMAND_VERSION`); (2) look up `(user_id, ingestion_key)`;
+  (3) if a row exists, verify ownership and compare `command_fingerprint`;
+  (4) return `outcome = replayed` on equivalence, or
+  `PH_INGESTION_KEY_CONFLICT` on divergence; (5) only when no row exists, apply
+  the occurrence-window and remaining new-write validations.
 - Consequently a valid replay of an already-persisted command still returns the
   existing session long after the original occurrence window has elapsed, and
   is never rejected merely because it is now old.
