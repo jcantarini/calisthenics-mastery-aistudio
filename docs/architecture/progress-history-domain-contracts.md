@@ -1913,7 +1913,7 @@ Rollback principles:
 
 ---
 
-## 19. Validation and ADR acceptance gate
+## 19. Validation record and ADR acceptance
 
 This contract contains no unresolved open questions, deferred decisions or
 placeholder text. Every detail required for implementation is frozen above, and
