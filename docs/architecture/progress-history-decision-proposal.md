@@ -1043,8 +1043,8 @@ drafting outline:
 17. Rollback strategy.
 18. Validation requirements.
 
-**Readiness: ADR 0005 PROPOSED — READY FOR 8.0B-B2 CONTRACT FREEZE**
+**Readiness: ADR 0005 ACCEPTED — READY FOR 8.1 IMPLEMENTATION**
 
-This means the proposal has been independently validated and converted into
-proposed ADR 0005. It does not mean the architecture has been accepted or
-implemented.
+This readiness authorizes the implementation phase only after the B2B ZIP
+passes independent validation. It does not claim implementation success:
+Progress History remains unimplemented.
