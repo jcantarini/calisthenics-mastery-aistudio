@@ -273,35 +273,37 @@ food facts, calorie ingestion and CalorieCam are Phase 9B.
 
 ## 15. Implementation sequence
 
-Acceptance of this ADR does not authorize implementation, and this sprint
-implements nothing. Expected sequence:
+Acceptance of this ADR does not authorize implementation by itself; the
+architecture sprints implemented nothing. Recorded sequence:
 
-1. **8.0B-B1** — ADR 0005 draft and decision traceability.
-2. **8.0B-B2A** — detailed domain contract draft (this sprint's companion
-   document, drafted and pending independent validation).
-3. **8.0B-B2B** — contract correction or ratification and final ADR
-   acceptance.
-4. **8.1** — schema, constraints, indexes, RLS/grants, trusted ingestion,
-   outbox.
-5. **8.2** — completion coordinator and source wiring.
-6. **8.3** — canonical read models and Progress/History UI.
-7. **8.4** — local-state isolation and legacy retirement.
-8. **8.5** — detailed workout-execution capture.
-9. **Phase 9B** — food facts, calorie ingestion and CalorieCam.
+1. **8.0B-B1** — ADR proposal and traceability, completed.
+2. **8.0B-B2A** — contract draft, completed.
+3. **B2A-C1/C2/C3** — contract corrections and validation, completed.
+4. **8.0B-B2B** — contract ratification and ADR acceptance, completed.
+5. **8.1** — schema, constraints, indexes, RLS/grants, trusted ingestion and
+   outbox, next.
+6. **8.2** — completion coordinator and source wiring.
+7. **8.3** — canonical read models and Progress/History UI.
+8. **8.4** — local-state isolation and legacy retirement.
+9. **8.5** — detailed workout-execution capture.
+10. **Phase 9B** — food facts, calorie ingestion and CalorieCam.
 
-## 16. Validation and acceptance gate
+## 16. Validation and acceptance record
 
-This ADR stays **Proposed** until:
+Acceptance is complete:
 
-1. it passes independent validation as drafted;
-2. Sprint 8.0B-B2A drafts the detailed domain contracts (table and column
-   contracts, RPC signature and error taxonomy, outbox state machine, read
-   models and index list, adjustment-event taxonomy) —
+1. the validated proposal passed independent validation;
+2. the ADR draft passed validation;
+3. the contract was drafted and corrected through Sprint 8.0B-B2A-C3 —
    [progress-history-domain-contracts.md](../progress-history-domain-contracts.md),
-   currently a DRAFT;
-3. that contract draft passes independent validation and Sprint 8.0B-B2B
-   either corrects it or ratifies it.
+   now Ratified;
+4. the C3 contract passed independent validation;
+5. Sprint 8.0B-B2B ratified the contract without modifying its normative
+   decisions;
+6. ADR 0005 is **Accepted**.
 
-Only then is the status changed to Accepted. Any decision that contradicts or
-materially expands the validated proposal requires a new ADR rather than an
-edit to this one.
+Implementation has not started. Any future contradiction or material expansion
+of the validated proposal requires a new superseding ADR or a formal amendment
+rather than an edit to this one.
+
+ADR 0005 ACCEPTED — READY FOR 8.1 IMPLEMENTATION
