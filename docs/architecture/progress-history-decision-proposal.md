@@ -1,17 +1,17 @@
 # Progress & History — Architecture Decision Proposal (Sprint 8.0B-A, closure finalized by 8.0B-A-C2)
 
-**Status:** VALIDATED — architectural basis for proposed ADR 0005; not
-implemented.
+**Status:** VALIDATED — architectural basis for accepted ADR 0005; not implemented.
 **Scope:** documentation only. No executable behaviour, schema, policy or
 dependency changed.
 **Successor:** Sprint 8.0B-B1 converted this proposal into
 [ADR 0005 — Progress History Domain and Trusted Workout Completion](./decisions/0005-progress-history-domain.md).
 
 Independent validation of this proposal passed after Sprint 8.0B-A-C2. ADR
-0005 now exists as a **Proposed** record and remains Proposed until Sprint
-8.0B-B2 freezes the detailed domain contracts and its resulting ZIP passes
-independent validation. Nothing in this document is an implemented fact.
-Implemented facts are only those recorded in
+0005 is now **Accepted**, and its normative contract companion is **Ratified**;
+acceptance occurred in Sprint 8.0B-B2B after the C3 contract passed
+independent validation. Progress History remains unimplemented; Sprint 8.1 is
+the next implementation sprint. Nothing in this document is an implemented
+fact. Implemented facts are only those recorded in
 [progress-current-state-audit.md](./progress-current-state-audit.md) and the
 frozen Core Architecture v1.0 documents.
 
