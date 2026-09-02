@@ -1014,13 +1014,15 @@ No item in this table remains open.
 
 ---
 
-## 19. ADR 0005 drafting outline and readiness
+## 19. ADR 0005 status and readiness
 
 ADR 0005 was drafted in Sprint 8.0B-B1 from this validated proposal and is
 recorded at
-[decisions/0005-progress-history-domain.md](./decisions/0005-progress-history-domain.md)
-with status **Proposed — pending independent validation**. Its drafting
-outline:
+[decisions/0005-progress-history-domain.md](./decisions/0005-progress-history-domain.md).
+It is now **Accepted** (Sprint 8.0B-B2B), and its companion contract is
+**Ratified**. The architecture-definition stage is complete; implementation
+has not started, and Sprint 8.1 is the next implementation sprint. Its
+drafting outline:
 
 1. Context — Sprint 8.0A blockers and this validated proposal.
 2. Decision — Progress History as an independent immutable domain.
