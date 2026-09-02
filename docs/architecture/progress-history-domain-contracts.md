@@ -1,6 +1,6 @@
 # Progress History Domain Contracts — ADR 0005 Companion
 
-**Status:** DRAFT (Sprint 8.0B-B2A, corrected by 8.0B-B2A-C1, 8.0B-B2A-C2 and 8.0B-B2A-C3) · Pending independent validation · Not implemented
+**Status:** RATIFIED (Sprint 8.0B-B2B) · Normative companion to Accepted ADR 0005 · Not implemented
 
 ---
 
@@ -15,9 +15,11 @@ This document is the normative implementation contract companion to
   TypeScript appear here.
 - **No part of Progress History has been implemented.** No table, policy,
   grant, function, outbox, service, hook, route or component exists.
-- This contract becomes authoritative only after it passes independent
-  validation and Sprint 8.0B-B2B accepts it.
-- ADR 0005 remains **Proposed** until that acceptance sprint passes validation.
+- This contract passed independent validation after Sprint 8.0B-B2A-C3, and
+  Sprint 8.0B-B2B ratified it without changing its normative architecture.
+- It is now the authoritative implementation contract companion to ADR 0005.
+- ADR 0005 is **Accepted**. Progress History remains completely unimplemented;
+  implementation begins only in Sprint 8.1.
 
 **Authority order.** ADR 0005 governs. Where this document adds detail, the
 detail must remain inside ADR 0005's boundaries. If a future need contradicts
@@ -1911,7 +1913,7 @@ Rollback principles:
 
 ---
 
-## 19. Validation and ADR acceptance gate
+## 19. Validation record and ADR acceptance
 
 This contract contains no unresolved open questions, deferred decisions or
 placeholder text. Every detail required for implementation is frozen above, and
@@ -1985,22 +1987,18 @@ wording (§2 I5, §9, §10); and clarifies that adjustment `occurred_at` is
 server-derived UTC second-precision event time, distinct from `created_at` and
 excluded from the adjustment fingerprint (§7.1, §7.2).
 
-This revision remains a **Draft**. It has **not** been independently validated,
-ADR 0005 remains **Proposed**, and nothing has been implemented. Sprint
-8.0B-B2B remains the only ADR acceptance gate.
+**Ratification record (Sprint 8.0B-B2B).** The C3 revision passed independent
+validation with no remaining blockers. The effective repository diff of the
+correction sprints remained documentation-only, and the dependency baseline
+stayed intact. The contract contained no unresolved architecture blocker.
+Sprint 8.0B-B2B ratified this contract without modifying its normative
+decisions, and ADR 0005 moved from Proposed to **Accepted**. No implementation
+was performed. Sprint 8.1 is the next authorized implementation-planning
+sprint.
 
 Remaining blockers: **none.**
 
-Acceptance path:
+The marker below means: the architecture is accepted. It does not mean it has
+been implemented.
 
-1. This draft passes independent validation.
-2. Sprint 8.0B-B2B either corrects the contract or ratifies it.
-3. Only then does ADR 0005 move from Proposed to Accepted, and only then may
-   Sprint 8.1 begin schema implementation.
-
-The marker below means: detailed contracts have been drafted; they have not
-yet been independently validated; ADR 0005 remains Proposed; no implementation
-is authorized; Sprint 8.0B-B2B will either correct this contract or ratify
-ADR 0005.
-
-CONTRACT DRAFT COMPLETE — READY FOR 8.0B-B2B VALIDATION
+CONTRACT RATIFIED — ADR 0005 ACCEPTED — READY FOR 8.1 IMPLEMENTATION
