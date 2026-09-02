@@ -1,6 +1,6 @@
 # Progress History Domain Contracts — ADR 0005 Companion
 
-**Status:** DRAFT (Sprint 8.0B-B2A, corrected by 8.0B-B2A-C1, 8.0B-B2A-C2 and 8.0B-B2A-C3) · Pending independent validation · Not implemented
+**Status:** RATIFIED (Sprint 8.0B-B2B) · Normative companion to Accepted ADR 0005 · Not implemented
 
 ---
 
@@ -15,9 +15,11 @@ This document is the normative implementation contract companion to
   TypeScript appear here.
 - **No part of Progress History has been implemented.** No table, policy,
   grant, function, outbox, service, hook, route or component exists.
-- This contract becomes authoritative only after it passes independent
-  validation and Sprint 8.0B-B2B accepts it.
-- ADR 0005 remains **Proposed** until that acceptance sprint passes validation.
+- This contract passed independent validation after Sprint 8.0B-B2A-C3, and
+  Sprint 8.0B-B2B ratified it without changing its normative architecture.
+- It is now the authoritative implementation contract companion to ADR 0005.
+- ADR 0005 is **Accepted**. Progress History remains completely unimplemented;
+  implementation begins only in Sprint 8.1.
 
 **Authority order.** ADR 0005 governs. Where this document adds detail, the
 detail must remain inside ADR 0005's boundaries. If a future need contradicts
