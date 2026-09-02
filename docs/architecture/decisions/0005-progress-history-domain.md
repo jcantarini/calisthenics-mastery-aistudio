@@ -1,17 +1,15 @@
 # 0005 — Progress History Domain and Trusted Workout Completion
 
-**Status:** Proposed (Sprint 8.0B-B2A) · Contract draft pending independent validation · Extends Core Architecture v1.0
+**Status:** Accepted (Sprint 8.0B-B2B) · Extends Core Architecture v1.0
 
-> This ADR is **architectural documentation only**. Progress History is **not
-> implemented**. No table, RLS policy, grant, database function, outbox
-> processor, service, hook, route or component exists for this domain.
-> Database schema, RLS, RPCs, outbox processing and application services begin
-> only after this ADR and its companion contracts are accepted.
-> Sprint 8.0B-B2A drafted the detailed domain contracts in
-> [progress-history-domain-contracts.md](../progress-history-domain-contracts.md);
-> that draft has **not** yet passed independent validation, this ADR is **not
-> Accepted**, and Sprint 8.0B-B2B is the acceptance gate that will either
-> correct the contract or ratify this ADR.
+> This ADR and its companion contract have been **accepted**. The contract
+> passed independent validation after Sprint 8.0B-B2A-C3, and Sprint
+> 8.0B-B2B ratified it without changing its normative architecture.
+> This remains **architectural documentation only**. Progress History is
+> **not implemented**. No table, migration, RLS policy, grant, RPC, worker,
+> service, hook, route or component was created by the architecture sprints.
+> Implementation begins with Sprint 8.1 only after the resulting B2B ZIP
+> passes independent validation.
 
 Evidence and full analysis are not duplicated here. See
 [progress-current-state-audit.md](../progress-current-state-audit.md) (facts)
@@ -20,9 +18,10 @@ and
 (validated decision analysis). The normative implementation contract companion
 is
 [progress-history-domain-contracts.md](../progress-history-domain-contracts.md)
-(DRAFT). Where a detail required by implementation is not frozen by the
-validated proposal, it is frozen in that contract companion within the
-boundaries of this ADR and is deliberately not invented in this ADR.
+(Ratified, authoritative). Where a detail required by implementation is not
+frozen by the validated proposal, it is frozen in that contract companion
+within the boundaries of this ADR and is deliberately not invented in this
+ADR.
 
 ---
 
