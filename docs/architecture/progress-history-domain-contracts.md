@@ -1987,22 +1987,18 @@ wording (§2 I5, §9, §10); and clarifies that adjustment `occurred_at` is
 server-derived UTC second-precision event time, distinct from `created_at` and
 excluded from the adjustment fingerprint (§7.1, §7.2).
 
-This revision remains a **Draft**. It has **not** been independently validated,
-ADR 0005 remains **Proposed**, and nothing has been implemented. Sprint
-8.0B-B2B remains the only ADR acceptance gate.
+**Ratification record (Sprint 8.0B-B2B).** The C3 revision passed independent
+validation with no remaining blockers. The effective repository diff of the
+correction sprints remained documentation-only, and the dependency baseline
+stayed intact. The contract contained no unresolved architecture blocker.
+Sprint 8.0B-B2B ratified this contract without modifying its normative
+decisions, and ADR 0005 moved from Proposed to **Accepted**. No implementation
+was performed. Sprint 8.1 is the next authorized implementation-planning
+sprint.
 
 Remaining blockers: **none.**
 
-Acceptance path:
+The marker below means: the architecture is accepted. It does not mean it has
+been implemented.
 
-1. This draft passes independent validation.
-2. Sprint 8.0B-B2B either corrects the contract or ratifies it.
-3. Only then does ADR 0005 move from Proposed to Accepted, and only then may
-   Sprint 8.1 begin schema implementation.
-
-The marker below means: detailed contracts have been drafted; they have not
-yet been independently validated; ADR 0005 remains Proposed; no implementation
-is authorized; Sprint 8.0B-B2B will either correct this contract or ratify
-ADR 0005.
-
-CONTRACT DRAFT COMPLETE — READY FOR 8.0B-B2B VALIDATION
+CONTRACT RATIFIED — ADR 0005 ACCEPTED — READY FOR 8.1 IMPLEMENTATION
