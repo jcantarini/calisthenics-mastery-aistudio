@@ -133,7 +133,7 @@ restrict provider navigation; test login in the standalone preview URL.
 Repository migration does not transfer provider credentials, users or database
 contents, and does not apply migrations to a hosted database.
 
-Set VITE*SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY before building.
-VITE*_ values are public. Set server variables separately at runtime when server
-operations require them. Never put a secret/service-role key into VITE\__.
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` before building.
+`VITE_*` values are public. Set server variables separately at runtime when server
+operations require them. Never put a secret/service-role key into `VITE_*`.
 Environment files are ignored; `.env.example` contains placeholders only.

@@ -58,8 +58,16 @@ Migration hashes and regression gates were not relaxed.
 - ESLint: no errors; 13 existing Fast Refresh warnings.
 - Production Node build succeeded.
 - Production `/auth` returned HTML; PWA manifest returned successfully.
-- PostgreSQL suites are restored; fresh remote execution is recorded by the
-  pull request checks. Historical results above are not represented as a new run.
+- Fresh GitHub CI validated implementation commit `83755d465b13238b40239a3f2782f8c2ae9b6645`:
+  [application run 35521018233](https://github.com/jcantarini/calisthenics-mastery-aistudio/actions/runs/35521018233)
+  and [database run 35521018282](https://github.com/jcantarini/calisthenics-mastery-aistudio/actions/runs/35521018282).
+  Application: 370 tests, typecheck, lint, production build and HTTP smoke passed.
+  Database: 169 + 127 + 107 cases, twelve negative gates, default-grant
+  regression and final integrity passed. These are new executions in the new
+  repository, separate from the historical evidence above.
+- Corrections are available in [PR #1](https://github.com/jcantarini/calisthenics-mastery-aistudio/pull/1);
+  incorporation into main remains pending. Subsequent documentation-only commits
+  do not change the implementation validated by those run IDs.
 
 ## Remaining acceptance gates
 
