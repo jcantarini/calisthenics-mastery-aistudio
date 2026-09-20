@@ -30,7 +30,7 @@ Nenhuma migration foi aplicada a um banco compartilhado nesta migração.
 | 8.1A2                            | Hidratação, aderência alimentar e snapshots de metas                                | Validado anteriormente; restaurado                                                                  |
 | 8.1A3 + C1                       | Outbox e correção dos privilégios                                                   | Validado anteriormente; restaurado                                                                  |
 | M1                               | Recuperação e portabilidade para AI Studio                                          | Concluído: PR #1 incorporada à main; CI pós-merge aprovado                                          |
-| M2                               | Configuração e homologação no ambiente real                                         | Em andamento: aguardando URL real do app e acesso ao projeto Supabase para homologar OAuth e sessão |
+| M2                               | Configuração e homologação no ambiente real                                         | Bloqueado: link recebido contém Android/Kotlin divergente da main web; preview não conectou |
 | 8.1B1                            | Normalização canônica e fingerprints                                                | Próximo sprint de domínio; não implementado                                                         |
 | 8.1B2                            | Ingestão transacional e idempotência                                                | Pendente B1; sessões, filhos, fatos auxiliares e dispatch atômicos                                  |
 | 8.1B3                            | Voids e correções append-only                                                       | Planejado; propriedade, replay e integridade de cadeias                                             |
@@ -43,7 +43,7 @@ Nenhuma migration foi aplicada a um banco compartilhado nesta migração.
 | Fase 9 — experiência nutricional | Evolução da interface e integração dos fatos auxiliares                             | Interface atual preservada; decomposição posterior, sem antecipar food logging                      |
 | Fase 9B                          | Food facts, ingestão calórica e CalorieCam                                          | Futuro; separado da aderência alimentar do 8.1A2                                                    |
 | Fase 10 — hardening              | Segurança, fronteiras de Goals/XP, performance, privacidade e recuperação           | Planejado; ADR adicional somente quando necessário                                                  |
-| Entrega Android                  | Empacotamento, permissões, notificações e testes em dispositivo                     | Pendente decisão técnica documentada; não há conversão Kotlin nem APK validado                      |
+| Entrega Android                  | Empacotamento, permissões, notificações e testes em dispositivo                     | Projeto Kotlin observado no AI Studio; não está na main web e ainda não foi auditado nem homologado                      |
 | Release                          | Homologação completa, acessibilidade, observabilidade, backup, publicação e suporte | Bloqueado pelos gates de domínio e plataforma                                                       |
 
 As etapas Android e release consolidam objetivos já solicitados, sem afirmar que
@@ -62,7 +62,7 @@ da validação das dependências de cada etapa.
 
 ## Próxima execução
 
-Finalizar M2 no ambiente real e então retomar 8.1B1. O prompt anterior de B1 deve
+Resolver a divergência entre o projeto Android do AI Studio e a main web, finalizar M2 no ambiente real e então retomar 8.1B1. O prompt anterior de B1 deve
 usar o novo baseline portátil registrado no relatório de migração, não reinstalar
 o pacote Lovable 2.12.0 nem restaurar o lockfile antigo. Os 21 arquivos de migration
 continuam sendo o baseline imutável para o próximo sprint aditivo.
@@ -73,7 +73,25 @@ A PR #1 foi incorporada à `main` no commit `9c4c84c461ee2f9fc7b1494cde752538059
 Os checks pós-merge passaram: [aplicação](https://github.com/jcantarini/calisthenics-mastery-aistudio/actions/runs/35539272380)
 e [banco](https://github.com/jcantarini/calisthenics-mastery-aistudio/actions/runs/35539272524).
 
-A homologação no ambiente real ainda não foi executada: falta o endereço do aplicativo
-no AI Studio, e o conector Supabase negou acesso ao projeto identificado pela configuração
-do repositório. Nenhuma migration ou configuração de provedor foi aplicada ao banco
-compartilhado. M2 permanece aberto; 8.1B1 ainda não foi iniciado.
+A inspeção autenticada do AI Studio foi iniciada em 20/09/2026 no
+[projeto informado](https://aistudio.google.com/apps/ea998e0a-d223-40de-bb08-b94120125e34).
+O editor mostra um projeto Android com `app/`, `gradle/` e `build.gradle.kts`;
+a `main` do GitHub continua sendo a aplicação web React/TanStack/Vite.
+Não há evidência de equivalência ou sincronização entre essas duas bases.
+
+O painel de logs registra `BUILD SUCCESSFUL` para `assembleDebug`, mas o preview
+permaneceu em `Connecting to device...`, inclusive após uma tentativa de recarga.
+Há também uma mensagem de quota excedida na conversa do assistente; não foi
+estabelecida relação causal entre essa mensagem e a conexão do preview.
+Um log de build anterior menciona ausência de `google-services.json`, apesar de
+terminar com sucesso; o impacto funcional ainda não foi verificado.
+
+O acesso ao editor Google foi concluído, mas isso não valida a autenticação do
+aplicativo. OAuth, sessão, equivalência funcional e testes da versão Android
+continuam não verificados. O conector Supabase anteriormente negou acesso ao
+projeto identificado no repositório. Nenhuma migration ou configuração de
+provedor foi aplicada ao banco compartilhado.
+
+M2 permanece bloqueado até identificar qual base deve ser homologada e obter um
+preview operacional. A versão Android requer auditoria própria se for a direção
+escolhida; não herda a validação da versão web. 8.1B1 ainda não foi iniciado.
