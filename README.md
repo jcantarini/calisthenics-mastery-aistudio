@@ -29,8 +29,9 @@ pipeline. Available in Portuguese, English, Italian, Spanish and French.
 ## Local setup
 
 ```bash
-bun install
-bun run dev        # http://localhost:8080
+cp .env.example .env.local  # fill in public project configuration
+bun install --frozen-lockfile
+bun run dev        # http://localhost:3000
 ```
 
 ## Dependency management
@@ -96,7 +97,7 @@ src/
     achievements/      achievement engine
     gamification/      orchestrator
   lib/                 cross-cutting helpers (i18n, theme, nutrition, PWA...)
-  integrations/supabase/  generated clients and middleware (do not edit)
+  integrations/supabase/  portable clients, authentication and database types
 docs/architecture/     architecture documentation
 ```
 
@@ -111,3 +112,28 @@ documented architectural reason and a new ADR. The Goals domain (Sprints
 7.1–7.5) is documented in [`goals.md`](./docs/architecture/goals.md) with its
 release record in
 [`goals-release-gate.md`](./docs/architecture/goals-release-gate.md).
+
+## AI Studio migration
+
+This repository remains a TypeScript web application; it is not a Kotlin or
+native Android conversion. The validated Progress History storage work through
+8.1A3-C1 has been restored from the original sprint branch. See
+[the full roadmap](docs/ROADMAP.md) and [migration audit](docs/architecture/ai-studio-migration-audit.md).
+
+Development uses `bun run dev` on `0.0.0.0`, port `PORT` (default 3000).
+Production uses `bun run build` followed by `bun run start`; Nitro emits a Node
+server in `.output/server/index.mjs`. Use a Node runtime, not static-only hosting.
+Do not add another React/TanStack plugin alongside the explicit Vite plugins.
+
+Google and Apple login now use Supabase Auth directly. In the Supabase project,
+enable and configure each provider, set the application Site URL, and allow the
+actual application `/auth` callback URL (and development callback when needed).
+The provider console callback is the Supabase Auth callback. Preview iframes may
+restrict provider navigation; test login in the standalone preview URL.
+Repository migration does not transfer provider credentials, users or database
+contents, and does not apply migrations to a hosted database.
+
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` before building.
+`VITE_*` values are public. Set server variables separately at runtime when server
+operations require them. Never put a secret/service-role key into `VITE_*`.
+Environment files are ignored; `.env.example` contains placeholders only.

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { signInWithProvider, safeRedirect } from "@/integrations/supabase/oauth";
 import { useT } from "@/lib/i18n";
 
 const searchSchema = z.object({ redirect: z.string().optional() });
@@ -53,15 +53,13 @@ function AuthPage() {
   const signInWith = async (provider: "google" | "apple") => {
     setSigningIn(provider);
     try {
-      const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
-      });
+      const result = await signInWithProvider(provider, redirect);
       if (result.error) {
         toast.error(t("auth.error"), { description: result.error.message });
         setSigningIn(null);
         return;
       }
-      // Redirect flow: browser navigates away; popup flow: onAuthStateChange takes over.
+      // Supabase redirects back to /auth; onAuthStateChange restores the destination.
     } catch (err) {
       toast.error(t("auth.error"), {
         description: err instanceof Error ? err.message : String(err),
@@ -141,13 +139,6 @@ function AuthPage() {
       </div>
     </div>
   );
-}
-
-function safeRedirect(value: string | undefined): string | null {
-  if (!value) return null;
-  // Only allow same-origin relative paths.
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
-  return null;
 }
 
 function GoogleIcon({ className }: { className?: string }) {

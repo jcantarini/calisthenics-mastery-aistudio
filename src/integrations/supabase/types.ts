@@ -885,6 +885,280 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_session_adjustments: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          adjustment_key: string
+          command_fingerprint: string
+          contract_version: number
+          created_at: string
+          id: string
+          kind: string
+          occurred_at: string
+          reason_code: string
+          reason_text: string | null
+          replacement_session_id: string | null
+          target_session_id: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type: string
+          adjustment_key: string
+          command_fingerprint: string
+          contract_version?: number
+          created_at?: string
+          id?: string
+          kind: string
+          occurred_at: string
+          reason_code: string
+          reason_text?: string | null
+          replacement_session_id?: string | null
+          target_session_id: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          adjustment_key?: string
+          command_fingerprint?: string
+          contract_version?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          occurred_at?: string
+          reason_code?: string
+          reason_text?: string | null
+          replacement_session_id?: string | null
+          target_session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_session_adjustments_replacement_fkey"
+            columns: ["replacement_session_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "workout_session_adjustments_target_fkey"
+            columns: ["target_session_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      workout_session_exercises: {
+        Row: {
+          contract_version: number
+          created_at: string
+          exercise_id: string | null
+          exercise_key_snapshot: string
+          exercise_name_snapshot: string
+          id: string
+          notes: string | null
+          order_index: number
+          prescription_snapshot: Json
+          session_id: string
+          status: string
+          substituted_for_exercise_id: string | null
+          user_id: string
+        }
+        Insert: {
+          contract_version?: number
+          created_at?: string
+          exercise_id?: string | null
+          exercise_key_snapshot: string
+          exercise_name_snapshot: string
+          id?: string
+          notes?: string | null
+          order_index: number
+          prescription_snapshot: Json
+          session_id: string
+          status: string
+          substituted_for_exercise_id?: string | null
+          user_id: string
+        }
+        Update: {
+          contract_version?: number
+          created_at?: string
+          exercise_id?: string | null
+          exercise_key_snapshot?: string
+          exercise_name_snapshot?: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          prescription_snapshot?: Json
+          session_id?: string
+          status?: string
+          substituted_for_exercise_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_session_exercises_session_fkey"
+            columns: ["session_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      workout_session_sets: {
+        Row: {
+          assistance_level: string | null
+          contract_version: number
+          created_at: string
+          distance_m: number | null
+          duration_seconds: number | null
+          hold_seconds: number | null
+          id: string
+          is_completed: boolean
+          load_kg: number | null
+          performed_at: string | null
+          reps: number | null
+          rpe: number | null
+          session_exercise_id: string
+          set_index: number
+          user_id: string
+        }
+        Insert: {
+          assistance_level?: string | null
+          contract_version?: number
+          created_at?: string
+          distance_m?: number | null
+          duration_seconds?: number | null
+          hold_seconds?: number | null
+          id?: string
+          is_completed: boolean
+          load_kg?: number | null
+          performed_at?: string | null
+          reps?: number | null
+          rpe?: number | null
+          session_exercise_id: string
+          set_index: number
+          user_id: string
+        }
+        Update: {
+          assistance_level?: string | null
+          contract_version?: number
+          created_at?: string
+          distance_m?: number | null
+          duration_seconds?: number | null
+          hold_seconds?: number | null
+          id?: string
+          is_completed?: boolean
+          load_kg?: number | null
+          performed_at?: string | null
+          reps?: number | null
+          rpe?: number | null
+          session_exercise_id?: string
+          set_index?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_session_sets_exercise_fkey"
+            columns: ["session_exercise_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "workout_session_exercises"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      workout_sessions: {
+        Row: {
+          actual_duration_seconds: number | null
+          app_version: string
+          calculation_weight_kg: number | null
+          calorie_algorithm_version: string | null
+          calories_kcal: number | null
+          calories_source: string
+          command_fingerprint: string
+          confirmation_received_at: string
+          contract_version: number
+          created_at: string
+          day_number_snapshot: number | null
+          difficulty_snapshot: string | null
+          estimated_duration_seconds: number | null
+          id: string
+          ingestion_key: string
+          local_day: string
+          notes: string | null
+          occurred_at: string
+          occurred_timezone: string
+          occurred_timezone_source: string
+          plan_name_snapshot: string | null
+          source: string
+          source_plan_id: string | null
+          source_planned_workout_id: string | null
+          user_id: string
+          week_number_snapshot: number | null
+          workout_title_snapshot: string
+        }
+        Insert: {
+          actual_duration_seconds?: number | null
+          app_version: string
+          calculation_weight_kg?: number | null
+          calorie_algorithm_version?: string | null
+          calories_kcal?: number | null
+          calories_source: string
+          command_fingerprint: string
+          confirmation_received_at: string
+          contract_version?: number
+          created_at?: string
+          day_number_snapshot?: number | null
+          difficulty_snapshot?: string | null
+          estimated_duration_seconds?: number | null
+          id?: string
+          ingestion_key: string
+          local_day: string
+          notes?: string | null
+          occurred_at: string
+          occurred_timezone: string
+          occurred_timezone_source: string
+          plan_name_snapshot?: string | null
+          source: string
+          source_plan_id?: string | null
+          source_planned_workout_id?: string | null
+          user_id: string
+          week_number_snapshot?: number | null
+          workout_title_snapshot: string
+        }
+        Update: {
+          actual_duration_seconds?: number | null
+          app_version?: string
+          calculation_weight_kg?: number | null
+          calorie_algorithm_version?: string | null
+          calories_kcal?: number | null
+          calories_source?: string
+          command_fingerprint?: string
+          confirmation_received_at?: string
+          contract_version?: number
+          created_at?: string
+          day_number_snapshot?: number | null
+          difficulty_snapshot?: string | null
+          estimated_duration_seconds?: number | null
+          id?: string
+          ingestion_key?: string
+          local_day?: string
+          notes?: string | null
+          occurred_at?: string
+          occurred_timezone?: string
+          occurred_timezone_source?: string
+          plan_name_snapshot?: string | null
+          source?: string
+          source_plan_id?: string | null
+          source_planned_workout_id?: string | null
+          user_id?: string
+          week_number_snapshot?: number | null
+          workout_title_snapshot?: string
+        }
+        Relationships: []
+      }
       xp_history: {
         Row: {
           amount: number
@@ -945,12 +1219,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -974,11 +1248,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -999,11 +1273,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1024,11 +1298,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1041,11 +1315,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

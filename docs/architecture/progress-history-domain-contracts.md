@@ -1,6 +1,6 @@
 # Progress History Domain Contracts — ADR 0005 Companion
 
-**Status:** RATIFIED (Sprint 8.0B-B2B) · Normative companion to Accepted ADR 0005 · Not implemented
+**Status:** RATIFIED (Sprint 8.0B-B2B) · Normative companion to Accepted ADR 0005 · Partially implemented (core schema, Sprint 8.1A1; auxiliary facts schema, Sprint 8.1A2; dispatch outbox schema, Sprint 8.1A3; outbox privilege reset, Sprint 8.1A3-C1)
 
 ---
 
@@ -13,13 +13,155 @@ This document is the normative implementation contract companion to
   implementable, frozen detail.
 - It is **not** executable schema, migration or application code. No SQL and no
   TypeScript appear here.
-- **No part of Progress History has been implemented.** No table, policy,
-  grant, function, outbox, service, hook, route or component exists.
+- **Progress History is only partially implemented.** Sprint 8.1A1 created the
+  four core tables of §5–§7, Sprint 8.1A2 the three auxiliary fact tables of
+  §8 and Sprint 8.1A3 the dispatch outbox table of §12, each with their
+  row-local constraints, composite ownership, indexes (§15), RLS and explicit
+  Data API grants (§16). Everything else — trusted ingestion, adjustment
+  functions, outbox claim/recovery functions, workers, read models, services
+  and UI — remains unimplemented.
 - This contract passed independent validation after Sprint 8.0B-B2A-C3, and
   Sprint 8.0B-B2B ratified it without changing its normative architecture.
 - It is now the authoritative implementation contract companion to ADR 0005.
-- ADR 0005 is **Accepted**. Progress History remains completely unimplemented;
-  implementation begins only in Sprint 8.1.
+- ADR 0005 is **Accepted**. Implementation began in Sprint 8.1A1 and is not
+  complete.
+
+### 1.1 Implementation status record (Sprint 8.1A1)
+
+**Implemented, pending independent validation.** `public.workout_sessions`,
+`public.workout_session_exercises`, `public.workout_session_sets` and
+`public.workout_session_adjustments` exist with their schema-expressible CHECK
+constraints, direct `user_id` foreign keys to `auth.users(id) ON DELETE
+CASCADE`, composite ownership uniques and foreign keys, the §15 index set, RLS
+enabled, own-row `SELECT` policies for `authenticated`, and least-privilege
+grants (`anon`: none; `authenticated`: `SELECT`; `service_role`: `SELECT`,
+`INSERT`). Table owners and superusers sit outside this least-privilege matrix
+and keep their inherent privileges.
+
+**Validation record (Sprint 8.1A1-C2).** `prescription_snapshot` validation is
+now self-contained inside the CHECK expression: numeric keys are read only when
+`jsonb_typeof(...) = 'number'`, so every malformed payload fails as a check
+violation (SQLSTATE `23514`) rather than a cast error (`22P02`). `version` must
+equal `1`, `planned_sets` must be integral `0..100`, optional `rest_seconds`
+integral `0..3600`; `reps_text` and `rest_text` are 1–40 characters, `tempo`
+1–24, `focus_text` 1–120, `prescription_note` 1–400, each with no leading or
+trailing whitespace and never whitespace-only, internal spaces preserved;
+`focus_key` matches `^[A-Za-z0-9_.:-]{1,64}$`. The full 18-migration set was
+replayed on a disposable PostgreSQL 17.9 instance isolated from the shared
+project database; 103 positive and negative cases (68 prescription, 4
+`order_index`, 4 `set_index`, 7 provenance, 2 composite ownership, 1 ingestion
+idempotency, 1 deletion cascade, 16 RLS/grant catalog assertions) passed with
+zero failures, all 54 rejections reporting `23514`, and the transaction was
+rolled back leaving no rows.
+
+**Reproducible evidence (Sprint 8.1A1-V1-C1).** The committed suite
+`supabase/tests/progress_history_core/` replays all 18 migrations on a
+disposable PostgreSQL 17 cluster and executes 169 cases (55 positive, 114
+negative), including behavioural RLS and grant checks executed under the real
+`anon`, `authenticated` and `service_role` roles. The recorded run passed with
+zero failures; the report is
+[`progress-history-core-validation.md`](./progress-history-core-validation.md)
+and its status is `8.1A1-V2 — INDEPENDENTLY VALIDATED` (gate closed; run
+`34781722548`, commit `6e16ed128d12eea8cec779cd42198e5c5d3b0dac`). Canonical
+serialization and the exact 2048-byte prescription-snapshot limit remain
+unimplemented and will be enforced by the trusted ingestion boundary before
+storage and fingerprinting.
+
+### 1.2 Implementation status record (Sprint 8.1A2 — auxiliary facts)
+
+**Independently validated.** `public.hydration_facts`,
+`public.meal_adherence_facts` and `public.daily_target_snapshots` exist exactly
+as specified in §8, created by one additive migration that left the eighteen
+previous migrations byte-for-byte unchanged (19 in total). Each carries its
+schema-expressible CHECK constraints (key prefixes and bounds, lowercase
+hexadecimal fingerprints, `contract_version` `1`, enums, numeric bounds and the
+conditional-null matrices), a direct `user_id` foreign key to
+`auth.users(id) ON DELETE CASCADE`, the §15 indexes on every ownership / RLS
+lookup path, RLS enabled with an own-row `SELECT` policy for `authenticated`,
+and the §16 least-privilege grants (`anon`: none; `authenticated`: `SELECT`;
+`service_role`: `SELECT`, `INSERT`; `PUBLIC`: none). Hydration voids are bound
+to the same user through composite `(id, user_id)` uniqueness and a composite
+foreign key, self-targeting is rejected and a partial unique index allows one
+direct void per target. Meal adherence intentionally permits multiple
+observations per meal and day, and daily targets permit multiple snapshots per
+day. Table owners and superusers sit outside the least-privilege matrix and
+keep their inherent privileges; RLS does not restrict `service_role`.
+
+**Evidence.** `supabase/tests/progress_history_auxiliary/` replays all 19
+migrations on a disposable PostgreSQL 17.9 cluster and executes a frozen
+inventory of 127 cases (54 positive, 73 negative); the recorded run passed with
+zero failures and the core suite remains 169/169. Report:
+[`progress-history-auxiliary-validation.md`](./progress-history-auxiliary-validation.md).
+Status: `8.1A2 — INDEPENDENTLY VALIDATED` (run `34783008196`, commit
+`7e0029168ec1042b8f93648d281141d2eedea797`).
+
+**Deferred to trusted ingestion for these facts.** Fingerprint computation and
+canonicalization, replay-versus-conflict resolution on a reused ingestion key,
+IANA timezone validation and `local_day` derivation, clock-relative occurrence
+validation, refusing to void a hydration row that is itself a void, and atomic
+correction/completion transactions. No clock-dependent CHECK was introduced and
+schema constraints alone do not make ingestion safe.
+
+### 1.3 Implementation status record (Sprint 8.1A3 — dispatch outbox)
+
+**Implemented, pending independent validation.**
+`public.history_dispatch_outbox` exists exactly as specified in §12, §12.1 and
+§15, created by one additive migration that left the nineteen previous
+migrations byte-for-byte unchanged (20 in total). It carries the frozen
+`event_kind`, `consumer` and `state` vocabularies, `attempt_count >= 0`,
+`event_version` `1`, the contracted text bounds and nullability, the contracted
+clock and initial-state defaults, the row-local subject-resolution rule
+(`session_completed` forbids `adjustment_id`; `session_voided` and
+`session_corrected` require it), both partial unique indexes of §12.1, the
+complete §15 index set, a direct `user_id` foreign key to
+`auth.users(id) ON DELETE CASCADE` and same-user composite foreign keys to
+`workout_sessions` and `workout_session_adjustments`. The ten-attempt budget is
+deliberately not a CHECK: it belongs to the future restricted worker functions.
+
+Security follows §16 exactly: RLS enabled with **no** policy, no privilege for
+`PUBLIC`, `anon` or `authenticated`, and `SELECT`, `INSERT`, `UPDATE`, `DELETE`
+for `service_role` only — no `ALL`, `TRUNCATE`, `REFERENCES` or `TRIGGER`.
+`service_role` bypasses RLS; the outbox `DELETE` grant only makes the future
+90-day retention boundary of §17 possible and enforces nothing by itself.
+History and auxiliary grants are unchanged.
+
+**Privilege reset (Sprint 8.1A3-C1).** The Sprint 8.1A3 migration granted the
+four contracted privileges without first revoking inherited ones, so on a
+database carrying permissive default table privileges `service_role` also
+retained `TRUNCATE`, `REFERENCES`, `TRIGGER` and `MAINTAIN` — a deviation from
+§16. One additive corrective migration now revokes every privilege on the table
+from `PUBLIC`, `anon`, `authenticated` and `service_role` and re-grants only
+the four contracted privileges to `service_role` (21 migrations in total; the
+twenty previous ones byte-for-byte unchanged). No table, data, index,
+constraint, RLS setting, policy absence, schema-wide default privilege or
+neighbouring grant changed.
+
+**Evidence.** `supabase/tests/progress_history_outbox/` replays all 21
+migrations on a disposable PostgreSQL 17.9 cluster whose default table
+privileges are deliberately permissive, and executes a frozen inventory of 107
+cases (61 positive, 46 negative); the recorded run passed with zero failures,
+with the core suite at 169/169 and the auxiliary suite at 127/127. A dedicated
+regression proves the suite fails without the corrective migration and passes
+with it. Report:
+[`progress-history-outbox-validation.md`](./progress-history-outbox-validation.md).
+Status: `8.1A3-C1 — IMPLEMENTED, PENDING INDEPENDENT VALIDATION`.
+
+**Deferred for the outbox.** Claim, acknowledgement and lease recovery, lease
+duration, retry and backoff scheduling, the state-transition matrix and attempt
+budget, `updated_at` maintenance, write-once identity, matching an adjustment's
+kind and target, the plan-sync delivery rule, atomicity with the historical
+facts, complete consumer semantics (§13.4), operator manual replay and
+retention cleanup with diagnostic sanitization. No trigger, function, view or
+RPC was created.
+
+**Not implemented.** `public.ingest_workout_completion_v1`,
+`public.adjust_workout_session_v1`, the outbox claim/recovery functions, the
+read models of §14, the
+`WorkoutCompletionCoordinator`, downstream dispatch, services, hooks, routes
+and UI. Canonical JSON serialization, cross-row ingestion validation, set
+contiguity, nonzero-workout evidence and the session-relative `performed_at`
+window remain trusted-ingestion responsibilities and are not enforced by the
+schema. The Progress History domain is **not** complete.
 
 **Authority order.** ADR 0005 governs. Where this document adds detail, the
 detail must remain inside ADR 0005's boundaries. If a future need contradicts
@@ -1998,7 +2140,7 @@ sprint.
 
 Remaining blockers: **none.**
 
-The marker below means: the architecture is accepted. It does not mean it has
-been implemented.
+The marker below means: the architecture is accepted and its core schema
+exists. It does not mean the domain is complete.
 
-CONTRACT RATIFIED — ADR 0005 ACCEPTED — READY FOR 8.1 IMPLEMENTATION
+CONTRACT RATIFIED — ADR 0005 ACCEPTED — 8.1A1 CORE HISTORY SCHEMA IMPLEMENTED

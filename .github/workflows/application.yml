@@ -1,0 +1,44 @@
+name: Portable application validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run lint
+      - run: bun run build
+      - name: Production server smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=3000 bun run start > /tmp/application.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/auth > /tmp/auth.html; then break; fi
+            sleep 1
+          done
+          grep -q '<!DOCTYPE html>' /tmp/auth.html
+          curl -fsS http://127.0.0.1:3000/manifest.webmanifest > /dev/null
+      - name: Ensure validation did not modify source inputs
+        run: git diff --exit-code
