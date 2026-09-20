@@ -1,0 +1,258 @@
+name: Progress History core regression suite
+
+# Sprint 8.1A1-V2 / 8.1A2 / 8.1A3 — independent CI execution of the
+# disposable-database regression suites (core, auxiliary and outbox). No application secrets, no Supabase
+# credentials, no deployment: the job builds its own throwaway PostgreSQL 17
+# cluster.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/progress-history-core.yml"
+      - "package.json"
+      - "bun.lock"
+      - "src/integrations/supabase/**"
+      - "supabase/migrations/**"
+      - "supabase/tests/progress_history_core/**"
+      - "supabase/tests/progress_history_auxiliary/**"
+      - "supabase/tests/progress_history_outbox/**"
+  pull_request:
+    paths:
+      - ".github/workflows/progress-history-core.yml"
+      - "package.json"
+      - "bun.lock"
+      - "src/integrations/supabase/**"
+      - "supabase/migrations/**"
+      - "supabase/tests/progress_history_core/**"
+      - "supabase/tests/progress_history_auxiliary/**"
+      - "supabase/tests/progress_history_outbox/**"
+
+permissions:
+  contents: read
+
+env:
+  # Exact PGDG package version, matching the 17.9 evidence of the previous
+  # local executor. Both packages are built from the same source version.
+  PG_PKG_VERSION: "17.9-1.pgdg24.04+1"
+  ARTIFACT_DIR: /tmp/ph-core-artifacts
+
+jobs:
+  regression-suite:
+    name: PostgreSQL 17.9 disposable-cluster suites
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Created before the installation step so a failed installation still
+      # has a place to deposit its evidence.
+      - name: Prepare artifact directory
+        run: mkdir -p "$ARTIFACT_DIR"
+
+      - name: Install pinned PostgreSQL 17.9 client and server tooling
+        id: install
+        run: |
+          set -uo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          install_pg() {
+            # Fail-fast inside the installation subprocess: a failed command
+            # here must prevent every later installation command.
+            set -euo pipefail
+            sudo install -d /usr/share/postgresql-common/pgdg
+            sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+              https://www.postgresql.org/media/keys/ACCC4CF8.asc
+            echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+              https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+              | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+            sudo apt-get update
+            # Exact versions only: an unavailable pin must fail the job, never
+            # silently install a different patch release.
+            sudo apt-get install -y --no-install-recommends \
+              "postgresql-17=${PG_PKG_VERSION}" \
+              "postgresql-client-17=${PG_PKG_VERSION}"
+          }
+          # GitHub runs `run:` steps with `bash -e`; `set -uo pipefail` does not
+          # clear the inherited errexit, so the outer shell would die at the
+          # failed pipeline before PIPESTATUS could be read. Disable errexit
+          # explicitly around the pipeline and capture the statuses immediately.
+          set +e
+          ( install_pg ) 2>&1 | tee "$ARTIFACT_DIR/postgres-install.log"
+          statuses=( "${PIPESTATUS[@]}" )
+          set -e
+          rc=${statuses[0]}
+          log_rc=${statuses[1]}
+          # Errexit must stay off while the status-recording pipeline runs: a
+          # failing tee here would otherwise kill the shell before record_rc is
+          # captured and before the original installation failure is handled.
+          set +e
+          {
+            echo "install exit status: $rc"
+            echo "install log write status: $log_rc"
+          } | tee -a "$ARTIFACT_DIR/postgres-install.log"
+          record_rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "install-status=FAILED" >> "$GITHUB_OUTPUT"
+            echo "PG_INSTALL_OK=false" >> "$GITHUB_ENV"
+            if [ "$log_rc" -ne 0 ] || [ "$record_rc" -ne 0 ]; then
+              echo "::error::installation failed (exit $rc) and evidence logging failed"
+            fi
+            # Preserve the original installation exit code.
+            exit "$rc"
+          fi
+          if [ "$log_rc" -ne 0 ] || [ "$record_rc" -ne 0 ]; then
+            # A logging failure must never be reported as successful evidence.
+            echo "::error::installation succeeded but evidence logging failed"
+            echo "install-status=LOG-FAILED" >> "$GITHUB_OUTPUT"
+            echo "PG_INSTALL_OK=false" >> "$GITHUB_ENV"
+            exit 1
+          fi
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+          echo "install-status=OK" >> "$GITHUB_OUTPUT"
+          echo "PG_INSTALL_OK=true" >> "$GITHUB_ENV"
+
+      - name: Record tooling provenance
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          {
+            echo "runner:   ${RUNNER_OS} ${RUNNER_ARCH} (ubuntu-24.04)"
+            echo "commit:   ${GITHUB_SHA}"
+            echo "run id:   ${GITHUB_RUN_ID}"
+            echo "run url:  ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "pinned:   postgresql-17=${PG_PKG_VERSION}"
+            postgres --version
+            psql --version
+            dpkg -s postgresql-17 | grep -E '^(Package|Version):'
+            dpkg -s postgresql-client-17 | grep -E '^(Package|Version):'
+          } | tee "$ARTIFACT_DIR/provenance.txt"
+          test "$(dpkg-query -W -f='${Version}' postgresql-17)" = "${PG_PKG_VERSION}"
+
+      - name: Run baseline enforcement, all three suites, the twelve negative scenarios and the default-grant regression
+        id: suite
+        # The GitHub runner user `runner` is a real non-root OS account, so
+        # initdb/postgres never execute as root.
+        run: bash supabase/tests/progress_history_core/run-ci.sh "$ARTIFACT_DIR"
+
+      - name: Final worktree assertion
+        if: always()
+        id: worktree
+        run: |
+          set -uo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          git status --porcelain | tee "$ARTIFACT_DIR/git-status.txt"
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "WORKTREE MODIFIED DURING TESTING" | tee -a "$ARTIFACT_DIR/git-status.txt"
+            echo "worktree-clean=false" >> "$GITHUB_OUTPUT"
+            echo "WORKTREE_CLEAN=false" >> "$GITHUB_ENV"
+          else
+            echo "worktree clean" | tee -a "$ARTIFACT_DIR/git-status.txt"
+            echo "WORKTREE_CLEAN=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Record final integrity outcome
+        if: always()
+        run: |
+          set -uo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          # An artifact may legitimately exist and be empty. Distinguish
+          # absent (evidence unavailable) from present-but-empty (nothing
+          # recorded) from present-and-nonempty (content to inspect).
+          describe() {
+            local f="$ARTIFACT_DIR/$1"
+            if [ ! -e "$f" ]; then
+              echo "artifact ABSENT:         $1 (check could not run)"
+            elif [ -s "$f" ]; then
+              echo "artifact present:        $1 ($(wc -l <"$f") line(s))"
+            else
+              echo "artifact present, empty: $1 (no differences / no content recorded)"
+            fi
+          }
+          # Integrity is decided by a fresh comparison performed here, never
+          # by trusting a preexisting empty diff file. Equal inputs, different
+          # inputs, incomplete evidence and comparison errors are distinct.
+          integrity="UNKNOWN"
+          integrity_ok=false
+          before="$ARTIFACT_DIR/hashes-before.txt"
+          after="$ARTIFACT_DIR/hashes-after.txt"
+          if [ -s "$before" ] && [ -s "$after" ]; then
+            set +e
+            diff -u "$before" "$after" \
+              > "$ARTIFACT_DIR/hashes-verify-diff.txt" \
+              2> "$ARTIFACT_DIR/hashes-verify-error.txt"
+            cmp_rc=$?
+            set -e
+            case "$cmp_rc" in
+              0)
+                integrity="PASS (fresh comparison in finalization: manifests identical)"
+                integrity_ok=true
+                ;;
+              1)
+                integrity="FAIL (fresh comparison recorded differences in hashes-verify-diff.txt)"
+                ;;
+              *)
+                integrity="FAIL (comparison error, status $cmp_rc; see hashes-verify-error.txt)"
+                ;;
+            esac
+          else
+            integrity="NOT RUN (hash capture incomplete — never inferred as PASS)"
+          fi
+          echo "INTEGRITY_OK=$integrity_ok" >> "$GITHUB_ENV"
+          {
+            echo "install step outcome:    ${{ steps.install.outcome }} (${{ steps.install.outputs.install-status || 'unknown' }})"
+            echo "postgres available:      ${PG_INSTALL_OK:-false}"
+            echo "suite step outcome:      ${{ steps.suite.outcome }}"
+            if [ "${{ steps.suite.outcome }}" = "skipped" ] || [ "${PG_INSTALL_OK:-false}" != "true" ]; then
+              echo "suite execution:         NOT RUN (PostgreSQL tooling unavailable)"
+            fi
+            echo "worktree clean:          ${WORKTREE_CLEAN:-unknown}"
+            echo "integrity comparison:    $integrity"
+            echo "runner-produced diff is evidence only; the verdict above comes"
+            echo "from the comparison performed in this step."
+            for f in summary.txt postgres-install.log provenance.txt \
+              normal-suite.log auxiliary-suite.log \
+              auxiliary-negative-empty.log auxiliary-negative-missing-case.log \
+              auxiliary-negative-unexpected-case.log \
+              auxiliary-negative-wrong-expectation.log \
+              outbox-suite.log \
+              outbox-negative-empty.log outbox-negative-missing-case.log \
+              outbox-negative-unexpected-case.log \
+              outbox-negative-wrong-expectation.log \
+              outbox-grant-regression.log \
+              hashes-before.txt hashes-after.txt hashes-diff.txt \
+              hashes-verify-diff.txt hashes-verify-error.txt; do
+              describe "$f"
+
+            done
+          } | tee "$ARTIFACT_DIR/final-integrity.txt"
+
+      - name: Upload execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: progress-history-core-evidence-${{ github.run_id }}
+          path: /tmp/ph-core-artifacts
+          if-no-files-found: error
+          retention-days: 30
+
+      # Deferred gate: runs after evidence collection and upload, so a failure
+      # here never costs the artifacts.
+      - name: Fail when the worktree was modified or integrity did not pass
+        if: always()
+        run: |
+          set -uo pipefail
+          rc=0
+          if [ "${WORKTREE_CLEAN:-false}" != "true" ]; then
+            echo "::error::worktree was modified during testing"
+            rc=1
+          fi
+          if [ "${INTEGRITY_OK:-false}" != "true" ]; then
+            echo "::error::integrity comparison did not pass (see final-integrity.txt)"
+            rc=1
+          fi
+          exit "$rc"

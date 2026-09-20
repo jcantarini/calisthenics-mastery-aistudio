@@ -112,3 +112,29 @@ another domain's tables.
 - **Bus:** `goalEvents.ts` (contracts only in 7.1).
 - **MUST NOT:** award XP, unlock achievements, generate workouts or write into
   another domain's tables. See [goals.md](./goals.md).
+
+## Progress History (schema added Sprints 8.1A1, 8.1A2 and 8.1A3)
+
+- **Responsibility:** immutable canonical records of completed workouts,
+  append-only corrections over them, and the independent auxiliary daily facts.
+  Defined by [ADR 0005](./decisions/0005-progress-history-domain.md) and its
+  [ratified contract](./progress-history-domain-contracts.md).
+- **Core tables (8.1A1):** `workout_sessions`, `workout_session_exercises`,
+  `workout_session_sets`, `workout_session_adjustments`.
+- **Auxiliary fact tables (8.1A2):** `hydration_facts`,
+  `meal_adherence_facts`, `daily_target_snapshots` — independent facts with no
+  `session_id` and no foreign key to sessions or to mutable plan tables.
+- **Dispatch outbox table (8.1A3, privileges reset in 8.1A3-C1):**
+  `history_dispatch_outbox` — mutable server-owned delivery state, never read
+  by clients: no grant and no policy for `anon` or `authenticated`, and
+  `service_role` limited to exactly `SELECT`, `INSERT`, `UPDATE` and `DELETE`
+  even where the database grants permissive default table privileges.
+- **State:** schema only. Trusted ingestion, adjustment functions, outbox
+  claim/recovery functions and workers, read models, services, hooks and UI do
+  not exist yet.
+
+- **Access:** `authenticated` may read only its own rows; writes are reserved
+  for a future trusted server boundary running as `service_role`.
+- **MUST NOT:** own training-plan prescription or runtime, award XP, unlock
+  achievements, or write into another domain's tables. `planned_workouts`
+  remains mutable prescription data and is never workout history.

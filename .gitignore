@@ -33,3 +33,8 @@ dist-ssr
 
 # Bun is the canonical package manager
 package-lock.json
+
+# Local environment files never belong in source control
+.env
+.env.*
+!.env.example
