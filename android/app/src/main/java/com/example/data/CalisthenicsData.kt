@@ -262,78 +262,9 @@ object CalisthenicsData {
     )
   )
 
-  val DEFAULT_GOALS: List<Goal> = listOf(
-    Goal(
-      id = "g1",
-      title = "10 Flexões perfeitas",
-      category = GoalCategory.FORCA,
-      current = 6,
-      target = 10,
-      unit = "reps",
-      deadline = "Fim do mês",
-      xpReward = 150,
-      isCompleted = false
-    ),
-    Goal(
-      id = "g2",
-      title = "Primeira Barra Fixa (Pull-up)",
-      category = GoalCategory.FORCA,
-      current = 0,
-      target = 1,
-      unit = "rep",
-      deadline = "4 semanas",
-      xpReward = 300,
-      isCompleted = false
-    ),
-    Goal(
-      id = "g3",
-      title = "Prancha isométrica de 60 segundos",
-      category = GoalCategory.TEMPO,
-      current = 40,
-      target = 60,
-      unit = "segundos",
-      deadline = "2 semanas",
-      xpReward = 200,
-      isCompleted = false
-    ),
-    Goal(
-      id = "g4",
-      title = "4 Treinos completos nesta semana",
-      category = GoalCategory.FREQUENCIA,
-      current = 3,
-      target = 4,
-      unit = "treinos",
-      deadline = "Domingo",
-      xpReward = 250,
-      isCompleted = false
-    ),
-    Goal(
-      id = "g5",
-      title = "Handstand (Parada de mão) 15s",
-      category = GoalCategory.HABILIDADE,
-      current = 5,
-      target = 15,
-      unit = "segundos",
-      deadline = "6 semanas",
-      xpReward = 400,
-      isCompleted = false
-    ),
-    Goal(
-      id = "g6",
-      title = "1 Muscle-up limpo na barra",
-      category = GoalCategory.HABILIDADE,
-      current = 0,
-      target = 1,
-      unit = "rep",
-      deadline = "8 semanas",
-      xpReward = 500,
-      isCompleted = false
-    )
-  )
-
   val DEFAULT_ACHIEVEMENTS: List<Achievement> = listOf(
-    Achievement("a1", "Primeiro Passo", "Concluiu seu primeiro treino no app", 100, true, "Treino"),
-    Achievement("a2", "Guerreiro da Barra", "Realizou uma sessão de puxada na barra fixa", 150, true, "Habilidade"),
+    Achievement("a1", "Primeiro Passo", "Concluiu seu primeiro treino no app", 100, false, "Treino"),
+    Achievement("a2", "Guerreiro da Barra", "Realizou uma sessão de puxada na barra fixa", 150, false, "Habilidade"),
     Achievement("a3", "Mestre do HIIT", "Concluiu 1 sessão completa no Cronômetro Intervalado", 120, false, "Timer"),
     Achievement("a4", "Disciplina de Ferro", "Alcançou sequência de 3 dias consecutivos", 200, false, "Consistência"),
     Achievement("a5", "Queima Calórica 500+", "Acumulou mais de 500 kcal queimadas em treinos", 250, false, "Performance"),

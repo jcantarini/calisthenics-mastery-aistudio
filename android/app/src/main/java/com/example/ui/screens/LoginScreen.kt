@@ -31,11 +31,9 @@ fun LoginScreen(
   isLoading: Boolean,
   errorMessage: String?,
   onGoogleSignIn: () -> Unit,
-  onSelectGoogleAccount: (String, String) -> Unit,
   onGuestSignIn: (String) -> Unit
 ) {
   var athleteName by remember { mutableStateOf("") }
-  var showGoogleAccountSheet by remember { mutableStateOf(false) }
 
   Box(
     modifier = Modifier
@@ -175,11 +173,7 @@ fun LoginScreen(
 
           // Primary Official Google Sign-In Button
           Button(
-            onClick = {
-              // Open Google Account Chooser bottom sheet immediately
-              showGoogleAccountSheet = true
-              onGoogleSignIn()
-            },
+            onClick = onGoogleSignIn,
             enabled = !isLoading,
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
@@ -204,7 +198,7 @@ fun LoginScreen(
                 GoogleGIcon()
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                  text = "Continuar com o Google",
+                  text = "Google indisponível por enquanto",
                   color = Color(0xFF1F1F1F),
                   fontWeight = FontWeight.Bold,
                   fontSize = 15.sp
@@ -214,41 +208,6 @@ fun LoginScreen(
           }
 
           Spacer(modifier = Modifier.height(10.dp))
-
-          // Quick 1-tap Google Account Badge
-          Row(
-            modifier = Modifier
-              .fillMaxWidth()
-              .clip(RoundedCornerShape(10.dp))
-              .background(ObsidianSurfaceElevated)
-              .clickable {
-                onSelectGoogleAccount("Julio Cantarini", "jcantarini@gmail.com")
-              }
-              .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-          ) {
-            Text(
-              text = "Conta detectada: ",
-              color = TextMuted,
-              fontSize = 11.sp
-            )
-            Text(
-              text = "jcantarini@gmail.com",
-              color = ElectricLime,
-              fontWeight = FontWeight.Bold,
-              fontSize = 11.sp
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Icon(
-              imageVector = Icons.Default.CheckCircle,
-              contentDescription = null,
-              tint = ElectricLime,
-              modifier = Modifier.size(14.dp)
-            )
-          }
-
-          Spacer(modifier = Modifier.height(16.dp))
 
           // Divider
           Row(
@@ -321,7 +280,7 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-              text = "Entrar como Atleta",
+              text = "Explorar como convidado",
               fontWeight = FontWeight.Black,
               fontSize = 14.sp
             )
@@ -331,23 +290,13 @@ fun LoginScreen(
 
       // Footer
       Text(
-        text = "Ao continuar, você concorda com o plano de calistenia e metas.",
+        text = "Modo local temporário. Sem conta, sincronização, histórico salvo ou recompensas.",
         color = TextMuted,
         fontSize = 11.sp,
         textAlign = TextAlign.Center
       )
     }
 
-    // Google Account Picker Bottom Sheet
-    if (showGoogleAccountSheet) {
-      GoogleAccountBottomSheet(
-        onDismiss = { showGoogleAccountSheet = false },
-        onSelectAccount = { name, email ->
-          showGoogleAccountSheet = false
-          onSelectGoogleAccount(name, email)
-        }
-      )
-    }
   }
 }
 
@@ -366,230 +315,5 @@ fun GoogleGIcon(modifier: Modifier = Modifier) {
       fontWeight = FontWeight.Black,
       fontSize = 16.sp
     )
-  }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun GoogleAccountBottomSheet(
-  onDismiss: () -> Unit,
-  onSelectAccount: (String, String) -> Unit
-) {
-  var isAddingOtherAccount by remember { mutableStateOf(false) }
-  var otherName by remember { mutableStateOf("") }
-  var otherEmail by remember { mutableStateOf("") }
-
-  ModalBottomSheet(
-    onDismissRequest = onDismiss,
-    containerColor = Color(0xFF1E2229),
-    tonalElevation = 16.dp,
-    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-  ) {
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp, vertical = 8.dp)
-        .padding(bottom = 24.dp)
-    ) {
-      // Header
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-      ) {
-        GoogleGIcon(modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.width(12.dp))
-        Column {
-          Text(
-            text = "Fazer login com o Google",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp
-          )
-          Text(
-            text = "para continuar no app Calisthenics Mastery",
-            color = Color(0xFF8B949E),
-            fontSize = 12.sp
-          )
-        }
-      }
-
-      Spacer(modifier = Modifier.height(20.dp))
-      Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(ObsidianBorder))
-      Spacer(modifier = Modifier.height(16.dp))
-
-      Text(
-        text = "Escolha uma conta",
-        color = Color(0xFFC9D1D9),
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 13.sp,
-        modifier = Modifier.padding(bottom = 10.dp)
-      )
-
-      // Primary Default Google Account (Julio Cantarini)
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .clip(RoundedCornerShape(16.dp))
-          .background(ObsidianSurfaceElevated)
-          .border(1.dp, Color(0xFF4285F4).copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-          .clickable {
-            onSelectAccount("Julio Cantarini", "jcantarini@gmail.com")
-          }
-          .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Box(
-          modifier = Modifier
-            .size(42.dp)
-            .clip(CircleShape)
-            .background(Color(0xFF4285F4)),
-          contentAlignment = Alignment.Center
-        ) {
-          Text(
-            text = "J",
-            color = Color.White,
-            fontWeight = FontWeight.Black,
-            fontSize = 18.sp
-          )
-        }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = "Julio Cantarini",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp
-          )
-          Text(
-            text = "jcantarini@gmail.com",
-            color = Color(0xFF8B949E),
-            fontSize = 12.sp
-          )
-        }
-
-        Icon(
-          imageVector = Icons.Default.Check,
-          contentDescription = null,
-          tint = ElectricLime,
-          modifier = Modifier.size(20.dp)
-        )
-      }
-
-      Spacer(modifier = Modifier.height(12.dp))
-
-      // Option: Use another Google account
-      if (!isAddingOtherAccount) {
-        Row(
-          modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(ObsidianSurface)
-            .border(1.dp, ObsidianBorder, RoundedCornerShape(14.dp))
-            .clickable { isAddingOtherAccount = true }
-            .padding(14.dp),
-          verticalAlignment = Alignment.CenterVertically
-        ) {
-          Box(
-            modifier = Modifier
-              .size(38.dp)
-              .clip(CircleShape)
-              .background(ObsidianSurfaceElevated),
-            contentAlignment = Alignment.Center
-          ) {
-            Icon(
-              imageVector = Icons.Default.PersonAdd,
-              contentDescription = null,
-              tint = Color(0xFFC9D1D9),
-              modifier = Modifier.size(18.dp)
-            )
-          }
-
-          Spacer(modifier = Modifier.width(14.dp))
-
-          Text(
-            text = "Usar outra conta do Google",
-            color = Color(0xFFC9D1D9),
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp
-          )
-        }
-      } else {
-        Card(
-          shape = RoundedCornerShape(14.dp),
-          colors = CardDefaults.cardColors(containerColor = ObsidianSurface),
-          border = androidx.compose.foundation.BorderStroke(1.dp, ObsidianBorder),
-          modifier = Modifier.fillMaxWidth()
-        ) {
-          Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-              text = "Entrar com outro e-mail Google",
-              color = Color.White,
-              fontWeight = FontWeight.Bold,
-              fontSize = 13.sp
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            OutlinedTextField(
-              value = otherName,
-              onValueChange = { otherName = it },
-              placeholder = { Text("Nome do Atleta") },
-              singleLine = true,
-              colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = ElectricLime,
-                unfocusedBorderColor = ObsidianBorder,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
-              ),
-              shape = RoundedCornerShape(10.dp),
-              modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-              value = otherEmail,
-              onValueChange = { otherEmail = it },
-              placeholder = { Text("seu-email@gmail.com") },
-              singleLine = true,
-              colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = ElectricLime,
-                unfocusedBorderColor = ObsidianBorder,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
-              ),
-              shape = RoundedCornerShape(10.dp),
-              modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Button(
-              onClick = {
-                val n = if (otherName.isNotBlank()) otherName.trim() else "Atleta"
-                val e = if (otherEmail.isNotBlank()) otherEmail.trim() else "atleta@gmail.com"
-                onSelectAccount(n, e)
-              },
-              shape = RoundedCornerShape(10.dp),
-              colors = ButtonDefaults.buttonColors(containerColor = ElectricLime, contentColor = ObsidianBg),
-              modifier = Modifier.fillMaxWidth()
-            ) {
-              Text("Continuar com esta conta", fontWeight = FontWeight.Bold)
-            }
-          }
-        }
-      }
-
-      Spacer(modifier = Modifier.height(20.dp))
-
-      Text(
-        text = "Para continuar, o Google compartilhará seu nome, endereço de e-mail e foto do perfil com o Calisthenics Mastery.",
-        color = Color(0xFF6E7681),
-        fontSize = 11.sp,
-        lineHeight = 15.sp
-      )
-    }
   }
 }

@@ -62,7 +62,7 @@ fun GoalsScreen(
           fontWeight = FontWeight.Black
         )
         Text(
-          text = "Conquiste marcas históricas na calistenia",
+          text = "Rascunhos locais. Não salvos e sem recompensas.",
           color = TextSecondary,
           fontSize = 13.sp
         )
@@ -117,7 +117,7 @@ fun GoalsScreen(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
           val totalXp = completedGoals.sumOf { it.xpReward }
           Text(text = "+$totalXp", color = Color(0xFF58A6FF), fontSize = 22.sp, fontWeight = FontWeight.Black)
-          Text(text = "XP Acumulado", color = TextSecondary, fontSize = 11.sp)
+          Text(text = "XP indisponível", color = TextSecondary, fontSize = 11.sp)
         }
       }
     }
@@ -229,7 +229,7 @@ private fun GoalCard(
   onClaim: () -> Unit
 ) {
   val isReached = goal.current >= goal.target
-  val progress = (goal.current.toFloat() / goal.target.toFloat()).coerceIn(0f, 1f)
+  val progress = (goal.current.toFloat() / goal.target.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
 
   Card(
     shape = RoundedCornerShape(18.dp),
@@ -269,7 +269,7 @@ private fun GoalCard(
         }
 
         Text(
-          text = "+${goal.xpReward} XP",
+          text = "Sem recompensa",
           color = WarningGold,
           fontWeight = FontWeight.Bold,
           fontSize = 12.sp
@@ -326,7 +326,7 @@ private fun GoalCard(
           ) {
             Icon(imageVector = Icons.Default.EmojiEvents, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
-            Text("Resgatar XP", fontWeight = FontWeight.Black, fontSize = 12.sp)
+            Text("Recompensas indisponíveis", fontWeight = FontWeight.Black, fontSize = 12.sp)
           }
         } else {
           OutlinedButton(
@@ -519,7 +519,7 @@ private fun RewardCelebrationDialog(
         Spacer(modifier = Modifier.height(14.dp))
 
         Text(
-          text = "+${goal.xpReward} XP",
+          text = "Sem recompensa",
           color = WarningGold,
           fontSize = 32.sp,
           fontWeight = FontWeight.Black

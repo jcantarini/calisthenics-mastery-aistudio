@@ -41,7 +41,7 @@ de autenticação, integridade, paridade e build; não é uma versão de lançam
 | M1               | Recuperação e portabilidade web                   | Concluída na PR #1; referência técnica preservada                                                 |
 | M2               | Homologação do ambiente                           | Não aprovada; escopo móvel distribuído entre A1, A2 e A6                                          |
 | A0               | Decisão Android, baseline e auditoria inicial     | Decisão confirmada; fonte preservada em branch própria; 14 achados registrados                    |
-| A1               | Build reproduzível e contenção do protótipo       | Próximo sprint corretivo: wrapper, assets, CI, login simulado, dados fictícios e escrita indevida |
+| A1               | Build reproduzível e contenção do protótipo       | Implementado na branch android/a1-containment; build, testes e lint em validação |
 | A2               | Autenticação e sessão reais                       | Pendente A1; Google/Supabase, refresh, logout, isolamento e retorno ao app                        |
 | A3               | Paridade de onboarding, perfil e plano            | Planejado; portar regras com casos de equivalência                                                |
 | A4               | Paridade de gamificação e metas                   | Planejado; preservar donos de domínio, curva e idempotência                                       |
@@ -91,7 +91,7 @@ dados de usuários.
 
 ## Próxima execução
 
-Executar **A1 — Android Build Baseline & Trust Boundary Containment**, validar seu
-resultado e então iniciar A2. A auditoria A0 não significa que os 14 achados já
+Finalizar a validação de **A1 — Android Build Baseline & Trust Boundary Containment**
+e então iniciar A2. A auditoria A0 não significa que os 14 achados já
 foram corrigidos. Manter o backend 8.1B1–8.1D no roadmap, sem reiniciar schemas
 concluídos nem considerar o protótipo Kotlin equivalente à aplicação validada.
