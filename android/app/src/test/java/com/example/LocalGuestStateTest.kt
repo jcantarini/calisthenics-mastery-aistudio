@@ -88,4 +88,22 @@ class LocalGuestStateTest {
   fun zeroTargetIsRejectedInsteadOfCreatingInvalidProgress() {
     CalisthenicsRepository().addNewGoal("Meta", 0, "reps", GoalCategory.FORCA, "", 0)
   }
+  @Test fun verifiedAccountSwitchClearsEveryLocalDraftAndMetric() {
+    val repository = CalisthenicsRepository()
+    repository.authenticated("verified-a")
+    repository.addWater(500)
+    repository.addNewGoal("Draft", 2, "reps", GoalCategory.FORCA, "", 0)
+    repository.authenticated("verified-b")
+    assertEquals("verified-b", (repository.state.value.currentUser as com.example.data.AuthenticatedUser).userId)
+    assertEquals(0, repository.state.value.waterConsumedMl)
+    assertTrue(repository.state.value.goals.isEmpty())
+    assertTrue(repository.state.value.recentSessions.isEmpty())
+    assertEquals(0, repository.state.value.currentXp)
+  }
+  @Test fun refreshingSameVerifiedIdentityPreservesLocalDrafts() {
+    val repository = CalisthenicsRepository()
+    repository.authenticated("verified-a"); repository.addWater(250)
+    repository.authenticated("verified-a")
+    assertEquals(250, repository.state.value.waterConsumedMl)
+  }
 }

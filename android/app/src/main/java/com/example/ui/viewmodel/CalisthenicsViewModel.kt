@@ -1,6 +1,11 @@
 package com.example.ui.viewmodel
 
+import android.app.Activity
 import android.app.Application
+import com.example.BuildConfig
+import com.example.auth.*
+import com.example.data.AuthenticatedUser
+import com.example.data.GuestUser
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
@@ -62,6 +67,14 @@ data class NutritionRecommendation(
 class CalisthenicsViewModel(application: Application) : AndroidViewModel(application) {
 
   private val repository = CalisthenicsRepository()
+  private val authConfig = AuthConfiguration(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_PUBLISHABLE_KEY, BuildConfig.GOOGLE_WEB_CLIENT_ID)
+  private val google by lazy { GoogleCredentialProvider(application, authConfig.googleWebClientId) }
+  private val auth = SessionController(
+    if (authConfig.isValid) SupabaseAuthGateway(authConfig) else null,
+    KeystoreSessionVault(application, authConfig.supabaseUrl), viewModelScope,
+    clearProvider = { if (authConfig.isValid) google.clear() }
+  )
+  val googleConfigured get() = auth.configured
   val appState: StateFlow<CalisthenicsAppState> = repository.state
 
   private val _selectedTab = MutableStateFlow(AppNavTab.DASHBOARD)
@@ -79,7 +92,7 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
   private var workoutTimerJob: Job? = null
 
   init {
-    // Clear obsolete prototype identities; A1 never restores a session.
+    // Clear only obsolete prototype identities, never the new encrypted session store.
     repository.initPreferences(getApplication())
 
     // Set default timer configuration from default preset
@@ -98,15 +111,41 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
       phase = TimerPhase.PREP,
       secondsRemaining = initialPreset.prep
     )
+    viewModelScope.launch {
+      auth.state.collect { state ->
+        when (state.phase) {
+          AuthPhase.AUTHENTICATED -> {
+            val userId = requireNotNull(state.user).id
+            if ((appState.value.currentUser as? AuthenticatedUser)?.userId != userId) clearLocalExecution()
+            repository.authenticated(userId)
+          }
+          AuthPhase.GUEST -> {
+            if (appState.value.currentUser !is GuestUser) { clearLocalExecution(); repository.enterGuest("Atleta") }
+            state.message?.let(repository::sessionNotice)
+          }
+          else -> {
+            clearLocalExecution()
+            repository.authScreen(state.phase == AuthPhase.LOADING, state.message)
+          }
+        }
+      }
+    }
+    auth.restore()
   }
 
   fun finishSplash() {
     repository.finishSplash()
   }
 
-  fun signInWithGoogle() { repository.requestGoogleSignIn() }
+  fun signInWithGoogle(activity: Activity) {
+    clearLocalExecution()
+    repository.authScreen(true, null)
+    auth.signIn { hash -> google.obtain(activity, hash) }
+  }
+  fun onForeground() { auth.refreshIfNeeded() }
 
   fun signInAsGuest(athleteName: String) {
+    auth.enterGuest()
     clearLocalExecution()
     repository.enterGuest(athleteName)
   }
@@ -122,6 +161,7 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
   }
 
   fun signOut() {
+    auth.signOut()
     clearLocalExecution()
     repository.signOut()
   }

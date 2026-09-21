@@ -15,6 +15,17 @@ android {
     versionCode = 1
     versionName = "1.0"
 
+    // Only these PUBLIC values enter the APK; no .env or arbitrary secret injection.
+    fun publicValue(name: String): String = providers.gradleProperty(name).orElse(providers.environmentVariable(name)).getOrElse("")
+    fun literal(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "").replace("\r", "") + "\""
+    buildConfigField("String", "SUPABASE_URL", literal(publicValue("ANDROID_SUPABASE_URL")))
+    val publicKey = publicValue("ANDROID_SUPABASE_PUBLISHABLE_KEY")
+    require(publicKey.isEmpty() || publicKey.matches(Regex("sb_publishable_[A-Za-z0-9_-]{16,}"))) {
+      "ANDROID_SUPABASE_PUBLISHABLE_KEY must be a public publishable key; secret and legacy JWT keys are forbidden"
+    }
+    buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", literal(publicKey))
+    buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", literal(publicValue("ANDROID_GOOGLE_WEB_CLIENT_ID")))
+
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
@@ -48,6 +59,7 @@ android {
     debug { signingConfig = signingConfigs.getByName("debug") }
   }
   compileOptions {
+    isCoreLibraryDesugaringEnabled = true
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
@@ -63,6 +75,12 @@ android {
 }
 
 dependencies {
+  implementation("io.github.jan-tennert.supabase:auth-kt:3.2.2")
+  implementation("io.ktor:ktor-client-okhttp:3.2.2")
+  implementation(libs.androidx.credentials)
+  implementation(libs.androidx.credentials.play.services)
+  implementation(libs.googleid)
+  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.compose.material.icons.core)
@@ -83,6 +101,7 @@ dependencies {
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
   testImplementation(libs.junit)
+  testImplementation("io.ktor:ktor-client-mock:3.2.2")
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
   androidTestImplementation(platform(libs.androidx.compose.bom))
