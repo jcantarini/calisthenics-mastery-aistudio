@@ -354,7 +354,6 @@ private fun AddGoalDialog(
   var unit by remember { mutableStateOf("reps") }
   var category by remember { mutableStateOf(GoalCategory.FORCA) }
   var deadline by remember { mutableStateOf("4 semanas") }
-  var xpRewardStr by remember { mutableStateOf("200") }
 
   Dialog(onDismissRequest = onDismiss) {
     Card(
@@ -448,17 +447,17 @@ private fun AddGoalDialog(
 
           Button(
             onClick = {
-              val target = targetStr.toIntOrNull() ?: 10
-              val xp = xpRewardStr.toIntOrNull() ?: 200
-              if (title.isNotBlank()) {
-                onAdd(title, target, unit, category, deadline, xp)
+              val target = targetStr.toIntOrNull()
+              if (title.isNotBlank() && target != null && target > 0) {
+                onAdd(title, target, unit, category, deadline, 0)
               }
             },
+            enabled = title.isNotBlank() && (targetStr.toIntOrNull() ?: 0) > 0,
             colors = ButtonDefaults.buttonColors(containerColor = ElectricLime, contentColor = ObsidianBg),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.weight(1f)
           ) {
-            Text("Salvar Meta", fontWeight = FontWeight.Bold)
+            Text("Criar rascunho", fontWeight = FontWeight.Bold)
           }
         }
       }

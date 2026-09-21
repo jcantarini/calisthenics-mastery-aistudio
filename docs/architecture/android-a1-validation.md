@@ -30,11 +30,15 @@ trusted completion/persistence depends on 8.1B–D and A5. Guest drafts are not 
 
 Local Gradle bootstrap could not download its distribution because the Java
 process reported network unreachable. This is not a successful local build.
-GitHub CI results will be recorded here after validation. Device, background/process
+The first GitHub run assembled the debug APK and passed seven pure tests, but
+Robolectric SDK 36 could not initialize under JDK 17. CI and checkout instructions
+now use JDK 21, as required by Robolectric; no tests were disabled. Final CI results
+will be recorded after the rerun. Device, background/process
 lifecycle, provider authentication and AI Studio synchronization are not yet validated.
 
 ## References
 
+- [Robolectric Java/SDK compatibility](https://robolectric.org/compatibility_table/)
 - [Gradle checksums](https://gradle.org/release-checksums/)
 - [AGP 9.1 compatibility](https://developer.android.com/build/releases/agp-9-1-0-release-notes)
 - [Android source and commands](../../android/README.md)

@@ -6,7 +6,7 @@ canonical history and rewards are unavailable until their roadmap gates pass.
 
 ## Reproduce validation
 
-Use JDK 17, Android SDK platform 36.1, build-tools 36.0.0 and platform-tools.
+Use JDK 21 (required by Robolectric with SDK 36), Android SDK platform 36.1, build-tools 36.0.0 and platform-tools.
 Set ANDROID_HOME to your SDK installation or supply an untracked local.properties.
 From this directory run:
 
