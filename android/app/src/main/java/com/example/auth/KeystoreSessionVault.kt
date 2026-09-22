@@ -53,5 +53,12 @@ class KeystoreSessionVault(context: Context, projectUrl: String,
     try { output.write(bytes); file.finishWrite(output) }
     catch (e: Exception) { file.failWrite(output); throw IllegalStateException("Secure session unavailable") }
   }
-  @Synchronized override fun clear() { keys.destroy(); file.delete() }
+  @Synchronized override fun clear() {
+    // Attempt both removals even if Android Keystore is temporarily unavailable.
+    try { keys.destroy() } finally {
+      file.delete()
+      check(!file.baseFile.exists() && !File(file.baseFile.path + ".bak").exists() &&
+        !File(file.baseFile.path + ".new").exists()) { "Secure session removal failed" }
+    }
+  }
 }

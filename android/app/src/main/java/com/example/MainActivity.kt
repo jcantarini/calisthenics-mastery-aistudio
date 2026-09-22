@@ -1,6 +1,5 @@
 package com.example
 
-import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,7 +16,7 @@ import com.example.data.AuthenticatedUser
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,7 +48,7 @@ fun CalisthenicsMasteryApp(
   val timerState by viewModel.timerState.collectAsState()
   val supabaseStatus by viewModel.supabaseStatus.collectAsState()
   val nutrition = viewModel.calculateNutrition()
-  val activity = LocalContext.current as? Activity
+  val activity = LocalActivity.current
   LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onForeground() }
 
   // 1. Splash Screen Phase

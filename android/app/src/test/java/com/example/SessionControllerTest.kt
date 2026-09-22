@@ -66,7 +66,7 @@ class SessionControllerTest {
     val v=Vault();val g=Gateway();val c=SessionController(g,v,backgroundScope,{1000})
     g.gate=CompletableDeferred();c.signIn { "google" };runCurrent()
     c.signOut();assertEquals(AuthPhase.SIGNED_OUT,c.state.value.phase)
-    g.gate!!.complete(Unit);runCurrent();assertNull(c.state.value.user);assertNull(v.token)
+    g.gate!!.complete(Unit);runCurrent();assertNull(c.state.value.user);assertNull(v.token);assertEquals(1,g.out)
   }
   @Test fun guestEntryFencesPendingLogin() = runTest {
     val v=Vault();val g=Gateway();val c=SessionController(g,v,backgroundScope,{1000})
@@ -100,7 +100,15 @@ class SessionControllerTest {
   @Test fun refreshCannotChangeTheVerifiedUser() = runTest {
     var now=1000L;val v=Vault();val g=Gateway();val c=SessionController(g,v,backgroundScope,{now})
     c.signIn { "google" };runCurrent();now=3970;g.userId="other";g.expiry=8000;c.refreshIfNeeded();runCurrent()
+    assertNull(c.state.value.user);assertNull(v.token);assertEquals(1,g.out)
+  }
+  @Test fun providerCleanupTimeoutDoesNotPreventRemoteLogout() = runTest {
+    val v=Vault();val g=Gateway()
+    val c=SessionController(g,v,backgroundScope,{1000},clearProvider={ delay(30_000) })
+    c.signIn { "google" };runCurrent();c.signOut();runCurrent()
     assertNull(c.state.value.user);assertNull(v.token)
+    advanceTimeBy(5_001);runCurrent()
+    assertEquals(1,g.out);assertEquals(AuthPhase.SIGNED_OUT,c.state.value.phase)
   }
   @Test fun expiredServerSessionIsRejected() = runTest {
     val v=Vault();val g=Gateway();g.expiry=999;val c=SessionController(g,v,backgroundScope,{1000})

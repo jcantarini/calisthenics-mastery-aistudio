@@ -41,4 +41,16 @@ class SessionVaultTest {
     val keys=Keys();val vault=KeystoreSessionVault(context,"https://one.supabase.co",keys);vault.clear();vault.write("refresh")
     try { KeystoreSessionVault(context,"https://two.supabase.co",keys).read();fail("cross-project accepted") } catch (_:IllegalStateException) {}
   }
+  @Test fun keyDeletionFailureStillRemovesSavedToken() {
+    val keys=Keys()
+    val vault=KeystoreSessionVault(context,"https://project.supabase.co",keys)
+    vault.clear();vault.write("refresh-sensitive-token")
+    val failingKeys=object:VaultKeySource {
+      override fun key()=keys.key()
+      override fun destroy() { error("Keystore unavailable") }
+    }
+    val failingVault=KeystoreSessionVault(context,"https://project.supabase.co",failingKeys)
+    try { failingVault.clear();fail("storage error hidden") } catch (_:IllegalStateException) {}
+    assertNull(vault.read())
+  }
 }

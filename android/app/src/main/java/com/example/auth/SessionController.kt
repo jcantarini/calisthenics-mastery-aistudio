@@ -37,8 +37,8 @@ class SessionController(
       mutable.value = AuthState(AuthPhase.ERROR, message = message)
     }
   }
-  private fun accept(ticket: Long, next: AuthSession) = synchronized(lock) {
-    if (ticket != generation) return@synchronized
+  private fun accept(ticket: Long, next: AuthSession): Boolean = synchronized(lock) {
+    if (ticket != generation) return@synchronized false
     require(next.user.id.isNotBlank() && next.refreshToken.isNotBlank() && next.accessToken.isNotBlank())
     require(next.expiresAtSeconds > nowSeconds())
     // Synchronous atomic persistence and generation check prevent logout/write races.
@@ -46,6 +46,23 @@ class SessionController(
     session = next
     mutable.value = AuthState(AuthPhase.AUTHENTICATED, next.user)
     schedule(ticket, next)
+    true
+  }
+  private suspend fun deliver(ticket: Long, next: AuthSession) {
+    try {
+      if (accept(ticket, next)) return
+    } catch (e: Exception) {
+      revokeDiscarded(next)
+      throw e
+    }
+    revokeDiscarded(next)
+  }
+  private suspend fun revokeDiscarded(next: AuthSession) {
+    // A late server response must not leave a newly created remote session unhandled.
+    try { withTimeout(20_000) { gateway?.signOut(next.accessToken) } }
+    catch (_: TimeoutCancellationException) { /* No local session is retained. */ }
+    catch (e: CancellationException) { throw e }
+    catch (_: Exception) { /* Remote expiry/revocation cannot be guaranteed offline. */ }
   }
   private fun schedule(ticket: Long, next: AuthSession) {
     renewal?.cancel()
@@ -68,7 +85,7 @@ class SessionController(
             fail(ticket, "Configuração de login incompleta. Entre novamente após configurá-la.")
           } else {
             // Never trust a saved UID: obtain and verify a fresh session on process recreation.
-            accept(ticket, withTimeout(20_000) { gateway.refresh(token) })
+            deliver(ticket, withTimeout(20_000) { gateway.refresh(token) })
           }
         }
       } catch (_: TimeoutCancellationException) { fail(ticket, "A restauração demorou demais. Entre novamente.") }
@@ -79,7 +96,10 @@ class SessionController(
 
   fun signIn(credential: suspend (hashedNonce: String) -> String) {
     val ticket = begin()
-    synchronized(lock) { if (!erase()) { fail(ticket, "Não foi possível limpar a sessão local."); return } }
+    synchronized(lock) {
+      if (!current(ticket)) return
+      if (!erase()) { fail(ticket, "Não foi possível limpar a sessão local."); return }
+    }
     if (gateway == null) { fail(ticket, "Login Google indisponível: configuração pública incompleta."); return }
     scope.launch {
       try {
@@ -88,7 +108,7 @@ class SessionController(
         val token = credential(hash)
         if (token.isBlank()) throw AuthRejected()
         network.withLock {
-          if (current(ticket)) accept(ticket, withTimeout(20_000) { gateway.signIn(token, nonce) })
+          if (current(ticket)) deliver(ticket, withTimeout(20_000) { gateway.signIn(token, nonce) })
         }
       } catch (_: LoginCancelled) { fail(ticket, "Login cancelado. Nenhuma conta foi conectada.") }
       catch (_: TimeoutCancellationException) { fail(ticket, "A verificação demorou demais. Tente novamente.") }
@@ -105,8 +125,11 @@ class SessionController(
           val old = synchronized(lock) { if (current(ticket)) session else null } ?: return@withLock
           if (old.expiresAtSeconds - nowSeconds() > 60) return@withLock
           val next = withTimeout(20_000) { requireNotNull(gateway).refresh(old.refreshToken) }
-          if (next.user.id != old.user.id) throw AuthRejected()
-          accept(ticket, next)
+          if (next.user.id != old.user.id) {
+            revokeDiscarded(next)
+            throw AuthRejected()
+          }
+          deliver(ticket, next)
         }
       } catch (_: TimeoutCancellationException) { fail(ticket, "A renovação demorou demais. Entre novamente.") }
       catch (e: CancellationException) { throw e }
@@ -125,14 +148,15 @@ class SessionController(
     }
     scope.launch {
       var failed = false
-      try { clearProvider() } catch (e: CancellationException) { throw e } catch (_: Exception) { failed = true }
+      try { withTimeout(5_000) { clearProvider() } } catch (_: TimeoutCancellationException) { failed = true } catch (e: CancellationException) { throw e } catch (_: Exception) { failed = true }
       try { withTimeout(20_000) { if (old != null) gateway?.signOut(old.accessToken) } }
       catch (_: TimeoutCancellationException) { failed = true }
       catch (e: CancellationException) { throw e }
       catch (_: Exception) { failed = true }
       synchronized(lock) {
         if (ticket == generation && failed) mutable.value = mutable.value.copy(
-          message = "Você saiu deste aparelho. Não foi possível confirmar o encerramento remoto; a sessão no servidor pode continuar válida.")
+          message = listOfNotNull(mutable.value.message,
+            "Você saiu deste aparelho. Não foi possível confirmar o encerramento remoto; a sessão no servidor pode continuar válida.").joinToString(" "))
       }
     }
   }

@@ -112,3 +112,10 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
 }
+
+// Lock the application and test dependency graphs, including the Supabase/Ktor transitives.
+configurations.configureEach {
+  if (name.endsWith("CompileClasspath") || name.endsWith("RuntimeClasspath")) {
+    resolutionStrategy.activateDependencyLocking()
+  }
+}
