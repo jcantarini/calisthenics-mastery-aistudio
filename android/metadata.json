@@ -1,0 +1,6 @@
+{
+  "name": "Calisthenics Mastery",
+  "description": "Aplicativo completo de calistenia com programas de treino, cronômetro de intervalos HIIT, metas, gamificação e nutrição.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
