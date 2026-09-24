@@ -373,7 +373,7 @@ private fun AthleteProfileSummaryCard(
           if (user != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
               Text(
-                text = "Modo Convidado",
+                text = if (user is com.example.data.AuthenticatedUser) "Conta verificada pelo Supabase" else "Modo Convidado",
                 color = TextSecondary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium

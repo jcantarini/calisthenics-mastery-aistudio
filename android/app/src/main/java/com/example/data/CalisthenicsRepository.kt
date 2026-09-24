@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.update
 import java.util.UUID
 
 /** A local display name is never a verified cloud identity. */
-data class GuestUser(val displayName: String)
+sealed interface AppIdentity { val displayName: String }
+data class GuestUser(override val displayName: String) : AppIdentity
+data class AuthenticatedUser(val userId: String, override val displayName: String = "Atleta") : AppIdentity
 
 data class CalisthenicsAppState(
-  val currentUser: GuestUser? = null,
+  val currentUser: AppIdentity? = null,
   val isSplashFinished: Boolean = false,
   val isAuthLoading: Boolean = false,
   val authErrorMessage: String? = null,
@@ -39,9 +41,13 @@ class CalisthenicsRepository {
   val state: StateFlow<CalisthenicsAppState> = _state.asStateFlow()
 
   fun initPreferences(context: Context) {
-    // Prototype identities were not authenticated. Never restore them as sessions.
-    context.getSharedPreferences("calisthenics_auth_prefs", Context.MODE_PRIVATE).edit().clear().apply()
-    context.getSharedPreferences("supabase_client_prefs", Context.MODE_PRIVATE).edit().clear().apply()
+    // One-time cleanup targets only the two obsolete plaintext prototype stores.
+    val marker = context.getSharedPreferences("auth_migration_v1", Context.MODE_PRIVATE)
+    if (!marker.getBoolean("legacy_removed", false)) {
+      val first = context.getSharedPreferences("calisthenics_auth_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+      val second = context.getSharedPreferences("supabase_client_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+      if (first && second) marker.edit().putBoolean("legacy_removed", true).commit()
+    }
   }
 
   fun enterGuest(name: String) {
@@ -60,6 +66,17 @@ class CalisthenicsRepository {
     )
   }
 
+  fun authenticated(userId: String) {
+    require(userId.isNotBlank())
+    if ((_state.value.currentUser as? AuthenticatedUser)?.userId != userId) {
+      _state.value = CalisthenicsAppState(currentUser = AuthenticatedUser(userId), isSplashFinished = true)
+    }
+  }
+  fun authScreen(loading: Boolean, message: String?) {
+    _state.value = CalisthenicsAppState(isSplashFinished = _state.value.isSplashFinished,
+      isAuthLoading = loading, authErrorMessage = message)
+  }
+  fun sessionNotice(message: String) { _state.update { it.copy(notice = message) } }
   fun finishSplash() { _state.update { it.copy(isSplashFinished = true) } }
   fun signOut() { _state.value = CalisthenicsAppState(isSplashFinished = true) }
   fun dismissNotice() { _state.update { it.copy(notice = null) } }

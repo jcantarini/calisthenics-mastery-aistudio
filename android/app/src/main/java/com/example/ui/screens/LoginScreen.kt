@@ -31,7 +31,8 @@ fun LoginScreen(
   isLoading: Boolean,
   errorMessage: String?,
   onGoogleSignIn: () -> Unit,
-  onGuestSignIn: (String) -> Unit
+  onGuestSignIn: (String) -> Unit,
+  googleConfigured: Boolean = false
 ) {
   var athleteName by remember { mutableStateOf("") }
 
@@ -198,7 +199,7 @@ fun LoginScreen(
                 GoogleGIcon()
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                  text = "Google indisponível por enquanto",
+                  text = if (googleConfigured) "Entrar com Google" else "Google indisponível por enquanto",
                   color = Color(0xFF1F1F1F),
                   fontWeight = FontWeight.Bold,
                   fontSize = 15.sp
@@ -290,7 +291,7 @@ fun LoginScreen(
 
       // Footer
       Text(
-        text = "Modo local temporário. Sem conta, sincronização, histórico salvo ou recompensas.",
+        text = "Convidado: modo temporário sem conta. Treinos, histórico e recompensas ainda não são sincronizados.",
         color = TextMuted,
         fontSize = 11.sp,
         textAlign = TextAlign.Center

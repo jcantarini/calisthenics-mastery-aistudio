@@ -1,6 +1,6 @@
 # Calisthenics Mastery — roadmap completo
 
-Atualizado em 21/09/2026.
+Atualizado em 22/09/2026.
 
 **Direção escolhida pelo usuário: Android/Kotlin é o aplicativo principal.**
 O código web permanece como referência de comportamento e regressão. O backend
@@ -16,7 +16,12 @@ conduzida pelas etapas A0–A6 abaixo.
 
 A1 passou em build debug, 13 testes Android e lint (0 erros). As mudanças estão na
 [PR #3](https://github.com/jcantarini/calisthenics-mastery-aistudio/pull/3), ainda sem merge
-ou sincronização comprovada com o AI Studio. A2 é o próximo sprint.
+ou sincronização comprovada com o AI Studio. A2 foi implementado na
+[PR #4](https://github.com/jcantarini/calisthenics-mastery-aistudio/pull/4), ainda em
+rascunho e baseado na PR #3. As correções da revisão `a5b83ff` passaram no CI:
+build debug, testes unitários/Compose, lint e os dois testes instrumentados no
+emulador. O CI web também passou com 370 testes. Login Google real e sincronização
+do AI Studio permanecem pendentes; A2 ainda não está aprovado e A3 não está liberado.
 
 A0 preserva a exportação do AI Studio em `android/`, na branch
 `android/native-baseline-a0`, com inventário e hashes. Essa baseline tem bloqueadores
@@ -24,46 +29,48 @@ de autenticação, integridade, paridade e build; não é uma versão de lançam
 
 - [Auditoria Android e decisão](https://github.com/jcantarini/calisthenics-mastery-aistudio/blob/android/native-baseline-a0/docs/architecture/android-native-audit.md)
 - [Validação A1](https://github.com/jcantarini/calisthenics-mastery-aistudio/blob/android/a1-containment/docs/architecture/android-a1-validation.md)
-- [Prompt completo do próximo sprint A2](https://github.com/jcantarini/calisthenics-mastery-aistudio/blob/android/a1-containment/docs/android-a2-prompt.md)
+- [Implementação e gate A2](./architecture/android-a2-auth.md)
+- [Próxima continuação: A2-C1](./android-a2-c1-prompt.md)
 - [Fonte Android preservada](https://github.com/jcantarini/calisthenics-mastery-aistudio/tree/android/native-baseline-a0/android)
 
 ## Roadmap
 
-| Fase / sprint    | Entrega                                           | Estado atualizado                                                              |
-| ---------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Base / fases 1–2 | Estrutura, catálogo, tema e navegação             | Web preservada; UI Compose existente, sem paridade integral validada           |
-| Fase 3           | UX mobile, onboarding e acessibilidade            | Web existente; port e homologação Android em A3/A6                             |
-| Fase 4           | Avaliação, primeiro treino e plano personalizado  | Web existente; equivalentes nativos incompletos, A3                            |
-| Fase 5           | Dashboard, perfil e progresso                     | A1 removeu dados fictícios; paridade e persistência pendentes A3/8.3           |
-| Fase 6           | XP, níveis e conquistas                           | Web validada anteriormente; regras Android divergentes, A4                     |
-| Fase 7           | Metas e recuperação de recompensas                | Web validada anteriormente; Android sem garantias equivalentes, A4             |
-| 8.0A             | Auditoria inicial de Progress History             | Concluída e preservada                                                         |
-| 8.0B-A + C1/C2   | Proposta arquitetural                             | Concluída e validada                                                           |
-| 8.0B-B           | ADR 0005 e contratos                              | Ratificados; invariantes continuam normativos para o cliente móvel             |
-| 8.1A1            | Schema central e segurança                        | Validado anteriormente e restaurado; sem nova aplicação a banco compartilhado  |
-| 8.1A2            | Fatos auxiliares e snapshots                      | Validado anteriormente e restaurado                                            |
-| 8.1A3 + C1       | Schema da outbox e privilégios                    | Validado anteriormente e restaurado                                            |
-| M1               | Recuperação e portabilidade web                   | Concluída na PR #1; referência técnica preservada                              |
-| M2               | Homologação do ambiente                           | Não aprovada; escopo móvel distribuído entre A1, A2 e A6                       |
-| A0               | Decisão Android, baseline e auditoria inicial     | Decisão confirmada; fonte preservada em branch própria; 14 achados registrados |
-| A1               | Build reproduzível e contenção do protótipo       | Validado: build debug, 13 testes, lint sem erros; PR #3 pronta para revisão    |
-| A2               | Autenticação e sessão reais                       | Próximo sprint: Google/Supabase, refresh, logout, isolamento e retorno ao app  |
-| A3               | Paridade de onboarding, perfil e plano            | Planejado; portar regras com casos de equivalência                             |
-| A4               | Paridade de gamificação e metas                   | Planejado; preservar donos de domínio, curva e idempotência                    |
-| 8.1B1            | Normalização canônica e fingerprints              | Não implementado; próximo sprint do backend após estabilizar a base nativa     |
-| 8.1B2            | Ingestão transacional idempotente                 | Pendente B1; histórico, filhos, fatos e dispatch atômicos                      |
-| 8.1B3            | Voids e correções append-only                     | Planejado; integridade e replay das cadeias                                    |
-| 8.1C             | Operação da outbox                                | Planejado; claim, leases, retry, replay e retenção                             |
-| 8.1D             | Fronteira autenticada acessível ao Android        | Planejado; contrato HTTP, identidade verificada e RPC restrita no servidor     |
-| A5 / 8.2         | Coordinator e fontes de conclusão Android         | Pendente backend; plano/timer/primeiro treino, confirmação e retries duráveis  |
-| 8.3              | Leituras canônicas e UI nativa de histórico       | Planejado; relatórios, keyset pagination e estados vazios honestos             |
-| 8.4              | Isolamento local e retirada do legado             | Planejado; sem importar fixtures nem reconstruir histórico do plano            |
-| 8.5              | Captura detalhada da execução                     | Planejado; séries, substituições, desempenho e ciclo de vida Android           |
-| Fase 9           | Experiência nutricional                           | UI nativa parcial; persistência e paridade ainda pendentes                     |
-| Fase 9B          | Food facts, ingestão calórica e CalorieCam        | Futuro; separado dos fatos auxiliares da fase 8                                |
-| Fase 10          | Segurança, privacidade, performance e recuperação | Planejado; inclui hardening Goals/XP e particularidades móveis                 |
-| A6               | Homologação e distribuição Android                | Pendente; dispositivo, offline, processo encerrado, assinatura e release       |
-| Release          | Publicação e operação                             | Bloqueado pelos gates de plataforma e domínio; nenhum APK homologado           |
+| Fase / sprint    | Entrega                                           | Estado atualizado                                                                    |
+| ---------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Base / fases 1–2 | Estrutura, catálogo, tema e navegação             | Web preservada; UI Compose existente, sem paridade integral validada                 |
+| Fase 3           | UX mobile, onboarding e acessibilidade            | Web existente; port e homologação Android em A3/A6                                   |
+| Fase 4           | Avaliação, primeiro treino e plano personalizado  | Web existente; equivalentes nativos incompletos, A3                                  |
+| Fase 5           | Dashboard, perfil e progresso                     | A1 removeu dados fictícios; paridade e persistência pendentes A3/8.3                 |
+| Fase 6           | XP, níveis e conquistas                           | Web validada anteriormente; regras Android divergentes, A4                           |
+| Fase 7           | Metas e recuperação de recompensas                | Web validada anteriormente; Android sem garantias equivalentes, A4                   |
+| 8.0A             | Auditoria inicial de Progress History             | Concluída e preservada                                                               |
+| 8.0B-A + C1/C2   | Proposta arquitetural                             | Concluída e validada                                                                 |
+| 8.0B-B           | ADR 0005 e contratos                              | Ratificados; invariantes continuam normativos para o cliente móvel                   |
+| 8.1A1            | Schema central e segurança                        | Validado anteriormente e restaurado; sem nova aplicação a banco compartilhado        |
+| 8.1A2            | Fatos auxiliares e snapshots                      | Validado anteriormente e restaurado                                                  |
+| 8.1A3 + C1       | Schema da outbox e privilégios                    | Validado anteriormente e restaurado                                                  |
+| M1               | Recuperação e portabilidade web                   | Concluída na PR #1; referência técnica preservada                                    |
+| M2               | Homologação do ambiente                           | Não aprovada; escopo móvel distribuído entre A1, A2 e A6                             |
+| A0               | Decisão Android, baseline e auditoria inicial     | Decisão confirmada; fonte preservada em branch própria; 14 achados registrados       |
+| A1               | Build reproduzível e contenção do protótipo       | Validado: build debug, 13 testes, lint sem erros; PR #3 pronta para revisão          |
+| A2               | Autenticação e sessão reais                       | Implementado em PR #4 draft; gates automatizados passaram; homologação real pendente |
+| A2-C1            | Validação final e homologação de autenticação     | Próxima etapa; verificar provedor, login real e sincronização AI Studio              |
+| A3               | Paridade de onboarding, perfil e plano            | Bloqueado pela aprovação de A2/A2-C1; casos de equivalência planejados               |
+| A4               | Paridade de gamificação e metas                   | Planejado; preservar donos de domínio, curva e idempotência                          |
+| 8.1B1            | Normalização canônica e fingerprints              | Não implementado; próximo sprint do backend após estabilizar a base nativa           |
+| 8.1B2            | Ingestão transacional idempotente                 | Pendente B1; histórico, filhos, fatos e dispatch atômicos                            |
+| 8.1B3            | Voids e correções append-only                     | Planejado; integridade e replay das cadeias                                          |
+| 8.1C             | Operação da outbox                                | Planejado; claim, leases, retry, replay e retenção                                   |
+| 8.1D             | Fronteira autenticada acessível ao Android        | Planejado; contrato HTTP, identidade verificada e RPC restrita no servidor           |
+| A5 / 8.2         | Coordinator e fontes de conclusão Android         | Pendente backend; plano/timer/primeiro treino, confirmação e retries duráveis        |
+| 8.3              | Leituras canônicas e UI nativa de histórico       | Planejado; relatórios, keyset pagination e estados vazios honestos                   |
+| 8.4              | Isolamento local e retirada do legado             | Planejado; sem importar fixtures nem reconstruir histórico do plano                  |
+| 8.5              | Captura detalhada da execução                     | Planejado; séries, substituições, desempenho e ciclo de vida Android                 |
+| Fase 9           | Experiência nutricional                           | UI nativa parcial; persistência e paridade ainda pendentes                           |
+| Fase 9B          | Food facts, ingestão calórica e CalorieCam        | Futuro; separado dos fatos auxiliares da fase 8                                      |
+| Fase 10          | Segurança, privacidade, performance e recuperação | Planejado; inclui hardening Goals/XP e particularidades móveis                       |
+| A6               | Homologação e distribuição Android                | Pendente; dispositivo, offline, processo encerrado, assinatura e release             |
+| Release          | Publicação e operação                             | Bloqueado pelos gates de plataforma e domínio; nenhum APK homologado                 |
 
 ## Regras preservadas
 
@@ -96,16 +103,31 @@ São 13 testes Android sem falhas ou skips e 370 testes web. Lint passou com 49 
 Android e 13 avisos web, sem erros. As 21 migrations e dependências web foram preservadas;
 SQL não foi reexecutado nesta etapa, mantendo a evidência anterior da baseline intacta.
 
-Login real, testes instrumentados em dispositivo/emulador, comportamento em background,
-assinatura de release e sincronização do editor AI Studio ainda não foram homologados.
+Em A2, a revisão corrigida `a5b83ffeff0a55d8854dded398569211582689a7` passou em
+[Android CI](https://github.com/jcantarini/calisthenics-mastery-aistudio/actions/runs/35752315322)
+e [web CI](https://github.com/jcantarini/calisthenics-mastery-aistudio/actions/runs/35752315172).
+O Android validou assembleDebug, testes unitários/Compose, lint e dois testes no
+emulador API 35. O web validou 370 testes, typecheck, lint (0 erros/13 avisos), build
+e smoke test. O merge sintético de CI `cbf881f` e o commit publicado têm a mesma
+árvore Git `0396c800f426c0e46e8909ee25e8513bd57fe27d`.
+
+Os relatórios Android foram publicados pelo CI. O download local do ZIP recebeu
+403; por isso, não se declara uma contagem de testes unitários/skips ou avisos de
+lint Android que não foi extraída dos relatórios. Os respectivos jobs passaram.
+Login Google real, comportamento completo em background, assinatura de release e
+sincronização do editor AI Studio ainda não foram homologados.
 O conector Supabase anteriormente negou acesso ao projeto configurado. Não houve
-publicação, mudança de provedor nem escrita em dados de usuários.
+publicação de APK, mudança de provedor nem escrita em dados de usuários.
 
 ## Próxima execução
 
-Executar **A2 — Android Verified Authentication & Session Isolation** a partir da
-revisão A1 validada, seguindo o prompt vinculado acima. Validar Google/Supabase,
-refresh, logout e troca de conta sem habilitar histórico/recompensas antes do backend.
-A auditoria A0 não significa que todos os 14 achados já foram encerrados: paridade,
-ingestão e homologação continuam distribuídas em A2–A6 e 8.1B1–8.1D. Os schemas
-concluídos não serão reiniciados. APK debug compilado não significa release homologado.
+Concluir **A2-C1 — Authentication Validation & Provider Homologation**, seguindo o
+[prompt de continuação](./android-a2-c1-prompt.md). Os gates automatizados do código
+publicado passaram. Falta homologar login real, refresh, logout e troca de conta
+no build assinado do AI Studio/dispositivo e comparar o export com a fonte revisada.
+O conector GitHub voltou a funcionar; o conector Supabase ainda nega acesso ao
+projeto. Não liberar A3 nem marcar A2 aprovado enquanto esses gates faltarem.
+
+A auditoria A0 não encerra os 14 achados: paridade, ingestão e homologação continuam
+distribuídas em A2–A6 e 8.1B1–8.1D. Os schemas concluídos não serão reiniciados.
+Nenhum APK foi publicado e nenhuma migration foi aplicada a banco compartilhado.

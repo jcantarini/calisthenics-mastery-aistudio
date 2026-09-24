@@ -1,6 +1,5 @@
 package com.example
 
-import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,10 +10,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
+import com.example.data.AuthenticatedUser
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,6 +48,8 @@ fun CalisthenicsMasteryApp(
   val timerState by viewModel.timerState.collectAsState()
   val supabaseStatus by viewModel.supabaseStatus.collectAsState()
   val nutrition = viewModel.calculateNutrition()
+  val activity = LocalActivity.current
+  LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onForeground() }
 
   // 1. Splash Screen Phase
   if (!appState.isSplashFinished) {
@@ -60,7 +64,8 @@ fun CalisthenicsMasteryApp(
     LoginScreen(
       isLoading = appState.isAuthLoading,
       errorMessage = appState.authErrorMessage,
-      onGoogleSignIn = { viewModel.signInWithGoogle() },
+      onGoogleSignIn = { activity?.let(viewModel::signInWithGoogle) },
+      googleConfigured = viewModel.googleConfigured,
       onGuestSignIn = { athleteName ->
         viewModel.signInAsGuest(athleteName)
       }
@@ -71,7 +76,7 @@ fun CalisthenicsMasteryApp(
   appState.notice?.let { message ->
     AlertDialog(
       onDismissRequest = { viewModel.dismissNotice() },
-      title = { Text("Não foi salvo") }, text = { Text(message) },
+      title = { Text("Aviso") }, text = { Text(message) },
       confirmButton = { TextButton(onClick = { viewModel.dismissNotice() }) { Text("Entendi") } }
     )
   }
@@ -94,7 +99,7 @@ fun CalisthenicsMasteryApp(
       .fillMaxSize()
       .background(ObsidianBg),
     topBar = {
-      Text("Convidado • dados temporários • sem sincronização ou recompensas",
+      Text(if (appState.currentUser is AuthenticatedUser) "Conta verificada • dados de treino temporários • sem sincronização ou recompensas" else "Convidado • dados temporários • sem sincronização ou recompensas",
         modifier = Modifier.fillMaxWidth().background(ObsidianSurface).statusBarsPadding().padding(12.dp),
         color = TextSecondary, style = MaterialTheme.typography.labelSmall)
     },
