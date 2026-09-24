@@ -56,6 +56,10 @@ fun DietProfileScreen(
       )
     }
 
+    item {
+      Text(if (state.profileConfigured) "Perfil e hidratação temporários, apenas neste dispositivo." else
+        "Valores de exemplo. Edite o perfil antes de usar as estimativas. Dados não são salvos.", color = TextSecondary)
+    }
     // Screen Title
     item {
       Row(
@@ -368,21 +372,9 @@ private fun AthleteProfileSummaryCard(
           Text(text = "Ficha do Atleta", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
           if (user != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-              if (!user.isGuest) {
-                Box(
-                  modifier = Modifier
-                    .size(14.dp)
-                    .clip(CircleShape)
-                    .background(Color.White),
-                  contentAlignment = Alignment.Center
-                ) {
-                  Text("G", color = Color(0xFF4285F4), fontSize = 10.sp, fontWeight = FontWeight.Black)
-                }
-                Spacer(modifier = Modifier.width(5.dp))
-              }
               Text(
-                text = if (user.isGuest) "Modo Convidado" else user.email,
-                color = if (user.isGuest) TextSecondary else Color(0xFF58A6FF),
+                text = "Modo Convidado",
+                color = TextSecondary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium
               )
@@ -589,136 +581,12 @@ private fun EditProfileDialog(
 }
 
 @Composable
-fun SupabaseCloudCard(
-  status: SupabaseCloudStatus,
-  onSync: () -> Unit
-) {
-  Card(
-    shape = RoundedCornerShape(18.dp),
-    colors = CardDefaults.cardColors(containerColor = ObsidianSurface),
-    border = androidx.compose.foundation.BorderStroke(1.dp, ElectricLime.copy(alpha = 0.35f)),
-    modifier = Modifier.fillMaxWidth()
-  ) {
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(16.dp)
-    ) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          Box(
-            modifier = Modifier
-              .size(36.dp)
-              .clip(CircleShape)
-              .background(Color(0xFF3ECF8E).copy(alpha = 0.15f))
-              .border(1.dp, Color(0xFF3ECF8E), CircleShape),
-            contentAlignment = Alignment.Center
-          ) {
-            Icon(
-              imageVector = Icons.Default.CloudDone,
-              contentDescription = "Supabase Cloud",
-              tint = Color(0xFF3ECF8E),
-              modifier = Modifier.size(20.dp)
-            )
-          }
-
-          Spacer(modifier = Modifier.width(10.dp))
-
-          Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-              Text(
-                text = "Supabase Conectado",
-                color = TextPrimary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-              )
-              Spacer(modifier = Modifier.width(6.dp))
-              Box(
-                modifier = Modifier
-                  .clip(RoundedCornerShape(4.dp))
-                  .background(Color(0xFF3ECF8E).copy(alpha = 0.2f))
-                  .padding(horizontal = 6.dp, vertical = 2.dp)
-              ) {
-                Text(
-                  text = "ONLINE",
-                  color = Color(0xFF3ECF8E),
-                  fontWeight = FontWeight.Black,
-                  fontSize = 9.sp
-                )
-              }
-            }
-            Text(
-              text = "Base do Lovable (26 tabelas ativas)",
-              color = TextSecondary,
-              fontSize = 12.sp
-            )
-          }
-        }
-
-        Button(
-          onClick = onSync,
-          enabled = !status.isSyncing,
-          colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF3ECF8E).copy(alpha = 0.18f),
-            contentColor = Color(0xFF3ECF8E)
-          ),
-          shape = RoundedCornerShape(10.dp),
-          contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-        ) {
-          if (status.isSyncing) {
-            CircularProgressIndicator(
-              modifier = Modifier.size(14.dp),
-              color = Color(0xFF3ECF8E),
-              strokeWidth = 2.dp
-            )
-          } else {
-            Icon(
-              imageVector = Icons.Default.Sync,
-              contentDescription = "Sincronizar",
-              modifier = Modifier.size(14.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-              text = "Sincronizar",
-              fontSize = 11.sp,
-              fontWeight = FontWeight.Bold
-            )
-          }
-        }
-      }
-
-      Spacer(modifier = Modifier.height(10.dp))
-
-      Box(
-        modifier = Modifier
-          .fillMaxWidth()
-          .clip(RoundedCornerShape(8.dp))
-          .background(ObsidianSurfaceElevated)
-          .padding(horizontal = 10.dp, vertical = 7.dp)
-      ) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically
-        ) {
-          Text(
-            text = status.lastSyncMessage ?: "Sincronizado com o Lovable",
-            color = TextMuted,
-            fontSize = 11.sp,
-            maxLines = 1
-          )
-          Text(
-            text = "togglhjhpkccrvxejhup",
-            color = TextMuted,
-            fontSize = 10.sp
-          )
-        }
-      }
+fun SupabaseCloudCard(status: SupabaseCloudStatus, onSync: () -> Unit) {
+  Card(colors = CardDefaults.cardColors(containerColor = ObsidianSurface), modifier = Modifier.fillMaxWidth()) {
+    Column(Modifier.padding(16.dp)) {
+      Text("Sincronização indisponível", color = TextPrimary, fontWeight = FontWeight.Bold)
+      Text(status.lastSyncMessage, color = TextSecondary)
+      TextButton(onClick = onSync) { Text("Verificar disponibilidade") }
     }
   }
 }
-

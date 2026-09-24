@@ -1,22 +1,38 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Android — A1 containment baseline
 
-# Run and deploy your AI Studio app
+Android/Kotlin is the primary client. This is an explicitly local, temporary guest
+prototype, not a release or a verified cloud client. Google sign-in, synchronization,
+canonical history and rewards are unavailable until their roadmap gates pass.
 
-This contains everything you need to run your app locally.
+## Reproduce validation
 
-View your app in AI Studio: https://ai.studio/apps/ea998e0a-d223-40de-bb08-b94120125e34
+Use JDK 21 (required by Robolectric with SDK 36), Android SDK platform 36.1, build-tools 36.0.0 and platform-tools.
+Set ANDROID_HOME to your SDK installation or supply an untracked local.properties.
+From this directory run:
 
-## Run Locally
+```sh
+./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+```
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+On Windows use gradlew.bat. Gradle 9.3.1 and AGP 9.1.1 remain the exported versions.
+The official wrapper JAR and distribution checksums are verified by Android CI.
+No Firebase configuration, cloud keys or .env file are needed for A1. Never embed
+service-role credentials in an APK. Debug signing uses the Android-generated local
+keystore; AI Studio can explicitly set AI_STUDIO_DEBUG_KEYSTORE to its debug key.
+Release signing and distribution are outside this stage.
 
+## Data and lifecycle
 
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
-7. If you have already published your app in AI Studio, please [request upload key reset](https://support.google.com/googleplay/android-developer/answer/9842756#zippy=%2Crequest-an-upload-key-reset) in Google Play Console.
+Every guest entry starts clean. Logout resets profile, goals, hydration, program,
+workout and timer state. Process recreation starts signed out. Old prototype
+identity/token preferences are cleared rather than accepted as authentication.
+Hydration and goal edits are temporary local drafts, never canonical cloud facts.
+Backup excludes preferences and automatic app backup is disabled.
+
+## Source synchronization
+
+The A0 source manifest records the original AI Studio export and must not be
+rewritten to describe A1. GitHub changes do not automatically prove that AI Studio
+uses the same revision. Import/synchronize the reviewed A1 revision explicitly,
+then compare its export and validate on a device before claiming AI Studio parity.
+See ../docs/ROADMAP.md and ../docs/architecture/android-a1-validation.md.

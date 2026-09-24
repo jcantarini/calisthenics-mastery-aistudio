@@ -327,7 +327,7 @@ private fun WorkoutFinishedDialog(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-          text = "TREINO CONCLUÍDO!",
+          text = "SESSÃO ENCERRADA",
           color = TextPrimary,
           fontSize = 22.sp,
           fontWeight = FontWeight.Black
@@ -347,8 +347,8 @@ private fun WorkoutFinishedDialog(
           horizontalArrangement = Arrangement.SpaceAround
         ) {
           Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = "+120", color = WarningGold, fontSize = 24.sp, fontWeight = FontWeight.Black)
-            Text(text = "XP Ganho", color = TextSecondary, fontSize = 12.sp)
+            Text(text = "—", color = WarningGold, fontSize = 24.sp, fontWeight = FontWeight.Black)
+            Text(text = "Sem recompensa", color = TextSecondary, fontSize = 12.sp)
           }
           Column(horizontalAlignment = Alignment.CenterHorizontally) {
             val mins = session.elapsedSeconds / 60
@@ -356,12 +356,12 @@ private fun WorkoutFinishedDialog(
             Text(text = "Duração", color = TextSecondary, fontSize = 12.sp)
           }
           Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            val kcal = (session.elapsedSeconds * 0.15f).toInt().coerceAtLeast(80)
-            Text(text = "$kcal", color = EmberOrange, fontSize = 24.sp, fontWeight = FontWeight.Black)
-            Text(text = "Kcal Queimadas", color = TextSecondary, fontSize = 12.sp)
+            Text(text = "—", color = EmberOrange, fontSize = 24.sp, fontWeight = FontWeight.Black)
+            Text(text = "Não calculadas", color = TextSecondary, fontSize = 12.sp)
           }
         }
 
+        Text("Esta sessão não foi salva. Histórico e recompensas indisponíveis.", color = TextSecondary)
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(

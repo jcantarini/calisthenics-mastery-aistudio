@@ -39,8 +39,6 @@ class MainActivity : ComponentActivity() {
 fun CalisthenicsMasteryApp(
   viewModel: CalisthenicsViewModel = viewModel()
 ) {
-  val context = LocalContext.current
-  val activity = context as? Activity
 
   val appState by viewModel.appState.collectAsState()
   val selectedTab by viewModel.selectedTab.collectAsState()
@@ -62,19 +60,20 @@ fun CalisthenicsMasteryApp(
     LoginScreen(
       isLoading = appState.isAuthLoading,
       errorMessage = appState.authErrorMessage,
-      onGoogleSignIn = {
-        activity?.let { act ->
-          viewModel.signInWithGoogle(act) {}
-        }
-      },
-      onSelectGoogleAccount = { name, email ->
-        viewModel.signInWithGoogleAccount(name, email)
-      },
+      onGoogleSignIn = { viewModel.signInWithGoogle() },
       onGuestSignIn = { athleteName ->
         viewModel.signInAsGuest(athleteName)
       }
     )
     return
+  }
+
+  appState.notice?.let { message ->
+    AlertDialog(
+      onDismissRequest = { viewModel.dismissNotice() },
+      title = { Text("Não foi salvo") }, text = { Text(message) },
+      confirmButton = { TextButton(onClick = { viewModel.dismissNotice() }) { Text("Entendi") } }
+    )
   }
 
   // 3. Active Interactive Workout Player (Fullscreen)
@@ -94,6 +93,11 @@ fun CalisthenicsMasteryApp(
     modifier = Modifier
       .fillMaxSize()
       .background(ObsidianBg),
+    topBar = {
+      Text("Convidado • dados temporários • sem sincronização ou recompensas",
+        modifier = Modifier.fillMaxWidth().background(ObsidianSurface).statusBarsPadding().padding(12.dp),
+        color = TextSecondary, style = MaterialTheme.typography.labelSmall)
+    },
     bottomBar = {
       NavigationBar(
         containerColor = ObsidianSurface,

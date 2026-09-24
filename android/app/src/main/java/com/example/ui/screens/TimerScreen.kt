@@ -81,7 +81,7 @@ fun TimerScreen(
           fontWeight = FontWeight.Black
         )
         Text(
-          text = "Intervalos de calistenia, tabata e militar",
+          text = "Timer local • sessão não salva • sem recompensas",
           color = TextSecondary,
           fontSize = 13.sp
         )

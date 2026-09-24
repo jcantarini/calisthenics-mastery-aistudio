@@ -1,30 +1,19 @@
 package com.example.ui.viewmodel
 
-import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.Log
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.R
-import com.example.data.AuthUser
 import com.example.data.CalisthenicsAppState
 import com.example.data.CalisthenicsData
 import com.example.data.CalisthenicsRepository
 import com.example.data.SupabaseCloudStatus
 import com.example.data.SupabaseManager
 import com.example.model.*
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.firebase.FirebaseApp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,35 +79,8 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
   private var workoutTimerJob: Job? = null
 
   init {
-    // 1. Initialize persistent auth session from SharedPreferences
+    // Clear obsolete prototype identities; A1 never restores a session.
     repository.initPreferences(getApplication())
-
-    // 2. Initialize Supabase Client & trigger background cloud sync
-    SupabaseManager.getInstance().init(getApplication())
-    viewModelScope.launch {
-      SupabaseManager.getInstance().syncCloudData()
-    }
-
-    // 3. Check if Firebase is available and has an active user
-    try {
-      if (FirebaseApp.getApps(getApplication()).isNotEmpty()) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null && repository.state.value.currentUser == null) {
-          repository.setAuthUser(
-            AuthUser(
-              uid = currentUser.uid,
-              displayName = currentUser.displayName ?: "Julio Cantarini",
-              email = currentUser.email ?: "jcantarini@gmail.com",
-              photoUrl = currentUser.photoUrl?.toString(),
-              isGuest = false,
-              provider = "google.com"
-            )
-          )
-        }
-      }
-    } catch (e: Exception) {
-      Log.w("CalisthenicsVM", "Firebase auth check note: ${e.message}")
-    }
 
     // Set default timer configuration from default preset
     val initialPreset = CalisthenicsData.TIMER_PRESETS.find { it.key == "hiit" }
@@ -142,160 +104,31 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
     repository.finishSplash()
   }
 
-  /**
-   * Completes Google Sign-In with given Google account details,
-   * setting the Google provider identity and updating athlete profile.
-   */
-  fun signInWithGoogleAccount(name: String, email: String, photoUrl: String? = null) {
-    viewModelScope.launch {
-      repository.setAuthLoading(true)
-      repository.setAuthError(null)
-      delay(400) // smooth authentic transition
-
-      val googleUser = AuthUser(
-        uid = "google_${email.hashCode()}_${System.currentTimeMillis()}",
-        displayName = name.ifBlank { "Julio Cantarini" },
-        email = email.ifBlank { "jcantarini@gmail.com" },
-        photoUrl = photoUrl,
-        isGuest = false,
-        provider = "google.com"
-      )
-      repository.setAuthUser(googleUser)
-      repository.setAuthLoading(false)
-    }
-  }
-
-  /**
-   * Attempts system CredentialManager or triggers Google Account Chooser
-   */
-  fun signInWithGoogle(activity: Activity, onShowChooser: () -> Unit) {
-    viewModelScope.launch {
-      repository.setAuthLoading(true)
-      repository.setAuthError(null)
-      try {
-        val serverClientId = try {
-          activity.getString(R.string.default_web_client_id)
-        } catch (_: Exception) {
-          "YOUR_WEB_CLIENT_ID"
-        }
-
-        // In emulator or when default placeholder is present, smoothly open the Google Account Chooser
-        if (serverClientId == "YOUR_WEB_CLIENT_ID" || serverClientId.isBlank()) {
-          repository.setAuthLoading(false)
-          onShowChooser()
-          return@launch
-        }
-
-        val credentialManager = CredentialManager.create(activity)
-        val googleIdOption = GetGoogleIdOption.Builder()
-          .setFilterByAuthorizedAccounts(false)
-          .setServerClientId(serverClientId)
-          .setAutoSelectEnabled(false)
-          .build()
-
-        val request = GetCredentialRequest.Builder()
-          .addCredentialOption(googleIdOption)
-          .build()
-
-        val result = credentialManager.getCredential(activity, request)
-        val credential = result.credential
-        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-        val idToken = googleIdTokenCredential.idToken
-
-        if (FirebaseApp.getApps(activity).isNotEmpty()) {
-          val authCredential = GoogleAuthProvider.getCredential(idToken, null)
-          FirebaseAuth.getInstance().signInWithCredential(authCredential)
-            .addOnSuccessListener { authResult ->
-              val user = authResult.user
-              repository.setAuthUser(
-                AuthUser(
-                  uid = user?.uid ?: googleIdTokenCredential.id,
-                  displayName = user?.displayName ?: googleIdTokenCredential.displayName ?: "Julio Cantarini",
-                  email = user?.email ?: googleIdTokenCredential.id,
-                  photoUrl = user?.photoUrl?.toString() ?: googleIdTokenCredential.profilePictureUri?.toString(),
-                  isGuest = false,
-                  provider = "google.com"
-                )
-              )
-            }
-            .addOnFailureListener {
-              signInWithGoogleAccount(
-                googleIdTokenCredential.displayName ?: "Julio Cantarini",
-                googleIdTokenCredential.id,
-                googleIdTokenCredential.profilePictureUri?.toString()
-              )
-            }
-        } else {
-          signInWithGoogleAccount(
-            googleIdTokenCredential.displayName ?: "Julio Cantarini",
-            googleIdTokenCredential.id,
-            googleIdTokenCredential.profilePictureUri?.toString()
-          )
-        }
-      } catch (e: Exception) {
-        Log.i("CalisthenicsVM", "Opening Google account chooser on emulator: ${e.message}")
-        repository.setAuthLoading(false)
-        onShowChooser()
-      }
-    }
-  }
+  fun signInWithGoogle() { repository.requestGoogleSignIn() }
 
   fun signInAsGuest(athleteName: String) {
-    val name = if (athleteName.isNotBlank()) athleteName else "Atleta"
-    repository.setAuthUser(
-      AuthUser(
-        uid = "guest_${System.currentTimeMillis()}",
-        displayName = name,
-        email = "atleta@calisthenics.local",
-        isGuest = true,
-        provider = "guest"
-      )
-    )
+    clearLocalExecution()
+    repository.enterGuest(athleteName)
+  }
+
+  private fun clearLocalExecution() {
+    workoutTimerJob?.cancel()
+    restCountdownJob?.cancel()
+    timerJob?.cancel()
+    _activeWorkout.value = null
+    selectTimerPreset("hiit")
+    _selectedTab.value = AppNavTab.DASHBOARD
+    SupabaseManager.getInstance().clearSession()
   }
 
   fun signOut() {
-    try {
-      if (FirebaseApp.getApps(getApplication()).isNotEmpty()) {
-        FirebaseAuth.getInstance().signOut()
-      }
-    } catch (_: Exception) {}
-    SupabaseManager.getInstance().clearSession()
+    clearLocalExecution()
     repository.signOut()
   }
 
+  fun dismissNotice() { repository.dismissNotice() }
   fun syncWithSupabase() {
-    viewModelScope.launch {
-      SupabaseManager.getInstance().syncCloudData()
-    }
-  }
-
-  fun sendSupabaseOtp(email: String, onResult: (Boolean, String) -> Unit) {
-    viewModelScope.launch {
-      val res = SupabaseManager.getInstance().sendOtp(email)
-      res.onSuccess { msg -> onResult(true, msg) }
-        .onFailure { err -> onResult(false, err.message ?: "Erro ao enviar código") }
-    }
-  }
-
-  fun verifySupabaseOtp(email: String, code: String, onResult: (Boolean, String) -> Unit) {
-    viewModelScope.launch {
-      val res = SupabaseManager.getInstance().verifyOtp(email, code)
-      res.onSuccess { (uid, _) ->
-        repository.setAuthUser(
-          AuthUser(
-            uid = uid,
-            displayName = email.substringBefore("@"),
-            email = email,
-            isGuest = false,
-            provider = "supabase"
-          )
-        )
-        syncWithSupabase()
-        onResult(true, "Autenticado com sucesso via Supabase!")
-      }.onFailure { err ->
-        onResult(false, err.message ?: "Código inválido ou expirado")
-      }
-    }
+    viewModelScope.launch { SupabaseManager.getInstance().syncCloudData() }
   }
 
   fun selectTab(tab: AppNavTab) {
@@ -329,12 +162,7 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
     repository.addNewGoal(title, target, unit, category, deadline, xpReward)
   }
 
-  fun addWater(ml: Int) {
-    repository.addWater(ml)
-    viewModelScope.launch {
-      SupabaseManager.getInstance().logHydrationToCloud(ml)
-    }
-  }
+  fun addWater(ml: Int) { repository.addWater(ml) }
 
   fun resetWater() {
     repository.resetWater()
@@ -402,6 +230,7 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
 
   fun completeCurrentSet() {
     val current = _activeWorkout.value ?: return
+    if (current.isFinished || current.isResting) return
     val exercise = current.program.exercises.getOrNull(current.currentExerciseIndex) ?: return
 
     val totalSetsForExercise = exercise.sets.takeWhile { it.isDigit() }.toIntOrNull() ?: 3
@@ -470,30 +299,9 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
 
   fun finishActiveWorkout() {
     val current = _activeWorkout.value ?: return
-    val program = current.program
-    val durationSec = current.elapsedSeconds.coerceAtLeast(60)
-    val estimatedKcal = (durationSec / 60) * 8
-
-    repository.completeWorkout(
-      programTitle = program.title,
-      durationSec = durationSec,
-      estimatedKcal = estimatedKcal,
-      xpEarned = 150
-    )
-
-    // Sync workout session with Supabase cloud database
-    viewModelScope.launch {
-      SupabaseManager.getInstance().logWorkoutSessionToCloud(
-        programTitle = program.title,
-        durationSec = durationSec,
-        kcal = estimatedKcal,
-        source = "programa"
-      )
-    }
-
     workoutTimerJob?.cancel()
     restCountdownJob?.cancel()
-    _activeWorkout.value = null
+    _activeWorkout.value = current.copy(isFinished = true, isResting = false)
   }
 
   fun closeWorkoutSession() {
@@ -557,6 +365,7 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
         val newElapsed = current.totalElapsedSec + 1
 
         if (newRemaining <= 0) {
+          _timerState.value = current.copy(totalElapsedSec = newElapsed)
           transitionToNextPhase()
         } else {
           _timerState.value = current.copy(
@@ -602,13 +411,7 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
             isRunning = false
           )
           timerJob?.cancel()
-          val kcal = (current.totalElapsedSec / 60) * 10
-          repository.logTimerSession(
-            label = "HIIT Intervalado",
-            durationSec = current.totalElapsedSec,
-            estimatedKcal = kcal,
-            xpEarned = 80
-          )
+
         }
       }
       TimerPhase.REST -> {

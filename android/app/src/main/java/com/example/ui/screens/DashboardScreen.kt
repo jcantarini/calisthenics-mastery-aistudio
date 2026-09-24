@@ -250,7 +250,7 @@ private fun DashboardHeroBanner(
 private fun WeeklyConsistencyCard(streakDays: Int) {
   val days = listOf("Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom")
   // Let's mark days active up to streak
-  val activeIndex = (streakDays - 1).coerceIn(0, 6)
+  val activeIndex = -1 // Calendar history is unavailable until canonical reads.
 
   Card(
     shape = RoundedCornerShape(20.dp),
@@ -271,7 +271,7 @@ private fun WeeklyConsistencyCard(streakDays: Int) {
           fontWeight = FontWeight.Bold
         )
         Text(
-          text = "Meta: 4x/sem",
+          text = "Sem histórico salvo",
           color = TextSecondary,
           fontSize = 12.sp
         )
@@ -550,7 +550,7 @@ private fun ActiveGoalsSpotlight(
 
       Spacer(modifier = Modifier.height(8.dp))
 
-      val progress = (topGoal.current.toFloat() / topGoal.target.toFloat()).coerceIn(0f, 1f)
+      val progress = (topGoal.current.toFloat() / topGoal.target.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
       LinearProgressIndicator(
         progress = { progress },
         color = ElectricLime,
