@@ -135,6 +135,35 @@ Web baseline checksums remain:
 
 **A2 IMPLEMENTED — AUTOMATED CHECKS PASSED — LIVE HOMOLOGATION BLOCKED**
 
+## AI Studio synchronization inspection — 26 September 2026
+
+GitHub PR #4 remains draft/unmerged at `bf00310db8ed3be1f80c0d8d1f508932e8700e0d`.
+The user reported synchronization; independent inspection of the supplied app
+`ea998e0a-d223-40de-bb08-b94120125e34` does not establish A2 source parity:
+
+- File search for `SessionController` returned `No matching results`.
+- Opening `app/src/main/java/com/example/MainActivity.kt` from the file tree showed
+  `import android.app.Activity`, `LocalContext.current` and `context as? Activity`.
+  The reviewed A2 source instead imports `LocalActivity` and includes the
+  authenticated lifecycle integration missing from the visible imports.
+- The export menu labels the GitHub operation `Push to GitHub / Sync to a
+repository`. No inbound branch synchronization was demonstrated.
+
+This is a confirmed source mismatch, not proof of the exact old commit or of every
+file in the editor. Export download attempts did not return a usable archive, so
+no full-export hash comparison or new build/runtime result is claimed. No source
+was changed in AI Studio, no prompt submitted to Gemini, and no outbound push,
+merge, provider change, database change or APK publication was performed.
+
+A deterministic source ZIP was prepared from the 63 tracked files under `android/`
+at `bf00310`, with the `android/` prefix removed. Every packaged byte was checked
+against Git. The [manifest](../android-a2-sync-manifest.json) records paths and
+SHA-256 values; the [corrective prompt](../android-a2-sync-prompt.md) defines the
+import and independent verification. This verifies the handoff package only, not
+the AI Studio source or runtime. Application inputs remain unchanged; automated
+build/tests were not rerun during this documentation/package step. Live provider
+verification, real Google sign-in and device lifecycle scenarios remain pending.
+
 ## References
 
 - https://supabase.com/docs/guides/auth/social-login/auth-google

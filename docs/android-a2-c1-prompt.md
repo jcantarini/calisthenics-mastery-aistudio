@@ -6,6 +6,14 @@ rebase onto web-only main automatically. Read `AGENTS.md`, `android/AGENTS.md`,
 `docs/ROADMAP.md`, `docs/architecture/android-a2-auth.md` and the normative ADR 0005
 contracts first. This is a corrective/acceptance step, not permission to start A3.
 
+## Synchronization blocker found on 26 September 2026
+
+The supplied AI Studio editor still differs from A2: file search did not find
+SessionController and MainActivity retains the old LocalContext/Activity cast.
+Apply [the source synchronization correction](./android-a2-sync-prompt.md) before
+provider/device homologation. The prepared input ZIP is verified against Git;
+the AI Studio export itself is not yet verified. Do not mark A2 approved.
+
 ## 1. Recover and identify the exact source
 
 - Inspect the branch, PR and local follow-up commit before changing anything.

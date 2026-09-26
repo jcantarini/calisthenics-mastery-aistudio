@@ -1,6 +1,6 @@
 # Calisthenics Mastery — roadmap completo
 
-Atualizado em 22/09/2026.
+Atualizado em 26/09/2026.
 
 **Direção escolhida pelo usuário: Android/Kotlin é o aplicativo principal.**
 O código web permanece como referência de comportamento e regressão. O backend
@@ -20,8 +20,9 @@ ou sincronização comprovada com o AI Studio. A2 foi implementado na
 [PR #4](https://github.com/jcantarini/calisthenics-mastery-aistudio/pull/4), ainda em
 rascunho e baseado na PR #3. As correções da revisão `a5b83ff` passaram no CI:
 build debug, testes unitários/Compose, lint e os dois testes instrumentados no
-emulador. O CI web também passou com 370 testes. Login Google real e sincronização
-do AI Studio permanecem pendentes; A2 ainda não está aprovado e A3 não está liberado.
+emulador. O CI web também passou com 370 testes. Login Google real permanece pendente. A inspeção do editor em 26/09 confirmou
+divergência em MainActivity e não encontrou SessionController na busca de arquivos.
+A sincronização do A2 não passou; A2 ainda não está aprovado e A3 não está liberado.
 
 A0 preserva a exportação do AI Studio em `android/`, na branch
 `android/native-baseline-a0`, com inventário e hashes. Essa baseline tem bloqueadores
@@ -54,7 +55,7 @@ de autenticação, integridade, paridade e build; não é uma versão de lançam
 | A0               | Decisão Android, baseline e auditoria inicial     | Decisão confirmada; fonte preservada em branch própria; 14 achados registrados       |
 | A1               | Build reproduzível e contenção do protótipo       | Validado: build debug, 13 testes, lint sem erros; PR #3 pronta para revisão          |
 | A2               | Autenticação e sessão reais                       | Implementado em PR #4 draft; gates automatizados passaram; homologação real pendente |
-| A2-C1            | Validação final e homologação de autenticação     | Próxima etapa; verificar provedor, login real e sincronização AI Studio              |
+| A2-C1            | Validação final e homologação de autenticação     | Em andamento; divergência AI Studio confirmada, corrigir importação antes do login   |
 | A3               | Paridade de onboarding, perfil e plano            | Bloqueado pela aprovação de A2/A2-C1; casos de equivalência planejados               |
 | A4               | Paridade de gamificação e metas                   | Planejado; preservar donos de domínio, curva e idempotência                          |
 | 8.1B1            | Normalização canônica e fingerprints              | Não implementado; próximo sprint do backend após estabilizar a base nativa           |
@@ -121,7 +122,13 @@ publicação de APK, mudança de provedor nem escrita em dados de usuários.
 
 ## Próxima execução
 
-Concluir **A2-C1 — Authentication Validation & Provider Homologation**, seguindo o
+Primeiro corrigir a fonte do editor com o
+[prompt de sincronização](./android-a2-sync-prompt.md) e comparar os 63 arquivos do
+[manifesto A2](./android-a2-sync-manifest.json). O pacote de entrada reproduz
+`android/` de `bf00310`; o export do AI Studio ainda não foi comparado integralmente.
+Não confundir o botão observado **Push to GitHub** com importação da branch.
+
+Depois concluir **A2-C1 — Authentication Validation & Provider Homologation**, seguindo o
 [prompt de continuação](./android-a2-c1-prompt.md). Os gates automatizados do código
 publicado passaram. Falta homologar login real, refresh, logout e troca de conta
 no build assinado do AI Studio/dispositivo e comparar o export com a fonte revisada.
