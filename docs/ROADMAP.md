@@ -1,6 +1,6 @@
 # Calisthenics Mastery — roadmap completo
 
-Atualizado em 26/09/2026.
+Atualizado em 27/09/2026.
 
 **Direção escolhida pelo usuário: Android/Kotlin é o aplicativo principal.**
 O código web permanece como referência de comportamento e regressão. O backend
@@ -20,9 +20,12 @@ ou sincronização comprovada com o AI Studio. A2 foi implementado na
 [PR #4](https://github.com/jcantarini/calisthenics-mastery-aistudio/pull/4), ainda em
 rascunho e baseado na PR #3. As correções da revisão `a5b83ff` passaram no CI:
 build debug, testes unitários/Compose, lint e os dois testes instrumentados no
-emulador. O CI web também passou com 370 testes. Login Google real permanece pendente. A inspeção do editor em 26/09 confirmou
-divergência em MainActivity e não encontrou SessionController na busca de arquivos.
-A sincronização do A2 não passou; A2 ainda não está aprovado e A3 não está liberado.
+emulador. O CI web também passou com 370 testes. Login Google real permanece pendente. O export `untitled.zip` recebido em 27/09
+confirmou os 63 arquivos A2 na raiz, sem divergências. Os XMLs registram 36 testes,
+sem falhas, erros ou skips; o relatório de lint registra 59 avisos e nenhum erro.
+A cópia interna de 394 arquivos é A1 e não é incluída pelo settings.gradle.kts da
+raiz. A paridade da fonte exportada está aprovada; o APK instalado, o provedor e
+os cenários reais de sessão ainda precisam de homologação. A3 continua bloqueado.
 
 A0 preserva a exportação do AI Studio em `android/`, na branch
 `android/native-baseline-a0`, com inventário e hashes. Essa baseline tem bloqueadores
@@ -55,7 +58,7 @@ de autenticação, integridade, paridade e build; não é uma versão de lançam
 | A0               | Decisão Android, baseline e auditoria inicial     | Decisão confirmada; fonte preservada em branch própria; 14 achados registrados       |
 | A1               | Build reproduzível e contenção do protótipo       | Validado: build debug, 13 testes, lint sem erros; PR #3 pronta para revisão          |
 | A2               | Autenticação e sessão reais                       | Implementado em PR #4 draft; gates automatizados passaram; homologação real pendente |
-| A2-C1            | Validação final e homologação de autenticação     | Em andamento; divergência AI Studio confirmada, corrigir importação antes do login   |
+| A2-C1            | Validação final e homologação de autenticação     | Fonte exportada A2 confirmada; homologação do APK, provedor e login real pendente    |
 | A3               | Paridade de onboarding, perfil e plano            | Bloqueado pela aprovação de A2/A2-C1; casos de equivalência planejados               |
 | A4               | Paridade de gamificação e metas                   | Planejado; preservar donos de domínio, curva e idempotência                          |
 | 8.1B1            | Normalização canônica e fingerprints              | Não implementado; próximo sprint do backend após estabilizar a base nativa           |
@@ -122,18 +125,20 @@ publicação de APK, mudança de provedor nem escrita em dados de usuários.
 
 ## Próxima execução
 
-Primeiro corrigir a fonte do editor com o
-[prompt de sincronização](./android-a2-sync-prompt.md) e comparar os 63 arquivos do
-[manifesto A2](./android-a2-sync-manifest.json). O pacote de entrada reproduz
-`android/` de `bf00310`; o export do AI Studio ainda não foi comparado integralmente.
-Não confundir o botão observado **Push to GitHub** com importação da branch.
+Continuar **A2-C1 — homologação do provedor e do aplicativo real**, conforme o
+[prompt atualizado](./android-a2-c1-prompt.md). A importação não deve ser repetida:
+a fonte na raiz do export já corresponde aos 63 arquivos do
+[manifesto A2](./android-a2-sync-manifest.json). A cópia A1 interna explica os ZIPs
+anteriores, mas não precisa ser removida como condição para testar autenticação.
 
-Depois concluir **A2-C1 — Authentication Validation & Provider Homologation**, seguindo o
-[prompt de continuação](./android-a2-c1-prompt.md). Os gates automatizados do código
-publicado passaram. Falta homologar login real, refresh, logout e troca de conta
-no build assinado do AI Studio/dispositivo e comparar o export com a fonte revisada.
-O conector GitHub voltou a funcionar; o conector Supabase ainda nega acesso ao
-projeto. Não liberar A3 nem marcar A2 aprovado enquanto esses gates faltarem.
+Os relatórios entregues foram inspecionados, sem reexecutar build/testes nesta
+verificação. O export não contém APK nem log bruto do build: o hash do APK e a
+impressão da assinatura em build-info.md são declarados pelo ambiente, ainda não
+verificados independentemente. Confirmar pacote, assinatura e configuração pública
+do build efetivamente instalado antes de testar login, refresh, logout e troca de
+conta. Não liberar A3 nem marcar A2 aprovado antes desses cenários. O acesso ao
+provedor foi negado na última tentativa anterior; não houve nova consulta nesta
+validação de arquivo.
 
 A auditoria A0 não encerra os 14 achados: paridade, ingestão e homologação continuam
 distribuídas em A2–A6 e 8.1B1–8.1D. Os schemas concluídos não serão reiniciados.

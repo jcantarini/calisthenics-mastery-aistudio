@@ -6,13 +6,26 @@ rebase onto web-only main automatically. Read `AGENTS.md`, `android/AGENTS.md`,
 `docs/ROADMAP.md`, `docs/architecture/android-a2-auth.md` and the normative ADR 0005
 contracts first. This is a corrective/acceptance step, not permission to start A3.
 
-## Synchronization blocker found on 26 September 2026
+## Source synchronization gate closed on 27 September 2026
 
-The supplied AI Studio editor still differs from A2: file search did not find
-SessionController and MainActivity retains the old LocalContext/Activity cast.
-Apply [the source synchronization correction](./android-a2-sync-prompt.md) before
-provider/device homologation. The prepared input ZIP is verified against Git;
-the AI Studio export itself is not yet verified. Do not mark A2 approved.
+Independent inspection of the actual AI Studio export `untitled.zip` confirmed
+all 63 A2 manifest files at its root, with zero differences or omissions. The
+embedded source ZIP also matches all 63 files. Do not repeat the import or restore
+A1. An internal `calisthenics-mastery-aistudio-main/` directory contains the old
+394-file A1 snapshot; root settings include only `:app`. Keep it out of source
+selection. Ten additional launcher WebP resources are platform additions.
+
+Delivered XMLs report 36 tests, zero failures/errors/skips, and the lint report
+contains 59 warnings and no errors. This was artifact inspection, not a new test
+execution. CredentialManagerMisuse warns about missing explicit NoCredentialException
+handling; SessionController catches provider failures without authenticating. Test
+that real no-credential path during live acceptance; do not suppress the warning or
+update dependencies simply to reduce the count.
+
+The export contains build-info.md but neither an APK nor the raw build log. Its
+APK hash/signing fingerprint and installed-preview identity have not been independently
+verified. Continue provider/configuration and real-device acceptance below, preserving
+all existing source. Do not present compiled-source parity as successful live login.
 
 ## 1. Recover and identify the exact source
 
@@ -75,9 +88,9 @@ before that external change. No database migration is needed for this sprint.
 
 ## 4. Homologate the actual signed Android app
 
-Synchronize/import the reviewed GitHub revision into AI Studio. Compare a fresh
-source export, accounting explicitly for platform-generated files. A commit in
-GitHub does not establish which revision AI Studio is running.
+Source import/export parity has passed for the received artifact. Verify the
+actual installed build corresponds to that source, accounting for public build
+configuration, signing and platform resources. Recompare source only if it changes.
 
 On the actual signed build, verify and record evidence for:
 
