@@ -6,7 +6,17 @@ rebase onto web-only main automatically. Read `AGENTS.md`, `android/AGENTS.md`,
 `docs/ROADMAP.md`, `docs/architecture/android-a2-auth.md` and the normative ADR 0005
 contracts first. This is a corrective/acceptance step, not permission to start A3.
 
-## Source synchronization gate closed on 27 September 2026
+## Current continuation — 28 September 2026
+
+Read [the current device acceptance record](./architecture/android-a2-device-homologation.md)
+and [the A2-C3 source manifest](./android-a2-c3-sync-manifest.json) first. They supersede
+the historical source counts and untested-login statements below. Do not restore
+the earlier 63-file source over the reviewed A2-C3 fixes. Real Google login,
+account isolation, offline logout and restart with verified remote refresh have
+passed owner testing. Scheduled renewal remains distinct and pending. This
+synchronization must pass current CI before acceptance; keep PR #4 draft and A3 blocked.
+
+## Historical source synchronization gate closed on 27 September 2026
 
 Independent inspection of the actual AI Studio export `untitled.zip` confirmed
 all 63 A2 manifest files at its root, with zero differences or omissions. The

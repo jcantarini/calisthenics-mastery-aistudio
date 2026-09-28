@@ -125,7 +125,7 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
           }
           else -> {
             clearLocalExecution()
-            repository.authScreen(state.phase == AuthPhase.LOADING, state.message)
+            repository.authScreen(state.phase == AuthPhase.LOADING, state.message, state.diagnostic)
           }
         }
       }
@@ -139,7 +139,7 @@ class CalisthenicsViewModel(application: Application) : AndroidViewModel(applica
 
   fun signInWithGoogle(activity: Activity) {
     clearLocalExecution()
-    repository.authScreen(true, null)
+    repository.authScreen(true, null, null)
     auth.signIn { hash -> google.obtain(activity, hash) }
   }
   fun onForeground() { auth.refreshIfNeeded() }

@@ -217,3 +217,11 @@ provider verification, login/refresh/logout/account switching and error scenario
 - https://github.com/supabase-community/supabase-kt/tree/3.2.2
 - https://developer.android.com/identity/sign-in/credential-manager-siwg-implementation
 - https://developer.android.com/privacy-and-security/keystore
+
+## Current follow-up — 28 September 2026
+
+The [device acceptance and source synchronization record](./android-a2-device-homologation.md)
+supersedes the older live-login and export blockers above. It records the reviewed
+AI Studio fixes, delivered 73-test evidence, owner device results and reported
+backend refresh/verification at 16:49:21 UTC. The current synchronization still
+requires CI confirmation and scheduled-renewal evidence; A3 remains blocked.

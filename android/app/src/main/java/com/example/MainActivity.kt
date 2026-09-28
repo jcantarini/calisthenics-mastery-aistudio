@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import com.example.data.AuthenticatedUser
@@ -66,6 +67,7 @@ fun CalisthenicsMasteryApp(
       errorMessage = appState.authErrorMessage,
       onGoogleSignIn = { activity?.let(viewModel::signInWithGoogle) },
       googleConfigured = viewModel.googleConfigured,
+      authDiagnostic = appState.authDiagnostic,
       onGuestSignIn = { athleteName ->
         viewModel.signInAsGuest(athleteName)
       }
@@ -220,18 +222,20 @@ fun CalisthenicsMasteryApp(
             viewModel.addNewGoal(title, target, unit, category, deadline, xp)
           }
         )
-        AppNavTab.PERFIL -> DietProfileScreen(
-          state = appState,
-          nutrition = nutrition,
-          supabaseStatus = supabaseStatus,
-          onSyncSupabase = { viewModel.syncWithSupabase() },
-          onAddWater = { ml -> viewModel.addWater(ml) },
-          onResetWater = { viewModel.resetWater() },
-          onUpdateProfile = { name, w, h, b, a, s ->
-            viewModel.updateProfile(name, w, h, b, a, s)
-          },
-          onSignOut = { viewModel.signOut() }
-        )
+        AppNavTab.PERFIL -> key(appState.currentUser) {
+          DietProfileScreen(
+            state = appState,
+            nutrition = nutrition,
+            supabaseStatus = supabaseStatus,
+            onSyncSupabase = { viewModel.syncWithSupabase() },
+            onAddWater = { ml -> viewModel.addWater(ml) },
+            onResetWater = { viewModel.resetWater() },
+            onUpdateProfile = { name, w, h, b, a, s ->
+              viewModel.updateProfile(name, w, h, b, a, s)
+            },
+            onSignOut = { viewModel.signOut() }
+          )
+        }
       }
     }
   }

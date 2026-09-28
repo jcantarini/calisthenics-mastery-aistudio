@@ -11,8 +11,10 @@ import java.security.SecureRandom
 
 /** SDK performs token exchange/refresh. This coordinator owns app state and stale-result fencing. */
 class SessionController(
-  private val gateway: AuthGateway?, private val vault: SessionVault,
-  private val scope: CoroutineScope, private val nowSeconds: () -> Long = { System.currentTimeMillis() / 1000 },
+  private val gateway: AuthGateway?,
+  private val vault: SessionVault,
+  private val scope: CoroutineScope,
+  private val nowSeconds: () -> Long = { System.currentTimeMillis() / 1000 },
   private val clearProvider: suspend () -> Unit = {}
 ) {
   private val lock = Any()
@@ -29,25 +31,36 @@ class SessionController(
     mutable.value = AuthState(AuthPhase.LOADING)
     generation
   }
+
   private fun current(ticket: Long) = synchronized(lock) { ticket == generation }
+
   private fun erase(): Boolean = try { vault.clear(); true } catch (_: Exception) { false }
-  private fun fail(ticket: Long, message: String) = synchronized(lock) {
+
+  private fun fail(ticket: Long, message: String, diagnostic: AuthDiagnostic? = null) = synchronized(lock) {
     if (ticket == generation) {
       session = null; renewal?.cancel(); erase()
-      mutable.value = AuthState(AuthPhase.ERROR, message = message)
+      mutable.value = AuthState(AuthPhase.ERROR, message = message, diagnostic = diagnostic)
     }
   }
+
   private fun accept(ticket: Long, next: AuthSession): Boolean = synchronized(lock) {
     if (ticket != generation) return@synchronized false
     require(next.user.id.isNotBlank() && next.refreshToken.isNotBlank() && next.accessToken.isNotBlank())
     require(next.expiresAtSeconds > nowSeconds())
     // Synchronous atomic persistence and generation check prevent logout/write races.
-    vault.write(next.refreshToken)
+    try {
+      vault.write(next.refreshToken)
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Exception) {
+      throw AuthDiagnosticException(AuthStage.PERSISTENCIA_SESSAO, e)
+    }
     session = next
     mutable.value = AuthState(AuthPhase.AUTHENTICATED, next.user)
     schedule(ticket, next)
     true
   }
+
   private suspend fun deliver(ticket: Long, next: AuthSession) {
     try {
       if (accept(ticket, next)) return
@@ -57,6 +70,7 @@ class SessionController(
     }
     revokeDiscarded(next)
   }
+
   private suspend fun revokeDiscarded(next: AuthSession) {
     // A late server response must not leave a newly created remote session unhandled.
     try { withTimeout(20_000) { gateway?.signOut(next.accessToken) } }
@@ -64,6 +78,7 @@ class SessionController(
     catch (e: CancellationException) { throw e }
     catch (_: Exception) { /* Remote expiry/revocation cannot be guaranteed offline. */ }
   }
+
   private fun schedule(ticket: Long, next: AuthSession) {
     renewal?.cancel()
     renewal = scope.launch {
@@ -90,7 +105,14 @@ class SessionController(
         }
       } catch (_: TimeoutCancellationException) { fail(ticket, "A restauração demorou demais. Entre novamente.") }
       catch (e: CancellationException) { throw e }
-      catch (_: Exception) { fail(ticket, "Não foi possível restaurar a sessão. Entre novamente com conexão disponível.") }
+      catch (e: AuthDiagnosticException) {
+        val diag = AuthDiagnostics.sanitize(e.stage, e.cause)
+        fail(ticket, "Não foi possível restaurar a sessão. Entre novamente com conexão disponível.", diag)
+      }
+      catch (e: Exception) {
+        val diag = AuthDiagnostics.sanitize(AuthStage.TROCA_ID_TOKEN_SUPABASE, e)
+        fail(ticket, "Não foi possível restaurar a sessão. Entre novamente com conexão disponível.", diag)
+      }
     }
   }
 
@@ -98,22 +120,43 @@ class SessionController(
     val ticket = begin()
     synchronized(lock) {
       if (!current(ticket)) return
-      if (!erase()) { fail(ticket, "Não foi possível limpar a sessão local."); return }
+      if (!erase()) {
+        val diag = AuthDiagnostics.sanitize(
+          AuthStage.PERSISTENCIA_SESSAO,
+          IllegalStateException("disk failure")
+        )
+        fail(ticket, "Não foi possível limpar a sessão local.", diag)
+        return
+      }
     }
-    if (gateway == null) { fail(ticket, "Login Google indisponível: configuração pública incompleta."); return }
+    if (gateway == null) {
+      val diag = AuthDiagnostics.sanitize(
+        AuthStage.TROCA_ID_TOKEN_SUPABASE,
+        AuthRejected()
+      )
+      fail(ticket, "Login Google indisponível: configuração pública incompleta.", diag)
+      return
+    }
     scope.launch {
       try {
         val nonce = ByteArray(32).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
         val hash = MessageDigest.getInstance("SHA-256").digest(nonce.toByteArray()).joinToString("") { "%02x".format(it) }
         val token = credential(hash)
-        if (token.isBlank()) throw AuthRejected()
+        if (token.isBlank()) throw AuthDiagnosticException(AuthStage.EXTRACAO_ID_TOKEN, AuthRejected())
         network.withLock {
           if (current(ticket)) deliver(ticket, withTimeout(20_000) { gateway.signIn(token, nonce) })
         }
       } catch (_: LoginCancelled) { fail(ticket, "Login cancelado. Nenhuma conta foi conectada.") }
       catch (_: TimeoutCancellationException) { fail(ticket, "A verificação demorou demais. Tente novamente.") }
       catch (e: CancellationException) { fail(ticket, "Login interrompido. Tente novamente."); throw e }
-      catch (_: Exception) { fail(ticket, "Não foi possível verificar a conta. Confira sua conexão e tente novamente.") }
+      catch (e: AuthDiagnosticException) {
+        val diag = AuthDiagnostics.sanitize(e.stage, e.cause)
+        fail(ticket, "Não foi possível verificar a conta. Confira sua conexão e tente novamente.", diag)
+      }
+      catch (e: Exception) {
+        val diag = AuthDiagnostics.sanitize(AuthStage.OBTENCAO_CREDENCIAL_GOOGLE, e)
+        fail(ticket, "Não foi possível verificar a conta. Confira sua conexão e tente novamente.", diag)
+      }
     }
   }
 
@@ -127,18 +170,26 @@ class SessionController(
           val next = withTimeout(20_000) { requireNotNull(gateway).refresh(old.refreshToken) }
           if (next.user.id != old.user.id) {
             revokeDiscarded(next)
-            throw AuthRejected()
+            throw AuthDiagnosticException(AuthStage.VERIFICACAO_REMOTA_USUARIO, AuthRejected())
           }
           deliver(ticket, next)
         }
       } catch (_: TimeoutCancellationException) { fail(ticket, "A renovação demorou demais. Entre novamente.") }
       catch (e: CancellationException) { throw e }
-      catch (_: Exception) { fail(ticket, "Sessão expirada ou conexão indisponível. Entre novamente.") }
+      catch (e: AuthDiagnosticException) {
+        val diag = AuthDiagnostics.sanitize(e.stage, e.cause)
+        fail(ticket, "Sessão expirada ou conexão indisponível. Entre novamente.", diag)
+      }
+      catch (e: Exception) {
+        val diag = AuthDiagnostics.sanitize(AuthStage.TROCA_ID_TOKEN_SUPABASE, e)
+        fail(ticket, "Sessão expirada ou conexão indisponível. Entre novamente.", diag)
+      }
     }
   }
 
   fun enterGuest() { leave(AuthPhase.GUEST) }
   fun signOut() { leave(AuthPhase.SIGNED_OUT) }
+
   private fun leave(phase: AuthPhase) {
     val (ticket, old) = synchronized(lock) {
       val old = session; generation++; renewal?.cancel(); session = null

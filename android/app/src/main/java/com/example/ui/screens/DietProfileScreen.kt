@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,101 +40,157 @@ fun DietProfileScreen(
   onUpdateProfile: (String, Float, Int, Int, ActivityLevel, Sex) -> Unit,
   onSignOut: () -> Unit
 ) {
-  var showEditProfileDialog by remember { mutableStateOf(false) }
+  // Key dialog state on identity to dismiss and invalidate edit dialog when identity changes
+  var showEditProfileDialog by remember(state.currentUser) { mutableStateOf(false) }
 
-  LazyColumn(
-    modifier = Modifier
-      .fillMaxSize()
-      .background(ObsidianBg),
-    contentPadding = PaddingValues(16.dp),
-    verticalArrangement = Arrangement.spacedBy(18.dp)
-  ) {
-    // Supabase Cloud Integration Card
-    item {
-      SupabaseCloudCard(
-        status = supabaseStatus,
-        onSync = onSyncSupabase
-      )
-    }
+  key(state.currentUser) {
+    LazyColumn(
+      modifier = Modifier
+        .fillMaxSize()
+        .background(ObsidianBg)
+        .testTag("diet_profile_list"),
+      contentPadding = PaddingValues(16.dp),
+      verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
+      // Supabase Cloud Integration Card
+      item {
+        SupabaseCloudCard(
+          status = supabaseStatus,
+          onSync = onSyncSupabase
+        )
+      }
 
-    item {
-      Text(if (state.profileConfigured) "Perfil e hidratação temporários, apenas neste dispositivo." else
-        "Valores de exemplo. Edite o perfil antes de usar as estimativas. Dados não são salvos.", color = TextSecondary)
-    }
-    // Screen Title
-    item {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Column {
-          Text(
-            text = "Nutrição & Atleta",
-            color = TextPrimary,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Black
-          )
-          Text(
-            text = "Combustível para performance e recuperação muscular",
-            color = TextSecondary,
-            fontSize = 13.sp
-          )
+      // Clear In-Memory Profile Notice
+      item {
+        if (state.profileConfigured) {
+          Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = ObsidianSurfaceElevated),
+            border = androidx.compose.foundation.BorderStroke(1.dp, ElectricLime.copy(alpha = 0.35f)),
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+              Icon(imageVector = Icons.Default.Info, contentDescription = null, tint = ElectricLime, modifier = Modifier.size(20.dp))
+              Spacer(modifier = Modifier.width(10.dp))
+              Column {
+                Text(
+                  text = "Perfil temporário em memória",
+                  color = TextPrimary,
+                  fontWeight = FontWeight.Bold,
+                  fontSize = 13.sp
+                )
+                Text(
+                  text = "Alterações aplicadas apenas nesta sessão local. Não há sincronização com a nuvem e os dados são descartados ao sair.",
+                  color = TextSecondary,
+                  fontSize = 11.sp
+                )
+              }
+            }
+          }
+        } else {
+          Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = ObsidianSurfaceElevated),
+            border = androidx.compose.foundation.BorderStroke(1.dp, ObsidianBorder),
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+              Icon(imageVector = Icons.Default.Info, contentDescription = null, tint = TextMuted, modifier = Modifier.size(20.dp))
+              Spacer(modifier = Modifier.width(10.dp))
+              Column {
+                Text(
+                  text = "Valores padrão de exemplo",
+                  color = TextPrimary,
+                  fontWeight = FontWeight.Bold,
+                  fontSize = 13.sp
+                )
+                Text(
+                  text = "Nenhum perfil foi configurado nesta sessão. As estimativas de calorias, macronutrientes e água usam valores genéricos de exemplo (72 kg, 175 cm).",
+                  color = TextSecondary,
+                  fontSize = 11.sp
+                )
+              }
+            }
+          }
         }
+      }
 
-        IconButton(
-          onClick = { showEditProfileDialog = true },
-          modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(ObsidianSurface)
-            .border(1.dp, ObsidianBorder, CircleShape)
+      // Screen Title
+      item {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
         ) {
-          Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Perfil", tint = TextSecondary, modifier = Modifier.size(18.dp))
+          Column {
+            Text(
+              text = "Nutrição & Atleta",
+              color = TextPrimary,
+              fontSize = 24.sp,
+              fontWeight = FontWeight.Black
+            )
+            Text(
+              text = "Combustível para performance e recuperação muscular",
+              color = TextSecondary,
+              fontSize = 13.sp
+            )
+          }
+
+          IconButton(
+            onClick = { showEditProfileDialog = true },
+            modifier = Modifier
+              .size(40.dp)
+              .clip(CircleShape)
+              .background(ObsidianSurface)
+              .border(1.dp, ObsidianBorder, CircleShape)
+              .testTag("edit_profile_button_header")
+          ) {
+            Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Perfil", tint = TextSecondary, modifier = Modifier.size(18.dp))
+          }
         }
       }
-    }
 
-    // Hydration Tracker Card
-    item {
-      HydrationCard(
-        consumedMl = state.waterConsumedMl,
-        targetMl = state.waterTargetMl,
-        onAdd = onAddWater,
-        onReset = onResetWater
-      )
-    }
-
-    // Caloric & Macronutrient Needs for Calisthenics
-    item {
-      NutritionCard(nutrition = nutrition, weightKg = state.profile.weightKg)
-    }
-
-    // Athlete Bio & Physical Stats
-    item {
-      AthleteProfileSummaryCard(
-        state = state,
-        onEdit = { showEditProfileDialog = true },
-        onSignOut = onSignOut
-      )
-    }
-
-    // Achievements Showcase
-    item {
-      AchievementsList(state = state)
-    }
-  }
-
-  // Edit Profile Dialog
-  if (showEditProfileDialog) {
-    EditProfileDialog(
-      state = state,
-      onDismiss = { showEditProfileDialog = false },
-      onSave = { name, weight, height, birthYear, activity, sex ->
-        onUpdateProfile(name, weight, height, birthYear, activity, sex)
-        showEditProfileDialog = false
+      // Hydration Tracker Card
+      item {
+        HydrationCard(
+          consumedMl = state.waterConsumedMl,
+          targetMl = state.waterTargetMl,
+          onAdd = onAddWater,
+          onReset = onResetWater
+        )
       }
-    )
+
+      // Caloric & Macronutrient Needs for Calisthenics
+      item {
+        NutritionCard(nutrition = nutrition, isConfigured = state.profileConfigured)
+      }
+
+      // Athlete Bio & Physical Stats
+      item {
+        AthleteProfileSummaryCard(
+          state = state,
+          onEdit = { showEditProfileDialog = true },
+          onSignOut = onSignOut
+        )
+      }
+
+      // Achievements Showcase
+      item {
+        AchievementsList(state = state)
+      }
+    }
+
+    // Edit Profile Dialog
+    if (showEditProfileDialog) {
+      EditProfileDialog(
+        state = state,
+        onDismiss = { showEditProfileDialog = false },
+        onSave = { name, weight, height, birthYear, activity, sex ->
+          onUpdateProfile(name, weight, height, birthYear, activity, sex)
+          showEditProfileDialog = false
+        }
+      )
+    }
   }
 }
 
@@ -238,7 +295,7 @@ private fun HydrationCard(
 @Composable
 private fun NutritionCard(
   nutrition: NutritionRecommendation,
-  weightKg: Float
+  isConfigured: Boolean
 ) {
   Card(
     shape = RoundedCornerShape(20.dp),
@@ -254,7 +311,11 @@ private fun NutritionCard(
       ) {
         Column {
           Text(text = "Metas de Macronutrientes", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-          Text(text = "Otimizado para força peso corporal", color = TextSecondary, fontSize = 11.sp)
+          Text(
+            text = if (isConfigured) "Otimizado para força e peso corporal" else "Estimativa padrão de exemplo (72 kg, 175 cm)",
+            color = if (isConfigured) TextSecondary else WarningGold,
+            fontSize = 11.sp
+          )
         }
 
         Box(
@@ -313,7 +374,10 @@ private fun NutritionCard(
           .padding(12.dp)
       ) {
         Text(
-          text = "💡 Dica de Calistenia: Mantenha ingestão adequada de proteína distribuída em 4 refeições diárias e consuma carboidratos complexos 90 minutos antes do treino na barra para evitar fadiga no core.",
+          text = if (isConfigured)
+            "💡 Dica de Calistenia: Mantenha ingestão adequada de proteína distribuída em 4 refeições diárias e consuma carboidratos complexos 90 minutos antes do treino na barra."
+          else
+            "💡 Exemplo de Demonstração: Os macronutrientes acima são calculados com base no perfil padrão (72 kg, 175 cm). Configure seu perfil para estimativas desta sessão.",
           color = TextSecondary,
           fontSize = 12.sp,
           lineHeight = 16.sp
@@ -355,6 +419,7 @@ private fun AthleteProfileSummaryCard(
 ) {
   val profile = state.profile
   val user = state.currentUser
+  val isConfigured = state.profileConfigured
 
   Card(
     shape = RoundedCornerShape(20.dp),
@@ -380,11 +445,33 @@ private fun AthleteProfileSummaryCard(
               )
             }
           }
+          Text(
+            text = if (isConfigured) "Perfil local preenchido" else "Valores de exemplo (não preenchido)",
+            color = if (isConfigured) ElectricLime else TextMuted,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold
+          )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-          Text(text = "Editar", color = ElectricLime, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onEdit() })
+          Text(
+            text = "Editar",
+            color = ElectricLime,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+              .clickable { onEdit() }
+              .testTag("edit_profile_button")
+          )
           Spacer(modifier = Modifier.width(16.dp))
-          Text(text = "Sair", color = ErrorRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onSignOut() })
+          Text(
+            text = "Sair",
+            color = ErrorRed,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+              .clickable { onSignOut() }
+              .testTag("sign_out_button")
+          )
         }
       }
 
@@ -395,18 +482,42 @@ private fun AthleteProfileSummaryCard(
         horizontalArrangement = Arrangement.SpaceAround
       ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-          Text(text = "${profile.weightKg} kg", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-          Text(text = "Peso", color = TextMuted, fontSize = 12.sp)
+          Text(
+            text = "${profile.weightKg} kg",
+            color = TextPrimary,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            modifier = Modifier.testTag("athlete_weight_stat")
+          )
+          Text(
+            text = if (isConfigured) "Peso" else "Peso (exemplo)",
+            color = TextMuted,
+            fontSize = 11.sp
+          )
         }
         Box(modifier = Modifier.width(1.dp).height(30.dp).background(ObsidianBorder))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-          Text(text = "${profile.heightCm} cm", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-          Text(text = "Altura", color = TextMuted, fontSize = 12.sp)
+          Text(
+            text = "${profile.heightCm} cm",
+            color = TextPrimary,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            modifier = Modifier.testTag("athlete_height_stat")
+          )
+          Text(
+            text = if (isConfigured) "Altura" else "Altura (exemplo)",
+            color = TextMuted,
+            fontSize = 11.sp
+          )
         }
         Box(modifier = Modifier.width(1.dp).height(30.dp).background(ObsidianBorder))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
           Text(text = profile.activityLevel.label, color = ElectricLime, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-          Text(text = "Nível", color = TextMuted, fontSize = 12.sp)
+          Text(
+            text = if (isConfigured) "Nível" else "Nível (exemplo)",
+            color = TextMuted,
+            fontSize = 11.sp
+          )
         }
       }
     }
@@ -488,12 +599,29 @@ private fun EditProfileDialog(
   onDismiss: () -> Unit,
   onSave: (String, Float, Int, Int, ActivityLevel, Sex) -> Unit
 ) {
-  var name by remember { mutableStateOf(state.profile.name) }
-  var weightStr by remember { mutableStateOf(state.profile.weightKg.toString()) }
-  var heightStr by remember { mutableStateOf(state.profile.heightCm.toString()) }
-  var birthYearStr by remember { mutableStateOf(state.profile.birthYear.toString()) }
-  var activityLevel by remember { mutableStateOf(state.profile.activityLevel) }
-  var sex by remember { mutableStateOf(state.profile.sex) }
+  val currentProfile = state.profile
+  val currentUser = state.currentUser
+  val isConfigured = state.profileConfigured
+
+  // Strictly bind form state to identity and configuration so identity switches immediately discard stale inputs
+  var name by remember(currentUser, currentProfile) {
+    mutableStateOf(if (isConfigured) currentProfile.name else "")
+  }
+  var weightStr by remember(currentUser, currentProfile) {
+    mutableStateOf(if (isConfigured) currentProfile.weightKg.toString() else "")
+  }
+  var heightStr by remember(currentUser, currentProfile) {
+    mutableStateOf(if (isConfigured) currentProfile.heightCm.toString() else "")
+  }
+  var birthYearStr by remember(currentUser, currentProfile) {
+    mutableStateOf(if (isConfigured) currentProfile.birthYear.toString() else "")
+  }
+  var activityLevel by remember(currentUser, currentProfile) { mutableStateOf(currentProfile.activityLevel) }
+  var sex by remember(currentUser, currentProfile) { mutableStateOf(currentProfile.sex) }
+
+  var weightError by remember(currentUser, currentProfile) { mutableStateOf<String?>(null) }
+  var heightError by remember(currentUser, currentProfile) { mutableStateOf<String?>(null) }
+  var birthYearError by remember(currentUser, currentProfile) { mutableStateOf<String?>(null) }
 
   Dialog(onDismissRequest = onDismiss) {
     Card(
@@ -505,21 +633,28 @@ private fun EditProfileDialog(
         .padding(16.dp)
     ) {
       Column(modifier = Modifier.padding(20.dp)) {
-        Text(text = "Editar Perfil do Atleta", color = TextPrimary, fontWeight = FontWeight.Black, fontSize = 18.sp)
-
-        Spacer(modifier = Modifier.height(14.dp))
+        Text(text = "Editar Perfil (Temporário)", color = TextPrimary, fontWeight = FontWeight.Black, fontSize = 18.sp)
+        Text(
+          text = "Dados mantidos apenas na memória local desta sessão. Não são sincronizados na nuvem nem transferidos entre contas.",
+          color = TextSecondary,
+          fontSize = 11.sp,
+          modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+        )
 
         OutlinedTextField(
           value = name,
           onValueChange = { name = it },
           label = { Text("Nome do Atleta") },
+          placeholder = { Text(if (isConfigured) currentProfile.name else "Nome do Atleta (opcional)") },
           colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = ElectricLime,
             unfocusedBorderColor = ObsidianBorder,
             focusedTextColor = TextPrimary,
             unfocusedTextColor = TextPrimary
           ),
-          modifier = Modifier.fillMaxWidth()
+          modifier = Modifier
+            .fillMaxWidth()
+            .testTag("athlete_name_input")
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -527,29 +662,80 @@ private fun EditProfileDialog(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
           OutlinedTextField(
             value = weightStr,
-            onValueChange = { weightStr = it },
+            onValueChange = {
+              weightStr = it
+              weightError = null
+            },
             label = { Text("Peso (kg)") },
+            placeholder = { Text("Ex: 72.0") },
+            isError = weightError != null,
+            supportingText = weightError?.let { err ->
+              { Text(err, color = ErrorRed, fontSize = 10.sp, modifier = Modifier.testTag("athlete_weight_error")) }
+            },
+            singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
               focusedBorderColor = ElectricLime,
               unfocusedBorderColor = ObsidianBorder,
+              errorBorderColor = ErrorRed,
               focusedTextColor = TextPrimary,
               unfocusedTextColor = TextPrimary
             ),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+              .weight(1f)
+              .testTag("athlete_weight_input")
           )
           OutlinedTextField(
             value = heightStr,
-            onValueChange = { heightStr = it },
+            onValueChange = {
+              heightStr = it
+              heightError = null
+            },
             label = { Text("Altura (cm)") },
+            placeholder = { Text("Ex: 175") },
+            isError = heightError != null,
+            supportingText = heightError?.let { err ->
+              { Text(err, color = ErrorRed, fontSize = 10.sp, modifier = Modifier.testTag("athlete_height_error")) }
+            },
+            singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
               focusedBorderColor = ElectricLime,
               unfocusedBorderColor = ObsidianBorder,
+              errorBorderColor = ErrorRed,
               focusedTextColor = TextPrimary,
               unfocusedTextColor = TextPrimary
             ),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+              .weight(1f)
+              .testTag("athlete_height_input")
           )
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+          value = birthYearStr,
+          onValueChange = {
+            birthYearStr = it
+            birthYearError = null
+          },
+          label = { Text("Ano de Nascimento") },
+          placeholder = { Text(if (isConfigured) currentProfile.birthYear.toString() else "Ex: 1998") },
+          isError = birthYearError != null,
+          supportingText = birthYearError?.let { err ->
+            { Text(err, color = ErrorRed, fontSize = 10.sp, modifier = Modifier.testTag("athlete_birth_year_error")) }
+          },
+          singleLine = true,
+          colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = ElectricLime,
+            unfocusedBorderColor = ObsidianBorder,
+            errorBorderColor = ErrorRed,
+            focusedTextColor = TextPrimary,
+            unfocusedTextColor = TextPrimary
+          ),
+          modifier = Modifier
+            .fillMaxWidth()
+            .testTag("athlete_birth_year_input")
+        )
 
         Spacer(modifier = Modifier.height(18.dp))
 
@@ -563,16 +749,63 @@ private fun EditProfileDialog(
 
           Button(
             onClick = {
-              val w = weightStr.toFloatOrNull() ?: 72f
-              val h = heightStr.toIntOrNull() ?: 175
-              val b = birthYearStr.toIntOrNull() ?: 1998
-              onSave(name, w, h, b, activityLevel, sex)
+              val trimmedWeight = weightStr.trim().replace(',', '.')
+              val trimmedHeight = heightStr.trim()
+              val trimmedBirthYear = birthYearStr.trim()
+
+              var valid = true
+
+              val w = trimmedWeight.toFloatOrNull()
+              if (trimmedWeight.isEmpty()) {
+                weightError = "Informe o peso"
+                valid = false
+              } else if (w == null || !w.isFinite() || w <= 0f) {
+                weightError = "Peso inválido (deve ser positivo)"
+                valid = false
+              } else {
+                weightError = null
+              }
+
+              val h = trimmedHeight.toIntOrNull()
+              if (trimmedHeight.isEmpty()) {
+                heightError = "Informe a altura"
+                valid = false
+              } else if (h == null || h <= 0) {
+                heightError = "Altura inválida (deve ser positiva)"
+                valid = false
+              } else {
+                heightError = null
+              }
+
+              val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+              val parsedYear = trimmedBirthYear.toIntOrNull()
+              if (trimmedBirthYear.isEmpty()) {
+                birthYearError = "Informe o ano de nascimento"
+                valid = false
+              } else if (parsedYear == null || parsedYear !in 1900..currentYear) {
+                birthYearError = "Ano inválido (1900 a $currentYear)"
+                valid = false
+              } else {
+                birthYearError = null
+              }
+
+              if (!valid || w == null || h == null || parsedYear == null) return@Button
+
+              val finalName = name.trim().ifBlank {
+                when (val u = currentUser) {
+                  is com.example.data.GuestUser -> u.displayName
+                  else -> "Atleta"
+                }
+              }
+              onSave(finalName, w, h, parsedYear, activityLevel, sex)
             },
             colors = ButtonDefaults.buttonColors(containerColor = ElectricLime, contentColor = ObsidianBg),
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+              .weight(1f)
+              .testTag("apply_profile_button")
           ) {
-            Text("Salvar", fontWeight = FontWeight.Bold)
+            Text("Aplicar no Aparelho", fontWeight = FontWeight.Bold, fontSize = 12.sp)
           }
         }
       }
