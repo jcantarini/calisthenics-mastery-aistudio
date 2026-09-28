@@ -29,6 +29,7 @@ class PrototypeIsolationTest {
   @After fun teardown() { Dispatchers.resetMain() }
 
   @Test fun oldFakeIdentityAndTokensAreClearedNotRestored() {
+    app.getSharedPreferences("auth_migration_v1", Context.MODE_PRIVATE).edit().clear().commit()
     val names = listOf("calisthenics_auth_prefs", "supabase_client_prefs")
     names.forEach { app.getSharedPreferences(it, Context.MODE_PRIVATE).edit()
       .putString("user_uid", "fake-google-uid").putString("sb_access_token", "expired-token").commit() }

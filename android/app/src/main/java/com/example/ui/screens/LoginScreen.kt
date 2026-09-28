@@ -3,12 +3,12 @@ package com.example.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,16 +22,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.BuildConfig
 import com.example.R
+import com.example.auth.AuthDiagnostic
 import com.example.ui.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
   isLoading: Boolean,
   errorMessage: String?,
   onGoogleSignIn: () -> Unit,
-  onGuestSignIn: (String) -> Unit
+  onGuestSignIn: (name: String) -> Unit,
+  googleConfigured: Boolean = false,
+  authDiagnostic: AuthDiagnostic? = null
 ) {
   var athleteName by remember { mutableStateOf("") }
 
@@ -40,7 +43,7 @@ fun LoginScreen(
       .fillMaxSize()
       .background(ObsidianBg)
   ) {
-    // Top Background Image with athletic gradient
+    // Top Hero Background Image with Subtle Gradient
     Box(
       modifier = Modifier
         .fillMaxWidth()
@@ -96,7 +99,6 @@ fun LoginScreen(
               .clip(CircleShape)
           )
         }
-
         Spacer(modifier = Modifier.height(12.dp))
 
         Box(
@@ -113,7 +115,6 @@ fun LoginScreen(
             letterSpacing = 1.sp
           )
         }
-
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
@@ -122,7 +123,6 @@ fun LoginScreen(
           fontSize = 24.sp,
           fontWeight = FontWeight.Black
         )
-
         Text(
           text = "Acesse seus treinos na barra, timer HIIT e metas",
           color = TextSecondary,
@@ -168,6 +168,55 @@ fun LoginScreen(
                 )
               }
             }
+            Spacer(modifier = Modifier.height(10.dp))
+          }
+
+          // Debug Diagnostic Banner (Active solely in Debug build with diagnostic info)
+          if (BuildConfig.DEBUG && authDiagnostic != null) {
+            Box(
+              modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(ObsidianSurfaceElevated)
+                .border(1.dp, ElectricLime.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                .padding(12.dp)
+            ) {
+              Column {
+                Text(
+                  text = "DIAGNÓSTICO DEBUG (A2-C3)",
+                  color = ElectricLime,
+                  fontWeight = FontWeight.Bold,
+                  fontSize = 11.sp,
+                  letterSpacing = 0.5.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                  text = "Etapa: ${authDiagnostic.stage.description}",
+                  color = TextPrimary,
+                  fontSize = 12.sp,
+                  fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                  text = "Exceção: ${authDiagnostic.exceptionClass}",
+                  color = TextSecondary,
+                  fontSize = 11.sp
+                )
+                if (authDiagnostic.httpStatus != null) {
+                  Text(
+                    text = "Status HTTP: ${authDiagnostic.httpStatus}",
+                    color = TextSecondary,
+                    fontSize = 11.sp
+                  )
+                }
+                if (!authDiagnostic.providerErrorCode.isNullOrBlank()) {
+                  Text(
+                    text = "Código do provedor: ${authDiagnostic.providerErrorCode}",
+                    color = TextSecondary,
+                    fontSize = 11.sp
+                  )
+                }
+              }
+            }
             Spacer(modifier = Modifier.height(14.dp))
           }
 
@@ -198,7 +247,7 @@ fun LoginScreen(
                 GoogleGIcon()
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                  text = "Google indisponível por enquanto",
+                  text = if (googleConfigured) "Entrar com Google" else "Google indisponível por enquanto",
                   color = Color(0xFF1F1F1F),
                   fontWeight = FontWeight.Bold,
                   fontSize = 15.sp
@@ -290,13 +339,12 @@ fun LoginScreen(
 
       // Footer
       Text(
-        text = "Modo local temporário. Sem conta, sincronização, histórico salvo ou recompensas.",
+        text = "Convidado: modo temporário sem conta. Treinos, histórico e recompensas ainda não são sincronizados.",
         color = TextMuted,
         fontSize = 11.sp,
         textAlign = TextAlign.Center
       )
     }
-
   }
 }
 

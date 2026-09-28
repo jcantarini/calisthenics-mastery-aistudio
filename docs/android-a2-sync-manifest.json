@@ -1,0 +1,323 @@
+{
+  "source_repository": "jcantarini/calisthenics-mastery-aistudio",
+  "source_commit": "bf00310db8ed3be1f80c0d8d1f508932e8700e0d",
+  "source_subdirectory": "android/",
+  "archive_sha256": "ab43d662eb17aa39fcd0e3608ec8109ea7e7ab4b52783e7d586908649c40a076",
+  "files": [
+    {
+      "path": ".env.example",
+      "sha256": "9a87d594e4457f34e44c5cb9bdc64d4bbd99d6fd4b2a492adc3a598202e4ac82",
+      "bytes": 434
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "1bc15e9a48af29eeec5ab7413fcdc31c27aece46b252f1f52c5dce91dafa2e5c",
+      "bytes": 281
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "b618882838d6b3e1d9a1edbd41d098c5e5f512f9e35a592b31a9e14e16ef5ecf",
+      "bytes": 1047
+    },
+    {
+      "path": "README.md",
+      "sha256": "1c55c80dee11fb72a6ead8fcab5866570ad51a3d4827dd93d8f601c74f41478c",
+      "bytes": 2611
+    },
+    {
+      "path": "app/.gitignore",
+      "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718",
+      "bytes": 7
+    },
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "15aee88250fe57860e4402972cb6560588bbdaffb0e0853e66cda57972649a5a",
+      "bytes": 4859
+    },
+    {
+      "path": "app/gradle.lockfile",
+      "sha256": "468a3f8499b88cddbd5944df84102d663016f6b7b091f0a4a93da9073637ba76",
+      "bytes": 51391
+    },
+    {
+      "path": "app/proguard-rules.pro",
+      "sha256": "1cf8c57e8f79c250b0af9c1a5a4edad71a5c348a79ab70243b6bae086c150ad2",
+      "bytes": 751
+    },
+    {
+      "path": "app/src/androidTest/java/com/example/ExampleInstrumentedTest.kt",
+      "sha256": "c6ef958cafb00dbec798a71f5be604e9cf56189676312bea40f63dd07ca0d674",
+      "bytes": 643
+    },
+    {
+      "path": "app/src/androidTest/java/com/example/KeystoreDeviceTest.kt",
+      "sha256": "63860d1de6e5576fbfa5ff0a8f64513a78bb769e77627206be168895f316996b",
+      "bytes": 1191
+    },
+    {
+      "path": "app/src/main/AndroidManifest.xml",
+      "sha256": "77733031f4c07133b8eb69709bb3df57e4c8c8300215314fbe9da184fdc8198f",
+      "bytes": 1223
+    },
+    {
+      "path": "app/src/main/java/com/example/MainActivity.kt",
+      "sha256": "2ce31dbb96765cfe96f436ced012044b993d9c43ce99723d401b14fae52aacb9",
+      "bytes": 9244
+    },
+    {
+      "path": "app/src/main/java/com/example/auth/AuthConfiguration.kt",
+      "sha256": "9adf746884d368aa38af777650a90f19f1d5faab7687d61e97c2378147c68845",
+      "bytes": 773
+    },
+    {
+      "path": "app/src/main/java/com/example/auth/AuthContracts.kt",
+      "sha256": "fcc86afb9e84e4fc5e747a7944f06832de43b11c2a451d1d33ff0bb3ddb463c6",
+      "bytes": 924
+    },
+    {
+      "path": "app/src/main/java/com/example/auth/GoogleCredentialProvider.kt",
+      "sha256": "64b3d68bc215ca5f2f1742a1f47506b9690e07fcd19ab1057cc6e212b4fdf691",
+      "bytes": 1623
+    },
+    {
+      "path": "app/src/main/java/com/example/auth/KeystoreSessionVault.kt",
+      "sha256": "a6128dc3682b3f7e5e8ced371159c5f10ecbfe7203b131ae092f0ca95a3f086e",
+      "bytes": 3253
+    },
+    {
+      "path": "app/src/main/java/com/example/auth/SessionController.kt",
+      "sha256": "13624cc8464b15bcee889a47cd7f320340fbcdd5a415af0c51d877a9c1c037f9",
+      "bytes": 7537
+    },
+    {
+      "path": "app/src/main/java/com/example/auth/SupabaseAuthGateway.kt",
+      "sha256": "5f5ebd2264041e3c4625478150b5e5af934df420c81ccde29ac7bad9da41f89c",
+      "bytes": 2539
+    },
+    {
+      "path": "app/src/main/java/com/example/data/CalisthenicsData.kt",
+      "sha256": "3bf211c33d4f477e87b30be1202de407473b28bdc040cbb71aaa59cd2106df2c",
+      "bytes": 9733
+    },
+    {
+      "path": "app/src/main/java/com/example/data/CalisthenicsRepository.kt",
+      "sha256": "b17059e298ae6f4f1f358d422c5bc8ef8fb42812c62a6e5f431c781bf5c7fa86",
+      "bytes": 5645
+    },
+    {
+      "path": "app/src/main/java/com/example/data/SupabaseManager.kt",
+      "sha256": "67a3e3b1a41be0aad6e73bd6e5a15f87bd0fc2b978578e4a0325a50fbe8db495",
+      "bytes": 1025
+    },
+    {
+      "path": "app/src/main/java/com/example/model/Models.kt",
+      "sha256": "e4bece64de194488846a330dd46cf758f43c93ecd6c3de33f3130e2eaffb968a",
+      "bytes": 3052
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/screens/DashboardScreen.kt",
+      "sha256": "8de28085319d42a70ecb29d26cddf44d95afee08b145dfc47d51c5bfb165af3a",
+      "bytes": 16563
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/screens/DietProfileScreen.kt",
+      "sha256": "16df94dacf736d8df2f3cbca6290ba141fb860f2e4718c4880c66fdc16ca79ef",
+      "bytes": 20151
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/screens/GoalsScreen.kt",
+      "sha256": "a3d499542f9eda14447ed939b223df2361faabf8b89fcb3d1fb4996e7d3df003",
+      "bytes": 17539
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/screens/LoginScreen.kt",
+      "sha256": "369129b7ffd8b9a80ae6e9bec9cc8859c9bebd2d3b99c92c11af9a9f7102ee2e",
+      "bytes": 9908
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/screens/ProgramsScreen.kt",
+      "sha256": "0200661e9a854216ba39350315e1869147b38777471ae8d7292c899180cded41",
+      "bytes": 14579
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/screens/SplashScreen.kt",
+      "sha256": "20678a599e7653394428e046e7db9e670806af542b8d2f10ee16206e5d50292c",
+      "bytes": 3800
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/screens/TimerScreen.kt",
+      "sha256": "66f8e66508b218fb733c8beedb8b585eb8201571e5a182b8b111ed4c0b2def53",
+      "bytes": 9563
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/screens/WorkoutPlayerScreen.kt",
+      "sha256": "456b671be191746f313db35300aadf34c1da5198b9f014263d03f66d7457c8f3",
+      "bytes": 12487
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/theme/Color.kt",
+      "sha256": "552e70b77ef15b8e4e6a7ec8ef01a9576388e1711b1a6e1106e422a0c346cc5c",
+      "bytes": 690
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/theme/Theme.kt",
+      "sha256": "a49b35ec75118baa721f0027a0c39df5b0e3518d720fdee276075ea1532bf923",
+      "bytes": 2040
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/theme/Type.kt",
+      "sha256": "4d1ed9437091dd4506aa51c0e040b7e0168bf90f3b0a1e7c266ac362e6c89d69",
+      "bytes": 994
+    },
+    {
+      "path": "app/src/main/java/com/example/ui/viewmodel/CalisthenicsViewModel.kt",
+      "sha256": "25fa8637a83fe3400f80a899232e114e0eb5318977af9f3d6ba0b87928360ff9",
+      "bytes": 15286
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_launcher_background.xml",
+      "sha256": "1894d640e87d92831b7764628ed0a34d5650bc894ce211d60d9ff6b2c2c2da17",
+      "bytes": 330
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_launcher_foreground.xml",
+      "sha256": "19e9a0e375837ad7a371540a70e7506e8ddbde5736c7d55548854d0a634f08c5",
+      "bytes": 280
+    },
+    {
+      "path": "app/src/main/res/drawable/img_app_icon.jpg",
+      "sha256": "d7ad3297beddfda032ebafae42641319f8c438f618062dce9c81a633e3ffeffe",
+      "bytes": 461349
+    },
+    {
+      "path": "app/src/main/res/drawable/img_hero_calisthenics.jpg",
+      "sha256": "351f7c7ca811123646cc4df4f4f8e75c44e6f94ecc1a3c5d165149fb1688023f",
+      "bytes": 820673
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "sha256": "6d0988175971f41bdc83eadb144af3d84c40052fa125e90edbe7d89227be4b25",
+      "bytes": 344
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "sha256": "6d0988175971f41bdc83eadb144af3d84c40052fa125e90edbe7d89227be4b25",
+      "bytes": 344
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi/ic_launcher.xml",
+      "sha256": "9cd3a10112e6614b3020a8ef205d39a822760189b6f73a55add86d5a84e50611",
+      "bytes": 173
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi/ic_launcher_round.xml",
+      "sha256": "9cd3a10112e6614b3020a8ef205d39a822760189b6f73a55add86d5a84e50611",
+      "bytes": 173
+    },
+    {
+      "path": "app/src/main/res/values/colors.xml",
+      "sha256": "57681038afd005dcd260eabdd6d16619709c4a3fe20324362ea00e093e85b5fd",
+      "bytes": 379
+    },
+    {
+      "path": "app/src/main/res/values/strings.xml",
+      "sha256": "ba3c9cf51f1c639c13cae916ee0774a858c5e6ec9fda41bb59e50d07dce98306",
+      "bytes": 83
+    },
+    {
+      "path": "app/src/main/res/values/themes.xml",
+      "sha256": "e8288b65767f4f28854d168c7b19c308579d3703bdf3fc26c2b266e19148f465",
+      "bytes": 155
+    },
+    {
+      "path": "app/src/main/res/xml/backup_rules.xml",
+      "sha256": "c618487098a594481858658a3a23caac2b1636f98ec3ae0ebd061f94e55ce7c4",
+      "bytes": 129
+    },
+    {
+      "path": "app/src/main/res/xml/data_extraction_rules.xml",
+      "sha256": "82662eeff0b6bd9473a5986e56ddaf6b570062e63cef35c22918d59d90bd1554",
+      "bytes": 242
+    },
+    {
+      "path": "app/src/test/java/com/example/ExampleRobolectricTest.kt",
+      "sha256": "a404b5dfebbb64e9d8ec43e472b986e5ce5028dfdc5e3815511a2aba5d38b6aa",
+      "bytes": 598
+    },
+    {
+      "path": "app/src/test/java/com/example/LocalGuestStateTest.kt",
+      "sha256": "a65aad970bc8736067fee56a2e70f09a76add3027d3745d6206e9babba7016c9",
+      "bytes": 4553
+    },
+    {
+      "path": "app/src/test/java/com/example/PrototypeIsolationTest.kt",
+      "sha256": "c66ce412d1a0a7ec5be1930be7201edb287fbf1dc343cde0a37f095b6f92fb7d",
+      "bytes": 2960
+    },
+    {
+      "path": "app/src/test/java/com/example/SessionControllerTest.kt",
+      "sha256": "e9f27b0ac06763eaefc4f4b6bf6489361f7986e732798f22e415e8e18858340d",
+      "bytes": 8031
+    },
+    {
+      "path": "app/src/test/java/com/example/SessionVaultTest.kt",
+      "sha256": "9db2fd4258404d6f4091345a4ceda3cadaad37236ea60fac5605256b00298928",
+      "bytes": 2928
+    },
+    {
+      "path": "app/src/test/java/com/example/SupabaseAuthGatewayTest.kt",
+      "sha256": "e0ce68f0c337868fdf6b7decb5afd6c740b10c43654fe65834dc6fab4c2c0a14",
+      "bytes": 2934
+    },
+    {
+      "path": "app/src/test/java/com/example/TrustBoundaryUiTest.kt",
+      "sha256": "b751500f9aee16a8c4d50d668ad04c9c383051ad0c6875bd69b62b933d5c6d19",
+      "bytes": 1993
+    },
+    {
+      "path": "build.gradle.kts",
+      "sha256": "a4957786c13577c3714bca796a86da3bd419efbe13be2d4f529c2bcaa5db3faf",
+      "bytes": 215
+    },
+    {
+      "path": "gradle.properties",
+      "sha256": "22e1659aca620bca6ec21c4585fe852f883c4593fb08f90561311ee08f874131",
+      "bytes": 1414
+    },
+    {
+      "path": "gradle/libs.versions.toml",
+      "sha256": "132d3ede28ca5007bfde76138946452f5f9d934ebde76259bcca7f4d0b5ca3cd",
+      "bytes": 7427
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "sha256": "b3a875ddc1f044746e1b1a55f645584505f4a10438c1afea9f15e92a7c42ec13",
+      "bytes": 46175
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "sha256": "40c4ac801fa3d3029cc46957c91216f9fcff52a05a011a0579357bae3dc4c441",
+      "bytes": 339
+    },
+    {
+      "path": "gradlew",
+      "sha256": "b2fe376b143a459ba5d0bd290dc89beed5399fc6d159cd1214bd642ea94bcf07",
+      "bytes": 8640
+    },
+    {
+      "path": "gradlew.bat",
+      "sha256": "9386e790d58b9368ca8e034536a5baa688643d51cb37bfa462503d36fd0291a6",
+      "bytes": 2825
+    },
+    {
+      "path": "metadata.json",
+      "sha256": "3a2d8c937c643bc3f927acde63d7c460c9287784d76dd0814d18ac78d950d08e",
+      "bytes": 284
+    },
+    {
+      "path": "settings.gradle.kts",
+      "sha256": "c2c25f90315ae98d79e1c07b59bbe4a2d8f6a4960f0b9c43a7c12143a1c6e516",
+      "bytes": 560
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 package com.example.data
 
 import android.content.Context
+import com.example.auth.AuthDiagnostic
 import com.example.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,13 +10,16 @@ import kotlinx.coroutines.flow.update
 import java.util.UUID
 
 /** A local display name is never a verified cloud identity. */
-data class GuestUser(val displayName: String)
+sealed interface AppIdentity { val displayName: String }
+data class GuestUser(override val displayName: String) : AppIdentity
+data class AuthenticatedUser(val userId: String, override val displayName: String = "Atleta") : AppIdentity
 
 data class CalisthenicsAppState(
-  val currentUser: GuestUser? = null,
+  val currentUser: AppIdentity? = null,
   val isSplashFinished: Boolean = false,
   val isAuthLoading: Boolean = false,
   val authErrorMessage: String? = null,
+  val authDiagnostic: AuthDiagnostic? = null,
   val profile: UserProfile = UserProfile(),
   val activeProgram: Program = CalisthenicsData.PROGRAMS.first(),
   val goals: List<Goal> = emptyList(),
@@ -39,16 +43,22 @@ class CalisthenicsRepository {
   val state: StateFlow<CalisthenicsAppState> = _state.asStateFlow()
 
   fun initPreferences(context: Context) {
-    // Prototype identities were not authenticated. Never restore them as sessions.
-    context.getSharedPreferences("calisthenics_auth_prefs", Context.MODE_PRIVATE).edit().clear().apply()
-    context.getSharedPreferences("supabase_client_prefs", Context.MODE_PRIVATE).edit().clear().apply()
+    // One-time cleanup targets only the two obsolete plaintext prototype stores.
+    val marker = context.getSharedPreferences("auth_migration_v1", Context.MODE_PRIVATE)
+    if (!marker.getBoolean("legacy_removed", false)) {
+      val first = context.getSharedPreferences("calisthenics_auth_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+      val second = context.getSharedPreferences("supabase_client_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+      if (first && second) marker.edit().putBoolean("legacy_removed", true).commit()
+    }
   }
 
   fun enterGuest(name: String) {
     val displayName = name.trim().take(80).ifBlank { "Atleta" }
     _state.value = CalisthenicsAppState(
-      currentUser = GuestUser(displayName), isSplashFinished = true,
-      profile = UserProfile(name = displayName)
+      currentUser = GuestUser(displayName),
+      isSplashFinished = true,
+      profile = UserProfile(name = displayName),
+      profileConfigured = false
     )
   }
 
@@ -60,16 +70,41 @@ class CalisthenicsRepository {
     )
   }
 
+  fun authenticated(userId: String) {
+    require(userId.isNotBlank())
+    if ((_state.value.currentUser as? AuthenticatedUser)?.userId != userId) {
+      _state.value = CalisthenicsAppState(
+        currentUser = AuthenticatedUser(userId),
+        isSplashFinished = true,
+        profile = UserProfile(),
+        profileConfigured = false
+      )
+    }
+  }
+
+  fun authScreen(loading: Boolean, message: String?, diagnostic: AuthDiagnostic? = null) {
+    _state.value = CalisthenicsAppState(
+      isSplashFinished = _state.value.isSplashFinished,
+      isAuthLoading = loading,
+      authErrorMessage = message,
+      authDiagnostic = diagnostic
+    )
+  }
+
+  fun sessionNotice(message: String) { _state.update { it.copy(notice = message) } }
   fun finishSplash() { _state.update { it.copy(isSplashFinished = true) } }
   fun signOut() { _state.value = CalisthenicsAppState(isSplashFinished = true) }
   fun dismissNotice() { _state.update { it.copy(notice = null) } }
+
   fun persistenceUnavailable() {
     _state.update { it.copy(notice = "Histórico e recompensas indisponíveis. Esta atividade não foi salva.") }
   }
+
   fun setActiveProgram(programId: String) {
     val found = CalisthenicsData.PROGRAMS.find { it.id == programId } ?: return
     _state.update { it.copy(activeProgram = found) }
   }
+
   fun updateGoalProgress(goalId: String, delta: Int) {
     _state.update { curr ->
       curr.copy(goals = curr.goals.map { goal ->
@@ -77,6 +112,7 @@ class CalisthenicsRepository {
       })
     }
   }
+
   fun claimGoalReward(@Suppress("UNUSED_PARAMETER") goalId: String) { persistenceUnavailable() }
   fun dismissGoalReward() { _state.update { it.copy(lastRewardedGoal = null) } }
 
@@ -109,11 +145,24 @@ class CalisthenicsRepository {
   }
 
   fun updateProfile(name: String, weightKg: Float, heightCm: Int, birthYear: Int, activityLevel: ActivityLevel, sex: Sex) {
+    val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+    if (!weightKg.isFinite() || weightKg <= 0f || heightCm <= 0 || birthYear !in 1900..currentYear) return
+    val sanitizedName = name.trim().take(80).ifBlank {
+      when (val u = _state.value.currentUser) {
+        is GuestUser -> u.displayName
+        else -> "Atleta"
+      }
+    }
     _state.update { curr ->
+      val newCurrentUser = when (val user = curr.currentUser) {
+        is GuestUser -> GuestUser(sanitizedName)
+        else -> user
+      }
       curr.copy(
+        currentUser = newCurrentUser,
         profileConfigured = true,
         profile = curr.profile.copy(
-          name = name,
+          name = sanitizedName,
           weightKg = weightKg,
           heightCm = heightCm,
           birthYear = birthYear,
@@ -123,5 +172,4 @@ class CalisthenicsRepository {
       )
     }
   }
-
 }
