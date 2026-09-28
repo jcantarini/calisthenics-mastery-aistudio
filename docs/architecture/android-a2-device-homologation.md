@@ -69,8 +69,21 @@ report success. The historical record reports two instrumented tests on an API 3
 emulator. The vault, its device test and dependency lock are byte-identical to
 that A2 baseline. Build configuration and other app sources have since changed;
 the unchanged component evidence is useful but is not a fresh whole-build result.
-The existing CI will run assembly, unit/Compose tests, lint and instrumentation
-again for this follow-up. Until results are recorded, current CI is pending.
+Current source commit `d8bf9985ac4572f41017a141682054c7d0837958` and CI merge
+`43d4ef311fca277bf553b91e2aac6ace40ce30e2` have identical Git tree
+`d98060e3de23a9bd4a79df632b69ac2535b3c490` (fetched and compared locally).
+[Android CI 36494523445](https://github.com/jcantarini/calisthenics-mastery-aistudio/actions/runs/36494523445)
+passed assembly, unit/Compose tests and lint. Downloaded artifact `11002799686`
+(SHA-256 `276d5172862c5a58ccaf0dad4716a0c21e504524b941953bca58c0714a9a0bed`)
+contains 73 tests in 11 suites, zero failures/errors/skips, and lint XML with
+57 warnings and zero errors. This is fresh CI evidence, distinct from the
+AI Studio reports above. The `keystore-device` job also passed: two instrumented tests completed on the
+API 35 emulator. Device artifact `11003215990` has SHA-256
+`1392fb2cf15c11007ed57a931c3f7d25d18fa472d22a2bc2825803340a6c1854`.
+[Web CI 36494523390](https://github.com/jcantarini/calisthenics-mastery-aistudio/actions/runs/36494523390)
+passed 370 tests, typecheck, lint (13 warnings, zero errors), build and production
+smoke. Protected dependency files and all migrations remain unchanged.
+SQL tests were not rerun because no SQL changed.
 
 AndroidKeyStore is used by the native implementation. TEE/StrongBox protection
 has not been measured and is not assumed or made a new acceptance requirement.
@@ -131,7 +144,6 @@ foreground-triggered renewal. Do not alter the system clock, shorten the shared
 provider lifetime, expose tokens or infer a universal lifetime of 3600 seconds.
 If logs are unavailable, record that limitation rather than inventing a pass.
 
-Current CI results and publication identity must be recorded after this source
-sync. Keep PR #4 draft, retain historical manifests, and preserve web files and
+The source synchronization and current CI are complete as recorded above. Keep PR #4 draft, retain historical manifests, and preserve web files and
 all migrations. A GitHub update does not imply AI Studio imported newer documents.
 No merge, A3 implementation, backend deployment or release is authorized here.

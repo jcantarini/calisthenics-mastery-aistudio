@@ -223,5 +223,6 @@ provider verification, login/refresh/logout/account switching and error scenario
 The [device acceptance and source synchronization record](./android-a2-device-homologation.md)
 supersedes the older live-login and export blockers above. It records the reviewed
 AI Studio fixes, delivered 73-test evidence, owner device results and reported
-backend refresh/verification at 16:49:21 UTC. The current synchronization still
-requires CI confirmation and scheduled-renewal evidence; A3 remains blocked.
+backend refresh/verification at 16:49:21 UTC. The source synchronization and its fresh CI are complete (73 unit/Compose tests,
+two device tests, assembly/lint and 370 web tests passed). Scheduled-renewal
+evidence remains pending; A3 remains blocked.
